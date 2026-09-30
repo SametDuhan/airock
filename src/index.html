@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>SkyTrack</title>
+<link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
+<style>
+:root{--bg:#141414;--pn:#1c1c1c;--ac:#f2c230;--fg:#f0e6d2;--mut:#8d877c;--line:#ffffff14}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden}
+#app{display:flex;height:100%}
+aside{width:300px;background:var(--pn);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2}
+.brand{padding:16px;font:700 13px ui-monospace,monospace;letter-spacing:.2em;color:var(--ac)}
+#q{margin:0 14px 10px;padding:9px 11px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}
+#q:focus{border-color:var(--ac)}
+#meta{padding:0 16px 8px;font:11px ui-monospace,monospace;color:var(--mut);letter-spacing:.08em}
+#list{flex:1;overflow:auto}
+.row{display:flex;justify-content:space-between;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:.2s}
+.row:hover{background:#ffffff0a;transform:translateX(3px)}.row.on{background:#f2c2301a;border-color:var(--ac)}
+.row b{font:600 13px ui-monospace,monospace}.row span{color:var(--mut);font-size:12px}
+main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
+.bar{position:absolute;top:12px;right:12px;z-index:1000;display:flex;gap:8px;align-items:center;background:var(--pn);border:1px solid var(--line);border-radius:4px;padding:6px 10px}
+.bar button{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:6px 10px;cursor:pointer}
+.bar button.on{background:var(--ac);color:#111;border-color:var(--ac);font-weight:700}
+#st{font:11px ui-monospace,monospace;color:var(--mut)}
+#card{position:absolute;right:12px;top:64px;width:260px;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px;transform:translateX(300px);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
+#card.show{transform:none}#card h2{margin:0 0 2px;font:400 28px Georgia,serif}#card small{color:var(--mut)}
+.kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}.kv span{color:var(--mut)}
+.pl{background:none;border:0}.pi{width:26px;height:26px;transition:transform .3s}.pi svg{width:100%;height:100%;fill:#f2c230;stroke:#000;stroke-width:.6;filter:drop-shadow(0 0 3px #0008)}
+.pl.sel .pi svg{fill:#fff;filter:drop-shadow(0 0 8px var(--ac))}
+.leaflet-container{background:#0e0e0e}
+</style></head>
+<body><div id="app">
+<aside><div class="brand">SKYTRACK</div><input id="q" placeholder="Çağrı kodu ara…"><div id="meta"></div><div id="list"></div></aside>
+<main><div id="map"></div>
+<div class="bar"><span id="st"></span><button id="mDemo" class="on">Demo</button><button id="mLive">Canlı</button></div>
+<div id="card"></div></main></div>
+<script src="../node_modules/leaflet/dist/leaflet.js"></script>
+<script src="renderer.js"></script></body></html>
