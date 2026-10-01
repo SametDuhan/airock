@@ -1,7 +1,10 @@
 const $ = id => document.getElementById(id);
 const map = L.map('map', { zoomControl: false, worldCopyJump: true }).setView([41, 29], 6);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap © CARTO', maxZoom: 12 }).addTo(map);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution: "&copy; OpenStreetMap contributors"
+}).addTo(map);, { attribution: '© OpenStreetMap © CARTO', maxZoom: 12 }).addTo(map);
 const trail = L.polyline([], { color: '#f2c230', weight: 2, opacity: .8 }).addTo(map);
 const PLANE = '<svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>';
 
