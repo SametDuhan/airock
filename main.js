@@ -21,7 +21,7 @@ ipcMain.handle('flights', async (_, b) => {
     const flights = (j.states || [])
       .filter(s => s[5] != null && s[6] != null && !s[8])
       .map(s => ({ id: s[0], cs: (s[1] || '').trim() || s[0], country: s[2], lon: s[5], lat: s[6],
-                   alt: s[7] || 0, spd: s[9] || 0, hdg: s[10] || 0, vr: s[11] || 0 }));
+                   alt: s[7] || 0, spd: s[9] || 0, hdg: s[10] || 0, vr: s[11] || 0 })).slice(0,2000);
     return { ok: true, flights };
   } catch (e) { return { ok: false, error: e.message }; }
 });
