@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const map = L.map('map', { zoomControl: false, worldCopyJump: true }).setView([41, 29], 6);
+const map = L.map('map', { zoomControl: false, worldCopyJump: true , minZoom:5 }).setView([41, 29], 6);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
