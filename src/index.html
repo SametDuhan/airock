@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr"><head><meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://opensky-network.org https://api.adsbdb.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
 <title>SkyTrack</title>
 <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
@@ -8,7 +8,7 @@
 :root{--bg:#141414;--pn:#1c1c1c;--ac:#f2c230;--fg:#f0e6d2;--mut:#8d877c;--line:#ffffff14}
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden}
 #app{display:flex;height:100%}
-aside{width:300px;flex-shrink:0;background:var(--pn);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2;transition:margin-left .35s cubic-bezier(.2,.7,.2,1)}
+aside{width:300px;flex-shrink:0;overflow-y:auto;background:var(--pn);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2;transition:margin-left .35s cubic-bezier(.2,.7,.2,1)}
 aside.hide{margin-left:-301px}
 .brand{display:flex;justify-content:space-between;align-items:center;padding:12px 12px 8px 16px;font:700 13px ui-monospace,monospace;letter-spacing:.2em;color:var(--ac)}
 .ib{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1}.ib:hover{border-color:var(--ac);color:var(--ac)}
@@ -19,7 +19,7 @@ aside.hide{margin-left:-301px}
 #q{margin:10px 14px 10px;padding:9px 11px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}
 #q:focus{border-color:var(--ac)}
 #meta{padding:0 16px 8px;font:11px ui-monospace,monospace;color:var(--mut);letter-spacing:.08em}
-#list{flex:1;overflow:auto}
+#list{flex:1 1 0;min-height:150px;overflow:auto}
 .row{display:flex;justify-content:space-between;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:.2s}
 .row:hover{background:#ffffff0a;transform:translateX(3px)}.row.on{background:#f2c2301a;border-color:var(--ac)}
 .row b{font:600 13px ui-monospace,monospace}.row span{color:var(--mut);font-size:12px}
@@ -27,11 +27,14 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 .bar{position:absolute;top:12px;right:12px;z-index:1000;display:flex;gap:8px;align-items:center;background:var(--pn);border:1px solid var(--line);border-radius:4px;padding:6px 10px}
 #clock{font:600 15px ui-monospace,monospace;letter-spacing:.06em}
 #st{font:11px ui-monospace,monospace;color:var(--mut);margin-top:7px}
-#card{position:absolute;right:12px;top:64px;width:260px;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px;transform:translateX(300px);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
-#card.show{transform:none}#card h2{margin:0 0 2px;font:400 28px Georgia,serif}#card small{color:var(--mut)}
+#card{position:absolute;right:12px;top:64px;width:270px;max-height:calc(100% - 140px);overflow-y:auto;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px;transform:translateX(300px);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
+#card.show{transform:none}#card h2{margin:0 0 2px;font:400 26px Georgia,serif;word-break:break-all}#card small{color:var(--mut)}
+.ch{display:flex;gap:10px;align-items:flex-start}.ch .cn{flex:1;min-width:0}.logo{width:38px;height:38px;border-radius:4px;background:#fff;object-fit:contain;padding:2px;flex:none}
+#card .ib{width:28px;height:28px;margin:0;padding:0;color:var(--mut);border-color:var(--line);flex:none}#card .ib:hover{background:transparent;color:var(--ac);border-color:var(--ac)}
+.ph{display:block;margin:10px 0 2px;border-radius:3px;overflow:hidden;background:#111}.ph img{display:block;width:100%;height:auto}
+canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
+#hov{position:absolute;z-index:1000;display:none;pointer-events:none;background:var(--pn);color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:3px 7px;font:600 11px ui-monospace,monospace;white-space:nowrap}
 .kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}.kv span{color:var(--mut)}
-.pl{background:none;border:0}.pi{width:26px;height:26px;transition:transform .3s}.pi svg{width:100%;height:100%;fill:var(--c,#f2c230);stroke:#000;stroke-width:.6;filter:drop-shadow(0 0 3px #0008)}
-.pl.sel .pi svg{fill:#fff;filter:drop-shadow(0 0 8px var(--ac))}
 .leaflet-container{background:#0e0e0e}
 .flt{padding:4px 16px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mut)}
 .dr{position:relative;height:20px;margin:4px 0 10px;--a:0%;--b:100%}
@@ -61,7 +64,8 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 <body><div id="app">
 <aside id="side"><div class="brand">SKYTRACK<button id="close" class="ib" title="Menüyü kapat">✕</button></div>
 <div class="sec"><div class="lbl">Veri</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Canlı</button></div><div id="st"></div></div>
-<div class="sec"><div class="lbl">Harita</div><div class="btns"><button id="bAp" class="on">Havalimanları</button><button id="bZ">Uyarı bölgesi</button></div></div>
+<div class="sec"><div class="lbl">Harita</div><div class="btns"><button id="bAp" class="on">Havalimanları</button><button id="bZ">Uyarı bölgesi</button></div>
+<div class="btns" id="tiles" style="margin-top:6px"><button data-t="osm">Standart</button><button data-t="light">Açık</button><button data-t="dark">Koyu</button></div></div>
 <div class="flt"><div class="lbl">Filtreler</div><div>İrtifa <b id="vA">0</b> – <b id="vM">45.000+</b> ft</div>
 <div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">en az</span><span class="rmax">en çok</span></div>
 <div style="height:8px"></div>
@@ -69,10 +73,11 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 <div>Havalimanı</div>
 <div class="apr"><input id="fDep" list="apList" placeholder="Kalkış" autocomplete="off"><button id="fSw" class="ib" title="Kalkış ↔ varış">⇄</button><input id="fArr" list="apList" placeholder="Varış" autocomplete="off"></div>
 <div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
+<label class="ck"><input id="fG" type="checkbox" checked> Yerdeki uçakları göster</label>
 <label class="ck"><input id="fF" type="checkbox"> Sadece favoriler ★</label></div>
-<input id="q" placeholder="Çağrı kodu ara…"><div id="meta"></div><div id="list"></div></aside>
+<input id="q" placeholder="Çağrı kodu veya tescil ara…"><div id="meta"></div><div id="list"></div></aside>
 <main><div id="map"></div>
 <button id="open" class="ib" title="Menüyü aç">☰</button><div class="bar"><span id="clock"></span></div>
-<div id="card"></div><div id="toast"></div>
+<div id="hov"></div><div id="card"></div><div id="toast"></div>
 <div id="rp"><button id="rpLive" class="on">● Canlı</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">geçmiş kaydı</span></div></main></div>
 <script src="loader.js"></script></body></html>
