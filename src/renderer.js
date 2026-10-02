@@ -8,7 +8,10 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map); 
 const trail = L.polyline([], { color: '#f2c230', weight: 2, opacity: .8 }).addTo(map);
-const routeLine = L.polyline([], { color: '#f2c230', weight: 1.5, opacity: .7, dashArray: '5 7', interactive: false }).addTo(map), routeEnds = L.layerGroup().addTo(map);
+// Rota: koyu kenarlı (casing) düz çizgi, hem açık hem koyu harita zemininde seçilsin
+const ROUTE_C = '#e8245f', routeCase = L.polyline([], { color: '#111', weight: 7, opacity: .5, interactive: false }).addTo(map);
+const routeLine = L.polyline([], { color: ROUTE_C, weight: 3.5, opacity: .95, interactive: false }).addTo(map), routeEnds = L.layerGroup().addTo(map);
+const setRoute = pts => { routeCase.setLatLngs(pts); routeLine.setLatLngs(pts); };
 const PLANE = '<svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>';
 const AP = [
   // Türkiye
@@ -97,11 +100,11 @@ async function loadRoute(f) {
 function showRoute(f) { if (f.id !== selected) return; drawRoute(f); renderCard(true); }
 function drawRoute(f) {
   routeEnds.clearLayers();
-  if (!f || !f.route) return routeLine.setLatLngs([]);
+  if (!f || !f.route) return setRoute([]);
   const { org, dst } = f.route;
-  routeLine.setLatLngs([[org.lat, org.lon], [f.lat, f.lon], [dst.lat, dst.lon]]);
-  [org, dst].forEach(a => L.circleMarker([a.lat, a.lon], { radius: 6, color: '#f2c230', weight: 2, fillColor: '#141414', fillOpacity: 1, interactive: false })
-    .bindTooltip(a.code, { permanent: true, direction: 'top', offset: [0, -6], className: 'apl' }).addTo(routeEnds));
+  setRoute([[org.lat, org.lon], [f.lat, f.lon], [dst.lat, dst.lon]]);
+  [org, dst].forEach(a => L.circleMarker([a.lat, a.lon], { radius: 7, color: '#fff', weight: 2.5, fillColor: ROUTE_C, fillOpacity: 1, interactive: false })
+    .bindTooltip(a.code, { permanent: true, direction: 'top', offset: [0, -8], className: 'apl' }).addTo(routeEnds));
 }
 function nearest(f) { let b = null, m = 1e9; AP.forEach(a => { const d = km(f.lat, f.lon, a[2], a[3]); if (d < m) { m = d; b = a; } }); return `${b[0]} · ${Math.round(m)} km`; }
 
@@ -118,7 +121,7 @@ setInterval(() => {
     if (!live && !f.route && (f.lat > 60 || f.lat < 20 || f.lon > 60 || f.lon < -10)) f.hdg = (f.hdg + 180) % 360;
     f.marker.setLatLng([f.lat, f.lon]); paint(f);
     if (zone) { const inn = km(f.lat, f.lon, zone.lat, zone.lon) < ZONE_R; if (inn && f.in === false) toast(`${f.cs} uyarı bölgesine girdi`); f.in = inn; }
-    if (f.id === selected) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 80) f.tr.shift(); trail.setLatLngs(f.tr); if (f.route) routeLine.setLatLngs([[f.route.org.lat, f.route.org.lon], [f.lat, f.lon], [f.route.dst.lat, f.route.dst.lon]]); }
+    if (f.id === selected) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 80) f.tr.shift(); trail.setLatLngs(f.tr); if (f.route) setRoute([[f.route.org.lat, f.route.org.lon], [f.lat, f.lon], [f.route.dst.lat, f.route.dst.lon]]); }
   });
   if (tick % 5 === 0) { // geçmiş kaydı: 5 sn'de bir, en fazla 720 kare
     hist.push({ t: Date.now(), d: [...flights.values()].map(f => [f.id, f.lat, f.lon, f.hdg]) }); if (hist.length > 720) hist.shift();

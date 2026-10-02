@@ -34,7 +34,7 @@ Not: Flightradar24'ün kendi verisi ticari API'dir; bu şablon açık ADS-B veri
 
 ## v0.3 özellikleri
 - **Uçuş rotası (nereden → nereye):** uçuş kartında kalkış/varış havalimanı, ilerleme çubuğu, uçulan/kalan mesafe ve tahmini kalan süre.
-  Haritada seçili uçak için kesikli rota çizgisi ve havalimanı etiketleri; listede `IST→FRA` gösterimi.
+  Haritada seçili uçak için koyu kenarlı, düz kırmızı-pembe rota çizgisi ve havalimanı etiketleri; listede `IST→FRA` gösterimi.
 - **Demo:** uçaklar gerçek rotalarda uçar (kalkıştan varışa), varınca yeni rotaya çıkar.
 - **Canlı:** rota, çağrı koduna göre [adsbdb.com](https://www.adsbdb.com) API'sinden alınır (ücretsiz, anahtarsız). Veri tablo tabanlıdır; bazı uçuşlarda eksik/eski olabilir.
 - **Sol menü:** veri modu (Demo/Canlı), harita katmanları (Havalimanları, Uyarı bölgesi) ve filtreler tek menüde; ✕ ile kapatılır, ☰ ile açılır (durum hatırlanır). Sağ üstte yalnızca saat.
