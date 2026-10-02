@@ -1,64 +1,96 @@
-# SkyTrack – Flightradar tarzı masaüstü uygulama şablonu
+# SkyTrack
 
-Electron + Leaflet. Harita üzerinde uçak simgeleri, arama/listeleme, uçuş detay paneli ve iz çizgisi içerir.
+**English** · [Türkçe](README.tr.md)
 
-## Çalıştırma
-    npm install
-    npm start
+SkyTrack is a free desktop app for tracking flights live on a map, similar to Flightradar24. It runs on Windows, macOS and Linux, and it uses open ADS-B data, so you don't need an account or an API key.
 
-## Paketleme (.exe / .dmg / AppImage)
-    npm run dist
+![SkyTrack showing live flights around Istanbul, with a selected flight's route and details](docs/screenshot.jpg)
 
-## Modlar
-- **Demo:** Uydurma uçuşlar, internet verisi gerekmez (zaman 30x hızlı akar).
-- **Canlı:** açık ADS-B verisi, 15 sn'de bir yenilenir (ayrıntılar aşağıda, *Veri kaynakları*).
+> The app's interface is in Turkish. Each feature below gives the button name in parentheses so you can find it.
 
-## Veri kaynakları
-| Ne | Kaynak | Not |
+## Features
+
+- **Live flights**: aircraft positions refresh every 15 seconds. When you move or zoom the map, the new area loads right away.
+- **Demo mode**: 45 simulated flights that need no internet connection. Time runs 30× faster.
+- **Flight details**: click a plane to see:
+  - its airline and logo, aircraft type, registration and a photo (when one is available)
+  - its route (departure → arrival), progress bar, distance left and estimated time left
+  - its altitude, speed and vertical speed
+- **Route and trail**: the route is drawn as a great-circle arc, the actual shortest path over the globe. The trail shows where the plane has flown over the last ~30 minutes.
+- **Filters**:
+  - an altitude range on one slider (left handle = minimum, right handle = maximum)
+  - a minimum speed
+  - departure and/or arrival airport, by code (IST, LTFM) or city name
+  - aircraft on the ground on or off, and a favorites-only option
+- **Favorites**: star a flight (☆) to find it again later.
+- **Alert zone** (*Uyarı bölgesi*): click the map to set a 100 km circle. You get a notification when an aircraft enters it.
+- **Replay**: rewind the last hour with the slider at the bottom, then press *● Canlı* to return to live.
+- **Map styles**: Standard, Light or Dark (*Standart / Açık / Koyu*).
+- **Fast with many planes**: all aircraft are drawn on a single canvas. Around 3,700 aircraft over Europe draw in about 8 ms.
+
+## Getting started
+
+You need [Node.js](https://nodejs.org) 18 or newer.
+
+```bash
+git clone https://github.com/SametDuhan/airock.git
+cd airock
+npm install
+npm start
+```
+
+To build an installer for your operating system (`.exe`, `.dmg` or AppImage), run:
+
+```bash
+npm run dist
+```
+
+The installer is created in the `dist/` folder.
+
+## How to use
+
+| I want to… | Do this |
+|---|---|
+| See real flights | In the left menu, click **Canlı** (Live). **Demo** switches back to simulated flights. |
+| Get details about a plane | Click the plane on the map or in the list. Close the card with **✕**. |
+| Find a flight | Type a callsign (e.g. `THY1`) or registration (e.g. `TC-JPN`) into the search box. |
+| Show only flights from Istanbul to Frankfurt | Under *Filtreler* (Filters), type `IST` into **Kalkış** (Departure) and `FRA` into **Varış** (Arrival). Fill in only one box to see all departures or all arrivals for that airport. |
+| Hide or show the side menu | Click **✕** at the top of the menu. Click **☰** on the map to bring it back. |
+| Go back in time | Drag the slider at the bottom of the map. |
+
+## Data sources
+
+| Data | Source | Notes |
 |---|---|---|
-| Uçak konumları (yakın görünüm) | [adsb.lol](https://adsb.lol) | Ücretsiz, anahtarsız. Bir noktanın en fazla 250 deniz mili çevresi sorulabilir ve hız sınırı sıkıdır (~10 istek/dk); bu yüzden en fazla 2 daire sorulur. |
-| Uçak konumları (geniş görünüm / yedek) | [OpenSky Network](https://opensky-network.org) | Tek istekle tüm alan. Anonim kullanımda günlük kredi düşüktür; kredi bitince (429) 10 dk hiç sorulmaz ve adsb.lol ile yalnız orta bölge gösterilir. |
-| Rota (kalkış → varış), uçak tipi/tescil/fotoğraf | [adsbdb.com](https://www.adsbdb.com) | Ücretsiz, anahtarsız. Tablo tabanlıdır; bazı uçuşlarda eksik/eski olabilir. |
-| Havayolu logosu | images.kiwi.com | IATA koduna göre. |
-| Harita | OpenStreetMap (Standart), Esri gri altlıklar (Açık / Koyu) | |
+| Aircraft positions, zoomed in | [adsb.lol](https://adsb.lol) | Free, no key. Strict rate limit (~10 requests/min). |
+| Aircraft positions, wide view or backup | [OpenSky Network](https://opensky-network.org) | Covers a large area in one request. Has a low daily limit for anonymous users. |
+| Route, aircraft type, registration, photo | [adsbdb.com](https://www.adsbdb.com) | Free, no key. Some flights may be missing or out of date. |
+| Airline logos | images.kiwi.com | |
+| Maps | OpenStreetMap, Esri | |
 
-Tüm istekler `src/data.js` içindedir; masaüstünde ana süreçten (`main.js`), tarayıcıda doğrudan çalışır.
-Not: adsb.lol ve OpenSky tarayıcıdan gelen isteklere CORS izni vermez, yani canlı mod yalnızca masaüstü uygulamada çalışır.
+All network requests are in [`src/data.js`](src/data.js).
 
-## Nereden geliştirilir?
-- `src/data.js` → veri kaynakları (uçuşlar, rota, uçak bilgisi)
-- `main.js` → Electron penceresi ve `data.js`'e köprü (IPC)
-- `src/renderer.js` → harita, canvas uçak katmanı, panel, liste mantığı
-- `src/index.html` → arayüz ve tema (CSS burada)
+> Flightradar24's own data is a paid commercial API. SkyTrack uses only open, community-collected ADS-B data, so coverage can be thinner in some regions.
 
-## Fikirler
-Uçuş rotası/havalimanı bilgisi, filtreler (irtifa, hız), favoriler, ses/uyarı, geçmiş iz kaydı (SQLite), tema seçenekleri.
+## Troubleshooting
 
-Not: Flightradar24'ün kendi verisi ticari API'dir; bu şablon açık ADS-B verisi kullanır.
+- **The status shows an error, or few planes appear when zoomed out.**
+  The free sources limit how many requests you can make. When OpenSky's daily limit runs out, SkyTrack shows only the center of the map and asks you to zoom in. Zooming in usually fixes it.
+- **Live mode doesn't work when I open `src/index.html` in a browser.**
+  The data sources only allow requests from the desktop app, not from a web page (they block cross-origin requests from browsers). Use `npm start`. Demo mode works in both.
+- **A flight shows "Rota bilgisi bulunamadı" (route not found).**
+  The route database doesn't know this callsign. The rest of the details still work.
 
-## v0.2 özellikleri
-- **İrtifa renkleri:** düşük irtifa sarı/turuncu → yüksek irtifa mor/mavi.
-- **Filtreler:** tek çubukta min–max irtifa (sol tutamaç en az, sağ tutamaç en çok), min hız, sadece favoriler.
-- **Favoriler:** uçuş kartındaki ☆ ile ekle; localStorage'da saklanır.
-- **Havalimanları:** 63 havalimanı (Türkiye, Avrupa, Orta Doğu, dünya); tıklayınca 100 km içindeki uçak sayısı. Uçuş kartında "en yakın havalimanı" gösterilir.
-- **Uyarı bölgesi:** "Uyarı bölgesi" → haritaya tıkla (100 km yarıçap, `renderer.js` içinde `ZONE_R`). Bir uçak bölgeye girince bildirim çıkar.
-- **Geçmiş:** son 720 kare (5 sn aralıkla, ~1 saat) bellekte tutulur; alttaki çubukla geri sar, "● Canlı" ile dön. Uygulama kapanınca sıfırlanır.
+## Project structure
 
-## v0.3 özellikleri
-- **Uçuş rotası (nereden → nereye):** uçuş kartında kalkış/varış havalimanı, ilerleme çubuğu, uçulan/kalan mesafe ve tahmini kalan süre.
-  Haritada seçili uçak için koyu kenarlı, düz kırmızı-pembe rota çizgisi ve havalimanı etiketleri; listede `IST→FRA` gösterimi.
-- **Demo:** uçaklar gerçek rotalarda uçar (kalkıştan varışa), varınca yeni rotaya çıkar.
-- **Canlı:** rota, çağrı koduna göre [adsbdb.com](https://www.adsbdb.com) API'sinden alınır (ücretsiz, anahtarsız). Veri tablo tabanlıdır; bazı uçuşlarda eksik/eski olabilir.
-- **Sol menü:** veri modu (Demo/Canlı), harita katmanları (Havalimanları, Uyarı bölgesi) ve filtreler tek menüde; ✕ ile kapatılır, ☰ ile açılır (durum hatırlanır). Sağ üstte yalnızca saat.
-- **Hızlı bölge yükleme (canlı):** harita kaydırılıp/zoom yapılınca 0,4 sn içinde yeni bölge istenir. Görünen alanın %15 genişi alındığından küçük hareketler yeni istek atmaz; hızlı ardışık atlamalarda yalnızca son cevap kullanılır.
-- **Havalimanı filtresi:** Filtreler'de *Kalkış* ve *Varış* kutuları. Yalnız kalkış → o havalimanından kalkanlar; yalnız varış → oraya gidenler; ikisi birden → tam o rotadakiler. IATA (IST), ICAO (LTFM) veya şehir adı (İstanbul) yazılabilir, ⇄ ile yer değiştirilir. Canlı modda filtre açıkken ekrandaki uçakların rotaları arka planda (aynı anda en fazla 3 istek) yüklenir; rotası bilinmeyen uçaklar filtre açıkken gizlenir.
+```
+main.js           Electron window; passes data requests from the app to src/data.js
+preload.js        Exposes those requests to the app safely
+src/index.html    Layout and styles
+src/loader.js     Loads Leaflet (local copy first, CDN as a fallback), then the app
+src/data.js       All data sources: flights, routes, aircraft info
+src/renderer.js   Map, aircraft layer, flight card, list, filters, replay
+docs/             Screenshots used in this README
+```
 
-## v0.4 özellikleri
-- **Yeni veri kaynağı:** adsb.lol (birincil) + OpenSky (geniş görünüm / yedek); yenileme 30 sn → 15 sn.
-- **Performans:** uçaklar tek bir canvas'a çizilir; Avrupa genelinde ~3.700 uçak tek karede ~8 ms. Uzaklaştıkça simgeler küçülür.
-- **Uçak bilgisi:** kartta havayolu logosu, uçak tipi, tescil, sahibi ve (varsa) fotoğraf; fotoğrafa tıklayınca sistem tarayıcısında büyük hali açılır.
-- **Büyük daire rotaları:** rota çizgisi dünyanın eğriliğini izler (IST→JFK gibi uzun uçuşlarda doğru yay).
-- **İz:** her uçağın son ~30 dk izi 5 sn'de bir kaydedilir; uçak seçilince geçmiş izi hemen görünür.
-- **Yerdeki uçaklar:** gri, küçük simgeyle gösterilir; Filtreler'de *Yerdeki uçakları göster* ile gizlenebilir.
-- **Harita stili:** Standart (OSM), Açık ve Koyu (Esri gri altlıklar); seçim hatırlanır.
-- **Diğer:** üzerine gelince uçuş etiketi, tescil koduyla arama, dış kaynaklı metinlerin HTML kaçışı, uygulama penceresinde dış sayfaya gidilmesinin engellenmesi.
+Built with [Electron](https://www.electronjs.org) and [Leaflet](https://leafletjs.com).
