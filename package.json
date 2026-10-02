@@ -1,6 +1,6 @@
 {
   "name": "skytrack",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "description": "Flightradar tarzı masaüstü uçuş takip şablonu",
   "main": "main.js",
   "scripts": { "start": "electron .", "dist": "electron-builder" },
