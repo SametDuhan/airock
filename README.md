@@ -38,3 +38,4 @@ Not: Flightradar24'ün kendi verisi ticari API'dir; bu şablon açık ADS-B veri
 - **Demo:** uçaklar gerçek rotalarda uçar (kalkıştan varışa), varınca yeni rotaya çıkar.
 - **Canlı:** rota, çağrı koduna göre [adsbdb.com](https://www.adsbdb.com) API'sinden alınır (ücretsiz, anahtarsız). Veri tablo tabanlıdır; bazı uçuşlarda eksik/eski olabilir.
 - **Sol menü:** veri modu (Demo/Canlı), harita katmanları (Havalimanları, Uyarı bölgesi) ve filtreler tek menüde; ✕ ile kapatılır, ☰ ile açılır (durum hatırlanır). Sağ üstte yalnızca saat.
+- **Hızlı bölge yükleme (canlı):** harita kaydırılıp/zoom yapılınca 0,4 sn içinde yeni bölge istenir. Görünen alanın %25 genişi alındığından küçük hareketler yeni istek atmaz (OpenSky kredisi korunur); hızlı ardışık atlamalarda yalnızca son cevap kullanılır.

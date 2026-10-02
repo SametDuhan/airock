@@ -136,18 +136,25 @@ async function getFlights(b) {
     return { ok: true, flights: (j.states || []).filter(s => s[5] != null && s[6] != null && !s[8]).map(s => ({ id: s[0], cs: (s[1] || '').trim() || s[0], country: s[2], lon: s[5], lat: s[6], alt: s[7] || 0, spd: s[9] || 0, hdg: s[10] || 0, vr: s[11] || 0 })) };
   } catch (e) { return { ok: false, error: e.message }; }
 }
-async function poll() {
-  if (!live) return; const b = map.getBounds(); $('st').textContent = 'yükleniyor…';
-  const r = await getFlights({ s: b.getSouth().toFixed(2), n: b.getNorth().toFixed(2), w: b.getWest().toFixed(2), e: b.getEast().toFixed(2) });
-  if (!live) return; if (!r.ok) { $('st').textContent = 'hata: ' + r.error; return; }
+// Görünen alanın biraz genişini ister; harita bu alanın içinde kaldıkça kaydırma/zoom yeni istek atmaz (OpenSky kredisi korunur)
+let fetchedBox = null, fetchedAt = 0, reqId = 0, moveTimer = null;
+async function poll(force) {
+  if (!live) return; const v = map.getBounds();
+  if (!force && fetchedBox && fetchedBox.contains(v) && Date.now() - fetchedAt < 30000) return;
+  const b = v.pad(.25), id = ++reqId, cl = (x, m) => Math.max(-m, Math.min(m, x)).toFixed(2);
+  fetchedBox = b; fetchedAt = Date.now(); $('st').textContent = 'yükleniyor…';
+  const r = await getFlights({ s: cl(b.getSouth(), 90), n: cl(b.getNorth(), 90), w: cl(b.getWest(), 180), e: cl(b.getEast(), 180) });
+  if (!live || id !== reqId) return; // bu arada harita yine değiştiyse eski cevabı at
+  if (!r.ok) { fetchedBox = null; $('st').textContent = 'hata: ' + r.error; return; }
   const seen = new Set(r.flights.map(d => d.id));
   flights.forEach((f, id) => { if (!seen.has(id)) { f.marker.remove(); flights.delete(id); if (selected === id) select(null); } });
   r.flights.forEach(d => { const o = flights.get(d.id); if (o) d.tr = o.tr; upsert(d); }); $('st').textContent = 'son güncelleme · ' + new Date().toLocaleTimeString('tr-TR');
 }
-setInterval(poll, 30000);
+setInterval(() => poll(true), 30000);
+map.on('moveend', () => { clearTimeout(moveTimer); moveTimer = setTimeout(poll, 400); }); // zoom/kaydırma bitince hemen yeni bölgeyi iste
 function setMode(l) {
   live = l; ts = l ? 1 : 30; exitReplay(); $('mLive').classList.toggle('on', l); $('mDemo').classList.toggle('on', !l); clearAll();
-  if (l) poll(); else { seedDemo(); $('st').textContent = 'demo (30x hız)'; }
+  if (l) poll(true); else { seedDemo(); $('st').textContent = 'demo (30x hız)'; }
 }
 $('mDemo').onclick = () => setMode(false); $('mLive').onclick = () => setMode(true);
 
