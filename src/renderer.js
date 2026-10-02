@@ -46,12 +46,14 @@ const APO = AP.map(a => ({ code: a[0], name: a[1], lat: a[2], lon: a[3] }));
 const brg = (a, b, c, d) => { const r = Math.PI / 180, y = Math.sin((d - b) * r) * Math.cos(c * r), x = Math.cos(a * r) * Math.sin(c * r) - Math.sin(a * r) * Math.cos(c * r) * Math.cos((d - b) * r); return (Math.atan2(y, x) / r + 360) % 360; };
 const km = (a, b, c, d) => { const r = Math.PI / 180, x = Math.sin((c - a) * r / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin((d - b) * r / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
 const flights = new Map(), routeCache = new Map(), fav = new Set(LS('sky.fav', [])), hist = [], 
-flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false };
+flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false, dep: '', arr: '' };
 let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
 
 /* ---------- görünüm: irtifa rengi + filtre ---------- */
 const color = alt => `hsl(${Math.round(40 + Math.min(alt / 12000, 1) * 240)} 90% 58%)`;
-const vis = f => { const ft = f.alt * 3.281; return ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (!flt.fav || fav.has(f.id)); };
+const apIs = (a, c) => !!a && (a.code === c || a.icao === c);
+const vis = f => { const ft = f.alt * 3.281; return ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (!flt.fav || fav.has(f.id))
+  && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)); };
 function paint(f, hdg) {
   const el = f.marker.getElement(); if (!el) return;
   el.style.display = vis(f) && !f.gone ? '' : 'none';
@@ -87,7 +89,7 @@ async function getRoute(cs) {
     const r = await fetch(`https://api.adsbdb.com/v0/callsign/${encodeURIComponent(cs)}`);
     if (r.status === 404) return { ok: true, route: null };
     const fr = (await r.json()).response?.flightroute; if (!fr) return { ok: true, route: null };
-    const ap = a => ({ code: a.iata_code || a.icao_code, name: a.municipality || a.name, lat: a.latitude, lon: a.longitude });
+    const ap = a => ({ code: a.iata_code || a.icao_code, icao: a.icao_code, name: a.municipality || a.name, lat: a.latitude, lon: a.longitude });
     return { ok: true, route: { org: ap(fr.origin), dst: ap(fr.destination), airline: fr.airline?.name || '' } };
   } catch (e) { return { ok: false, error: e.message }; }
 }
@@ -95,7 +97,7 @@ async function loadRoute(f) {
   if (f.rs) return; f.rs = 'loading';
   let r = routeCache.get(f.cs);
   if (r === undefined) { const res = await getRoute(f.cs); if (!res.ok) { f.rs = 'err'; return showRoute(f); } r = res.route; routeCache.set(f.cs, r); }
-  f.route = r; f.rs = r ? 'ok' : 'none'; showRoute(f);
+  f.route = r; f.rs = r ? 'ok' : 'none'; if (r) { addAp(r.org); addAp(r.dst); } showRoute(f);
 }
 function showRoute(f) { if (f.id !== selected) return; drawRoute(f); renderCard(true); }
 function drawRoute(f) {
@@ -152,9 +154,10 @@ async function poll(force) {
   const seen = new Set(r.flights.map(d => d.id));
   flights.forEach((f, id) => { if (!seen.has(id)) { f.marker.remove(); flights.delete(id); if (selected === id) select(null); } });
   r.flights.forEach(d => { const o = flights.get(d.id); if (o) d.tr = o.tr; upsert(d); }); $('st').textContent = 'son güncelleme · ' + new Date().toLocaleTimeString('tr-TR');
+  pumpRoutes();
 }
 setInterval(() => poll(true), 30000);
-map.on('moveend', () => { clearTimeout(moveTimer); moveTimer = setTimeout(poll, 400); }); // zoom/kaydırma bitince hemen yeni bölgeyi iste
+map.on('moveend', () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => { poll(); pumpRoutes(); }, 400); }); // zoom/kaydırma bitince hemen yeni bölgeyi iste
 function setMode(l) {
   live = l; ts = l ? 1 : 30; exitReplay(); $('mLive').classList.toggle('on', l); $('mDemo').classList.toggle('on', !l); clearAll();
   if (l) poll(true); else { seedDemo(); $('st').textContent = 'demo (30x hız)'; }
@@ -212,6 +215,10 @@ function renderList() {
   const q = $('q').value.trim().toLowerCase();
   const arr = [...flights.values()].filter(f => vis(f) && f.cs.toLowerCase().includes(q)).sort((a, b) => a.cs.localeCompare(b.cs)).slice(0, 200);
   $('meta').textContent = `${arr.length} / ${flights.size} UÇUŞ`;
+  let st = '';
+  if (live && (flt.dep || flt.arr)) { const v = map.getBounds(), inV = [...flights.values()].filter(f => v.contains([f.lat, f.lon]));
+    const done = inV.filter(f => f.rs && f.rs !== 'loading').length; if (done < inV.length) st = `rota bilgisi yükleniyor · ${done} / ${inV.length} uçak`; }
+  $('apSt').textContent = st;
   $('list').innerHTML = arr.map(f => `<div class="row ${f.id === selected ? 'on' : ''}" data-id="${f.id}"><b>${fav.has(f.id) ? '★ ' : ''}${f.cs}</b><span>${f.route ? f.route.org.code + '→' + f.route.dst.code + ' · ' : ''}${Math.round(f.alt * 3.281 / 100) * 100} ft</span></div>`).join('');
 }
 $('list').onpointerdown = e => { const r = e.target.closest('.row'); if (r) select(r.dataset.id); };
@@ -220,13 +227,39 @@ const applyF = e => {
   // tek çubukta iki tutamaç: sol = en az, sağ = en çok irtifa; birbirinin üstünden geçemezler
   const a = $('fA'), m = $('fM');
   if (+a.value > +m.value) { if (e && e.target === m) m.value = a.value; else a.value = m.value; }
-  flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.fav = $('fF').checked;
+  flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.fav = $('fF').checked; flt.dep = apCode($('fDep').value); flt.arr = apCode($('fArr').value);
+  $('fDep').classList.toggle('set', !!flt.dep); $('fArr').classList.toggle('set', !!flt.arr); pumpRoutes();
   a.style.zIndex = flt.alt > 22500 ? 3 : 1; // üst üste gelince sağ uçta da "en az" tutulabilsin
   $('dr').style.setProperty('--a', flt.alt / 450 + '%'); $('dr').style.setProperty('--b', flt.maxAlt / 450 + '%');
   $('vA').textContent = flt.alt.toLocaleString('tr-TR'); $('vM').textContent = flt.maxAlt >= 45000 ? '45.000+' : flt.maxAlt.toLocaleString('tr-TR'); $('vS').textContent = flt.spd;
   flights.forEach(f => paint(f)); renderList();
 };
-['fA', 'fM', 'fS', 'fF'].forEach(i => $(i).oninput = applyF);
+['fA', 'fM', 'fS', 'fF', 'fDep', 'fArr'].forEach(i => $(i).oninput = applyF);
+$('fSw').onclick = () => { const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; applyF(); };
+
+/* ---------- havalimanı filtresi (kalkış / varış) ---------- */
+// Bilinen havalimanları (öneri listesi): sabit liste + canlı modda öğrenilen rota havalimanları
+const knownAps = new Map();
+function addAp(a) { if (!a || !a.code || knownAps.has(a.code)) return; knownAps.set(a.code, a);
+  const o = document.createElement('option'); o.value = a.code; o.label = a.name; $('apList').appendChild(o); }
+APO.forEach(addAp);
+// "IST", "ltfm" veya "istanbul" → havalimanı kodu
+function apCode(v) {
+  const u = v.trim().toLocaleUpperCase('tr'); if (!u) return '';
+  if (knownAps.has(u)) return u;
+  for (const a of knownAps.values()) if (a.icao === u || (u.length > 2 && a.name.toLocaleUpperCase('tr').includes(u))) return a.code;
+  return u;
+}
+// Canlı modda rota bilgisi yalnızca uçağa tıklanınca gelir; filtre açıkken ekrandaki uçakların rotalarını arka planda (aynı anda en fazla 3) yükle
+let routeJobs = 0;
+function pumpRoutes() {
+  if (!live || (!flt.dep && !flt.arr)) return; const v = map.getBounds();
+  for (const f of flights.values()) {
+    if (routeJobs >= 3) return;
+    if (f.rs || !v.contains([f.lat, f.lon])) continue;
+    routeJobs++; loadRoute(f).finally(() => { routeJobs--; paint(f); pumpRoutes(); });
+  }
+}
 
 /* ---------- açılır/kapanır menü + saat ---------- */
 const setMenu = open => { $('side').classList.toggle('hide', !open); document.body.classList.toggle('closed', !open); save('sky.menu', open); };

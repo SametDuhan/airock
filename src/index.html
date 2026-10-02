@@ -41,6 +41,9 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 .dr input::-webkit-slider-runnable-track{height:20px;background:none}
 .dr input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:16px;height:16px;margin-top:2px;border-radius:50%;background:var(--ac);border:2px solid #111;cursor:grab}
 .dr input::-moz-range-track{background:none}.dr input::-moz-range-thumb{pointer-events:auto;width:12px;height:12px;border-radius:50%;background:var(--ac);border:2px solid #111;cursor:grab}
+.apr{display:flex;gap:6px;align-items:center;margin:6px 0 4px}.apr .ib{flex:none;width:28px;height:30px}
+.apr input{flex:1;min-width:0;padding:7px 8px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0;font:600 12px ui-monospace,monospace;text-transform:uppercase}
+.apr input::placeholder{text-transform:none;font-weight:400}.apr input:focus{border-color:var(--ac)}.apr input.set{border-color:var(--ac);color:var(--ac)}
 .dr .rmin,.dr .rmax{position:absolute;top:19px;font-size:10px}.dr .rmax{right:0}
 .flt label{display:block;margin:6px 0}.flt b{color:var(--fg)}.flt input[type=range]{width:100%;accent-color:var(--ac)}.flt .ck{display:flex;gap:6px;align-items:center;cursor:pointer}
 #card button{margin-top:12px;width:100%;background:transparent;color:var(--ac);border:1px solid var(--ac);border-radius:3px;padding:7px;cursor:pointer}#card button:hover{background:var(--ac);color:#111}
@@ -63,6 +66,9 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 <div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">en az</span><span class="rmax">en çok</span></div>
 <div style="height:8px"></div>
 <label>Min hız <b id="vS">0</b> kt<input id="fS" type="range" min="0" max="600" step="25" value="0"></label>
+<div>Havalimanı</div>
+<div class="apr"><input id="fDep" list="apList" placeholder="Kalkış" autocomplete="off"><button id="fSw" class="ib" title="Kalkış ↔ varış">⇄</button><input id="fArr" list="apList" placeholder="Varış" autocomplete="off"></div>
+<div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
 <label class="ck"><input id="fF" type="checkbox"> Sadece favoriler ★</label></div>
 <input id="q" placeholder="Çağrı kodu ara…"><div id="meta"></div><div id="list"></div></aside>
 <main><div id="map"></div>
