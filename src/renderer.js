@@ -1,17 +1,15 @@
 const $ = id => document.getElementById(id);
-const map = L.map('map', { zoomControl: false, worldCopyJump: true , minZoom:5 }).setView([41, 29], 6);
+const LS = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+const map = L.map('map', { zoomControl: false, worldCopyJump: true, minZoom:5 }).setView([41, 29], 6);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
   attribution: "&copy; OpenStreetMap contributors"
-}).addTo(map);, { attribution: '© OpenStreetMap © CARTO', maxZoom: 12 }).addTo(map);
+}).addTo(map); 
 const trail = L.polyline([], { color: '#f2c230', weight: 2, opacity: .8 }).addTo(map);
+const routeLine = L.polyline([], { color: '#f2c230', weight: 1.5, opacity: .7, dashArray: '5 7', interactive: false }).addTo(map), routeEnds = L.layerGroup().addTo(map);
 const PLANE = '<svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>';
-
-const flights = new Map();      // id -> uçuş verisi + marker
-let selected = null, live = false, timeScale = 30;   // demo modunda zaman 30x hızlı akar
-
-/* ---------- DEMO VERİSİ ---------- */
 const AP = [
   // Türkiye
   ['IST','İstanbul',41.26,28.74],['SAW','Sabiha Gökçen',40.90,29.31],['ESB','Ankara Esenboğa',40.13,32.99],
@@ -40,95 +38,180 @@ const AP = [
   ['HND','Tokyo Haneda',35.55,139.78],['SIN','Singapur',1.36,103.99],['DEL','Delhi',28.56,77.10],
   ['BOM','Mumbai',19.09,72.87],['BKK','Bangkok',13.69,100.75]
 ];
-function seedDemo() {
-  clearAll();
-  for (let i = 0; i < 45; i++) {
-    const a = AIRPORTS[i % AIRPORTS.length], id = 'd' + i;
-    upsert({ id, cs: AIRLINES[i % 10] + (100 + Math.floor(Math.random() * 900)), country: 'Demo',
-      lat: a[0] + (Math.random() - .5) * 10, lon: a[1] + (Math.random() - .5) * 16,
-      alt: 6000 + Math.random() * 5500, spd: 190 + Math.random() * 70, hdg: Math.random() * 360, vr: 0 });
-  }
+const AIRLINES = ['THY','PGT','AJA','KLM','DLH','BAW','UAE','AZA','SXS','WZZ'], ZONE_R = 100; // km
+const APO = AP.map(a => ({ code: a[0], name: a[1], lat: a[2], lon: a[3] }));
+const brg = (a, b, c, d) => { const r = Math.PI / 180, y = Math.sin((d - b) * r) * Math.cos(c * r), x = Math.cos(a * r) * Math.sin(c * r) - Math.sin(a * r) * Math.cos(c * r) * Math.cos((d - b) * r); return (Math.atan2(y, x) / r + 360) % 360; };
+const km = (a, b, c, d) => { const r = Math.PI / 180, x = Math.sin((c - a) * r / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin((d - b) * r / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
+const flights = new Map(), routeCache = new Map(), fav = new Set(LS('sky.fav', [])), hist = [], 
+flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false };
+let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
+
+/* ---------- görünüm: irtifa rengi + filtre ---------- */
+const color = alt => `hsl(${Math.round(40 + Math.min(alt / 12000, 1) * 240)} 90% 58%)`;
+const vis = f => { const ft = f.alt * 3.281; return ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (!flt.fav || fav.has(f.id)); };
+function paint(f, hdg) {
+  const el = f.marker.getElement(); if (!el) return;
+  el.style.display = vis(f) && !f.gone ? '' : 'none';
+  const i = el.firstChild; i.style.transform = `rotate(${hdg ?? f.hdg}deg)`; i.style.setProperty('--c', color(f.alt));
+}
+function toast(msg) {
+  const d = document.createElement('div'); d.className = 'tm'; d.textContent = msg; $('toast').appendChild(d); setTimeout(() => d.remove(), 4000);
+  try { new Notification('SkyTrack', { body: msg }); } catch {}
 }
 
-/* ---------- UÇUŞ YÖNETİMİ ---------- */
+/* ---------- uçuş verisi ---------- */
+// Demo uçuşlar gerçek bir rotada uçar: kalkış havalimanından varışa gider, varınca yeni bir rotaya çıkar
+const pickDst = o => { let d; do d = APO[Math.floor(Math.random() * APO.length)]; while (d === o || km(o.lat, o.lon, d.lat, d.lon) < 300); return d; };
+function seedDemo() {
+  for (let i = 0; i < 45; i++) { const o = APO[i % APO.length], d = pickDst(o), t = .05 + Math.random() * .85;
+    const lat = o.lat + (d.lat - o.lat) * t, lon = o.lon + (d.lon - o.lon) * t;
+    upsert({ id: 'd' + i, cs: AIRLINES[i % 10] + (100 + Math.floor(Math.random() * 900)), country: 'Demo', lat, lon,
+      alt: 6000 + Math.random() * 5500, spd: 190 + Math.random() * 70, hdg: brg(lat, lon, d.lat, d.lon), vr: 0, route: { org: o, dst: d }, rs: 'ok' }); }
+}
 function upsert(d) {
   let f = flights.get(d.id);
-  if (!f) {
-    f = { tr: [] };
+  if (!f) { f = { tr: [] };
     f.marker = L.marker([d.lat, d.lon], { icon: L.divIcon({ className: 'pl', html: '<div class="pi">' + PLANE + '</div>', iconSize: [26, 26] }) }).addTo(map);
-    f.marker.on('click', () => select(d.id));
-    flights.set(d.id, f);
-  }
-  Object.assign(f, d, { id: d.id });
-  f.marker.setLatLng([f.lat, f.lon]);
-  const el = f.marker.getElement(); if (el) el.firstChild.style.transform = `rotate(${f.hdg}deg)`;
-  return f;
+    f.marker.on('click', e => { L.DomEvent.stopPropagation(e); select(d.id); }); flights.set(d.id, f); }
+  Object.assign(f, d); f.marker.setLatLng([f.lat, f.lon]); paint(f); return f;
 }
-function clearAll() { flights.forEach(f => f.marker.remove()); flights.clear(); select(null); }
+function clearAll() { flights.forEach(f => f.marker.remove()); flights.clear(); hist.length = 0; select(null); }
 
-// her saniye: konumu hız ve yöne göre ilerlet (dead reckoning)
+/* ---------- rota (nereden → nereye) ---------- */
+async function getRoute(cs) {
+  if (window.api) return window.api.route(cs);
+  try {
+    const r = await fetch(`https://api.adsbdb.com/v0/callsign/${encodeURIComponent(cs)}`);
+    if (r.status === 404) return { ok: true, route: null };
+    const fr = (await r.json()).response?.flightroute; if (!fr) return { ok: true, route: null };
+    const ap = a => ({ code: a.iata_code || a.icao_code, name: a.municipality || a.name, lat: a.latitude, lon: a.longitude });
+    return { ok: true, route: { org: ap(fr.origin), dst: ap(fr.destination), airline: fr.airline?.name || '' } };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+async function loadRoute(f) {
+  if (f.rs) return; f.rs = 'loading';
+  let r = routeCache.get(f.cs);
+  if (r === undefined) { const res = await getRoute(f.cs); if (!res.ok) { f.rs = 'err'; return showRoute(f); } r = res.route; routeCache.set(f.cs, r); }
+  f.route = r; f.rs = r ? 'ok' : 'none'; showRoute(f);
+}
+function showRoute(f) { if (f.id !== selected) return; drawRoute(f); renderCard(true); }
+function drawRoute(f) {
+  routeEnds.clearLayers();
+  if (!f || !f.route) return routeLine.setLatLngs([]);
+  const { org, dst } = f.route;
+  routeLine.setLatLngs([[org.lat, org.lon], [f.lat, f.lon], [dst.lat, dst.lon]]);
+  [org, dst].forEach(a => L.circleMarker([a.lat, a.lon], { radius: 6, color: '#f2c230', weight: 2, fillColor: '#141414', fillOpacity: 1, interactive: false })
+    .bindTooltip(a.code, { permanent: true, direction: 'top', offset: [0, -6], className: 'apl' }).addTo(routeEnds));
+}
+function nearest(f) { let b = null, m = 1e9; AP.forEach(a => { const d = km(f.lat, f.lon, a[2], a[3]); if (d < m) { m = d; b = a; } }); return `${b[0]} · ${Math.round(m)} km`; }
+
+/* ---------- ana döngü (1 sn) ---------- */
 setInterval(() => {
+  if (replay) return;
+  tick++;
   flights.forEach(f => {
-    const dist = f.spd * timeScale, h = f.hdg * Math.PI / 180;
-    f.lat += Math.cos(h) * dist / 111320;
-    f.lon += Math.sin(h) * dist / (111320 * Math.cos(f.lat * Math.PI / 180));
-    if (!live && (f.lat > 60 || f.lat < 20 || f.lon > 60 || f.lon < -10)) f.hdg = (f.hdg + 180) % 360;
-    f.marker.setLatLng([f.lat, f.lon]);
-    const el = f.marker.getElement(); if (el) el.firstChild.style.transform = `rotate(${f.hdg}deg)`;
-    if (f.id === selected) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 80) f.tr.shift(); trail.setLatLngs(f.tr); }
+    if (!live && f.route) { const d = f.route.dst;
+      if (km(f.lat, f.lon, d.lat, d.lon) < 15) { f.route = { org: d, dst: pickDst(d) }; if (f.id === selected) { f.tr = []; drawRoute(f); renderCard(true); } }
+      f.hdg = brg(f.lat, f.lon, f.route.dst.lat, f.route.dst.lon); }
+    const dist = f.spd * ts, h = f.hdg * Math.PI / 180;
+    f.lat += Math.cos(h) * dist / 111320; f.lon += Math.sin(h) * dist / (111320 * Math.cos(f.lat * Math.PI / 180));
+    if (!live && !f.route && (f.lat > 60 || f.lat < 20 || f.lon > 60 || f.lon < -10)) f.hdg = (f.hdg + 180) % 360;
+    f.marker.setLatLng([f.lat, f.lon]); paint(f);
+    if (zone) { const inn = km(f.lat, f.lon, zone.lat, zone.lon) < ZONE_R; if (inn && f.in === false) toast(`${f.cs} uyarı bölgesine girdi`); f.in = inn; }
+    if (f.id === selected) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 80) f.tr.shift(); trail.setLatLngs(f.tr); if (f.route) routeLine.setLatLngs([[f.route.org.lat, f.route.org.lon], [f.lat, f.lon], [f.route.dst.lat, f.route.dst.lon]]); }
   });
+  if (tick % 5 === 0) { // geçmiş kaydı: 5 sn'de bir, en fazla 720 kare
+    hist.push({ t: Date.now(), d: [...flights.values()].map(f => [f.id, f.lat, f.lon, f.hdg]) }); if (hist.length > 720) hist.shift();
+    $('rpS').max = hist.length - 1; $('rpS').value = hist.length - 1;
+  }
   if (selected) renderCard();
 }, 1000);
 
-/* ---------- CANLI VERİ (OpenSky) ---------- */
+/* ---------- canlı veri ---------- */
+// Masaüstü uygulamada main.js üzerinden, tarayıcıda doğrudan OpenSky'a istek atar
+async function getFlights(b) {
+  if (window.api) return window.api.flights(b);
+  try {
+    const j = await (await fetch(`https://opensky-network.org/api/states/all?lamin=${b.s}&lomin=${b.w}&lamax=${b.n}&lomax=${b.e}`)).json();
+    return { ok: true, flights: (j.states || []).filter(s => s[5] != null && s[6] != null && !s[8]).map(s => ({ id: s[0], cs: (s[1] || '').trim() || s[0], country: s[2], lon: s[5], lat: s[6], alt: s[7] || 0, spd: s[9] || 0, hdg: s[10] || 0, vr: s[11] || 0 })) };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
 async function poll() {
-  if (!live) return;
-  const b = map.getBounds();
-  $('st').textContent = 'yükleniyor…';
-  const r = await window.api.flights({ s: b.getSouth().toFixed(2), n: b.getNorth().toFixed(2), w: b.getWest().toFixed(2), e: b.getEast().toFixed(2) });
-  if (!live) return;
-  if (!r.ok) { $('st').textContent = 'hata: ' + r.error; return; }
+  if (!live) return; const b = map.getBounds(); $('st').textContent = 'yükleniyor…';
+  const r = await getFlights({ s: b.getSouth().toFixed(2), n: b.getNorth().toFixed(2), w: b.getWest().toFixed(2), e: b.getEast().toFixed(2) });
+  if (!live) return; if (!r.ok) { $('st').textContent = 'hata: ' + r.error; return; }
   const seen = new Set(r.flights.map(d => d.id));
   flights.forEach((f, id) => { if (!seen.has(id)) { f.marker.remove(); flights.delete(id); if (selected === id) select(null); } });
-  r.flights.forEach(d => { const old = flights.get(d.id); if (old) d.tr = old.tr; upsert(d); });
-  $('st').textContent = 'canlı · ' + new Date().toLocaleTimeString('tr-TR');
+  r.flights.forEach(d => { const o = flights.get(d.id); if (o) d.tr = o.tr; upsert(d); }); $('st').textContent = 'canlı · ' + new Date().toLocaleTimeString('tr-TR');
 }
-setInterval(poll, 30000);   // anonim kullanımda günlük kredi sınırı var, README'ye bak
-
+setInterval(poll, 30000);
 function setMode(l) {
-  live = l; timeScale = l ? 1 : 30;
-  $('mLive').classList.toggle('on', l); $('mDemo').classList.toggle('on', !l);
-  clearAll();
+  live = l; ts = l ? 1 : 30; exitReplay(); $('mLive').classList.toggle('on', l); $('mDemo').classList.toggle('on', !l); clearAll();
   if (l) poll(); else { seedDemo(); $('st').textContent = 'demo (30x hız)'; }
 }
-$('mDemo').onclick = () => setMode(false);
-$('mLive').onclick = () => setMode(true);
+$('mDemo').onclick = () => setMode(false); $('mLive').onclick = () => setMode(true);
 
-/* ---------- SEÇİM / PANEL / LİSTE ---------- */
+/* ---------- havalimanları ---------- */
+const apLayer = L.layerGroup().addTo(map);
+AP.forEach(a => L.circleMarker([a[2], a[3]], { radius: 4, color: '#000', weight: 1, fillColor: '#f2c230', fillOpacity: 1 }).bindTooltip(`${a[0]} · ${a[1]}`)
+  .on('click', e => { L.DomEvent.stopPropagation(e); toast(`${a[0]}: ${[...flights.values()].filter(f => km(f.lat, f.lon, a[2], a[3]) < 100).length} uçak 100 km içinde`); }).addTo(apLayer));
+$('bAp').onclick = function () { const on = !map.hasLayer(apLayer); on ? apLayer.addTo(map) : apLayer.remove(); this.classList.toggle('on', on); };
+
+/* ---------- uyarı bölgesi ---------- */
+function drawZone() { zoneLayer && zoneLayer.remove(); zoneLayer = null; $('bZ').classList.toggle('on', !!zone);
+  if (zone) zoneLayer = L.circle([zone.lat, zone.lon], { radius: ZONE_R * 1000, color: '#ff6b5e', weight: 2, dashArray: '6 6', fillOpacity: .07, interactive: false }).addTo(map); }
+$('bZ').onclick = () => { if (zone) { zone = null; save('sky.zone', null); drawZone(); } else { placing = true; toast('Bölge merkezi için haritaya tıkla'); } };
+drawZone();
+
+/* ---------- geçmişi oynat ---------- */
+function exitReplay() { if (!replay) return; replay = false; $('rpLive').classList.add('on'); $('rpT').textContent = 'geçmiş kaydı';
+  flights.forEach(f => { f.gone = false; f.marker.setLatLng([f.lat, f.lon]); paint(f); }); drawRoute(flights.get(selected)); }
+$('rpS').oninput = function () { const s = hist[+this.value]; if (!s) return; replay = true; $('rpLive').classList.remove('on');
+  const m = new Map(s.d.map(x => [x[0], x])); trail.setLatLngs([]); drawRoute(null);
+  flights.forEach(f => { const x = m.get(f.id); f.gone = !x; if (x) f.marker.setLatLng([x[1], x[2]]); paint(f, x && x[3]); });
+  $('rpT').textContent = new Date(s.t).toLocaleTimeString('tr-TR'); };
+$('rpLive').onclick = exitReplay;
+
+/* ---------- seçim, favori, panel, liste ---------- */
 function select(id) {
   flights.forEach(f => f.marker.getElement() && f.marker.getElement().classList.toggle('sel', f.id === id));
-  selected = id; trail.setLatLngs([]);
-  const f = flights.get(id);
-  if (f) { f.tr = [[f.lat, f.lon]]; map.panTo([f.lat, f.lon], { animate: true }); }
-  $('card').classList.toggle('show', !!f); renderCard(); renderList();
+  selected = id; trail.setLatLngs([]); const f = flights.get(id);
+  if (f) { f.tr = [[f.lat, f.lon]]; map.panTo([f.lat, f.lon]); }
+  drawRoute(f); if (f && live) loadRoute(f);
+  $('card').classList.toggle('show', !!f); if (f) renderCard(true); renderList();
 }
-function renderCard() {
+function renderCard(full) {
   const f = flights.get(selected); if (!f) return;
-  $('card').innerHTML = `<h2>${f.cs}</h2><small>${f.country}</small><div style="height:10px"></div>
-   <div class="kv"><span>İrtifa</span><b>${Math.round(f.alt * 3.281).toLocaleString('tr-TR')} ft</b></div>
-   <div class="kv"><span>Hız</span><b>${Math.round(f.spd * 1.944)} kt</b></div>
-   <div class="kv"><span>Yön</span><b>${Math.round(f.hdg)}°</b></div>
-   <div class="kv"><span>Dikey hız</span><b>${Math.round(f.vr * 196.85)} ft/dk</b></div>
-   <div class="kv"><span>Konum</span><b>${f.lat.toFixed(2)}, ${f.lon.toFixed(2)}</b></div>`;
+  if (full) $('card').innerHTML = `<h2>${f.cs}</h2><small>${f.route?.airline || f.country}</small>${routeHtml(f)}<div id="kvs"></div><button id="fv"></button>`;
+  if (f.route) { const { org, dst } = f.route, a = km(org.lat, org.lon, f.lat, f.lon), b = km(f.lat, f.lon, dst.lat, dst.lon);
+    $('pgb').style.width = Math.min(100, a / (a + b) * 100).toFixed(1) + '%';
+    $('pgt').textContent = `${Math.round(a)} km uçtu · ${Math.round(b)} km kaldı${f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) : ''}`; }
+  $('kvs').innerHTML = [['İrtifa', Math.round(f.alt * 3.281).toLocaleString('tr-TR') + ' ft'], ['Hız', Math.round(f.spd * 1.944) + ' kt'], ['Yön', Math.round(f.hdg) + '°'],
+    ['Dikey hız', Math.round(f.vr * 196.85) + ' ft/dk'], ['En yakın havalimanı', nearest(f)], ['Konum', f.lat.toFixed(2) + ', ' + f.lon.toFixed(2)]].map(r => `<div class="kv"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('');
+  $('fv').textContent = fav.has(f.id) ? '★ Favoride' : '☆ Favorile';
 }
+const eta = h => h < 1 ? Math.round(h * 60) + ' dk' : Math.floor(h) + ' sa ' + Math.round(h % 1 * 60) + ' dk';
+function routeHtml(f) {
+  if (!f.route) return `<div class="rtx" style="margin-top:12px">${{ loading: 'Rota bilgisi yükleniyor…', none: 'Rota bilgisi bulunamadı', err: 'Rota bilgisi alınamadı' }[f.rs] || ''}</div>`;
+  const { org, dst } = f.route, esc = t => String(t).replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`);
+  return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(org.name)}</small></div><span>✈</span>`
+    + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(dst.name)}</small></div></div><div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
+}
+$('card').onclick = e => { if (e.target.id !== 'fv') return; fav.has(selected) ? fav.delete(selected) : fav.add(selected); save('sky.fav', [...fav]); renderCard(); renderList(); flights.forEach(f => paint(f)); };
 function renderList() {
   const q = $('q').value.trim().toLowerCase();
-  const arr = [...flights.values()].filter(f => f.cs.toLowerCase().includes(q)).sort((a, b) => a.cs.localeCompare(b.cs)).slice(0, 200);
+  const arr = [...flights.values()].filter(f => vis(f) && f.cs.toLowerCase().includes(q)).sort((a, b) => a.cs.localeCompare(b.cs)).slice(0, 200);
   $('meta').textContent = `${arr.length} / ${flights.size} UÇUŞ`;
-  $('list').innerHTML = arr.map(f => `<div class="row ${f.id === selected ? 'on' : ''}" data-id="${f.id}"><b>${f.cs}</b><span>${Math.round(f.alt * 3.281 / 100) * 100} ft</span></div>`).join('');
+  $('list').innerHTML = arr.map(f => `<div class="row ${f.id === selected ? 'on' : ''}" data-id="${f.id}"><b>${fav.has(f.id) ? '★ ' : ''}${f.cs}</b><span>${f.route ? f.route.org.code + '→' + f.route.dst.code + ' · ' : ''}${Math.round(f.alt * 3.281 / 100) * 100} ft</span></div>`).join('');
 }
-$('list').onclick = e => { const r = e.target.closest('.row'); if (r) select(r.dataset.id); };
-$('q').oninput = renderList;
-setInterval(renderList, 2000);
-map.on('click', () => select(null));
+$('list').onpointerdown = e => { const r = e.target.closest('.row'); if (r) select(r.dataset.id); };
+$('q').oninput = renderList; setInterval(renderList, 2000);
+const applyF = () => {
+  flt.alt = +$('fA').value; flt.maxAlt = +$('fM').value; flt.spd = +$('fS').value; flt.fav = $('fF').checked;
+  if (flt.alt > flt.maxAlt) { flt.maxAlt = flt.alt; $('fM').value = flt.maxAlt; } // min, max'ı geçmesin
+  $('vA').textContent = flt.alt; $('vM').textContent = flt.maxAlt >= 45000 ? '45000+' : flt.maxAlt; $('vS').textContent = flt.spd;
+  flights.forEach(f => paint(f)); renderList();
+};
+['fA', 'fM', 'fS', 'fF'].forEach(i => $(i).oninput = applyF);
+map.on('click', e => { if (placing) { placing = false; zone = { lat: e.latlng.lat, lon: e.latlng.lng }; save('sky.zone', zone); flights.forEach(f => delete f.in); drawZone(); toast('Uyarı bölgesi ayarlandı (100 km)'); } else select(null); });
 setMode(false);

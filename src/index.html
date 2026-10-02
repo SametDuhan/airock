@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="tr"><head><meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://opensky-network.org https://api.adsbdb.com">
 <title>SkyTrack</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <style>
 :root{--bg:#141414;--pn:#1c1c1c;--ac:#f2c230;--fg:#f0e6d2;--mut:#8d877c;--line:#ffffff14}
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden}
@@ -24,14 +25,31 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 #card{position:absolute;right:12px;top:64px;width:260px;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px;transform:translateX(300px);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
 #card.show{transform:none}#card h2{margin:0 0 2px;font:400 28px Georgia,serif}#card small{color:var(--mut)}
 .kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}.kv span{color:var(--mut)}
-.pl{background:none;border:0}.pi{width:26px;height:26px;transition:transform .3s}.pi svg{width:100%;height:100%;fill:#f2c230;stroke:#000;stroke-width:.6;filter:drop-shadow(0 0 3px #0008)}
+.pl{background:none;border:0}.pi{width:26px;height:26px;transition:transform .3s}.pi svg{width:100%;height:100%;fill:var(--c,#f2c230);stroke:#000;stroke-width:.6;filter:drop-shadow(0 0 3px #0008)}
 .pl.sel .pi svg{fill:#fff;filter:drop-shadow(0 0 8px var(--ac))}
 .leaflet-container{background:#0e0e0e}
+.flt{padding:4px 16px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mut)}
+.flt label{display:block;margin:6px 0}.flt b{color:var(--fg)}.flt input[type=range]{width:100%;accent-color:var(--ac)}.flt .ck{display:flex;gap:6px;align-items:center;cursor:pointer}
+#card button{margin-top:12px;width:100%;background:transparent;color:var(--ac);border:1px solid var(--ac);border-radius:3px;padding:7px;cursor:pointer}#card button:hover{background:var(--ac);color:#111}
+#rp{position:absolute;left:14px;right:80px;bottom:14px;z-index:1000;display:flex;gap:12px;align-items:center;background:var(--pn);border:1px solid var(--line);border-radius:4px;padding:8px 12px}
+#rp button{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:5px 10px;cursor:pointer}#rp button.on{color:#111;background:var(--ac);border-color:var(--ac)}
+#rp input{flex:1;accent-color:var(--ac)}#rpT{font:11px ui-monospace,monospace;color:var(--mut);min-width:90px;text-align:right}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:1100;display:flex;flex-direction:column;gap:8px;align-items:center}
+.tm{background:var(--ac);color:#111;padding:9px 16px;border-radius:3px;font-weight:600;animation:tin .4s cubic-bezier(.2,.7,.2,1),tout .4s 3.6s forwards}
+@keyframes tin{from{opacity:0;transform:translateY(-16px)}}@keyframes tout{to{opacity:0}}
+.rt{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 6px}.rt div{min-width:0}.rt div:last-child{text-align:right}
+.rt b{display:block;font:700 20px ui-monospace,monospace;color:var(--ac)}.rt small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:95px}.rt>span{color:var(--mut)}
+.pg{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:4px}.pg i{display:block;height:100%;background:var(--ac);transition:width .8s}
+.rtx{font-size:11px;color:var(--mut);margin-bottom:6px}.leaflet-tooltip.apl{border:0;font:700 11px ui-monospace,monospace;color:#111;background:var(--ac);padding:1px 4px;border-radius:2px;box-shadow:none}.leaflet-tooltip.apl::before{display:none}
 </style></head>
 <body><div id="app">
-<aside><div class="brand">SKYTRACK</div><input id="q" placeholder="Çağrı kodu ara…"><div id="meta"></div><div id="list"></div></aside>
+<aside><div class="brand">SKYTRACK</div><input id="q" placeholder="Çağrı kodu ara…"><div id="meta"></div>
+<div class="flt"><label>Min irtifa <b id="vA">0</b> ft<input id="fA" type="range" min="0" max="45000" step="1000" value="0"></label>
+<label>Max irtifa <b id="vM">45000</b> ft<input id="fM" type="range" min="0" max="45000" step="1000" value="45000"></label>
+<label>Min hız <b id="vS">0</b> kt<input id="fS" type="range" min="0" max="600" step="25" value="0"></label>
+<label class="ck"><input id="fF" type="checkbox"> Sadece favoriler ★</label></div><div id="list"></div></aside>
 <main><div id="map"></div>
-<div class="bar"><span id="st"></span><button id="mDemo" class="on">Demo</button><button id="mLive">Canlı</button></div>
-<div id="card"></div></main></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="renderer.js"></script>
+<div class="bar"><span id="st"></span><button id="mDemo" class="on">Demo</button><button id="mLive">Canlı</button><button id="bAp" class="on">Havalimanları</button><button id="bZ">Uyarı bölgesi</button></div>
+<div id="card"></div><div id="toast"></div>
+<div id="rp"><button id="rpLive" class="on">● Canlı</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">geçmiş kaydı</span></div></main></div>
+<script src="loader.js"></script></body></html>

@@ -26,6 +26,19 @@ ipcMain.handle('flights', async (_, b) => {
   } catch (e) { return { ok: false, error: e.message }; }
 });
 
+// Uçuş rotası (kalkış → varış): adsbdb.com (ücretsiz, anahtarsız), çağrı koduna göre
+ipcMain.handle('route', async (_, cs) => {
+  try {
+    const r = await fetch(`https://api.adsbdb.com/v0/callsign/${encodeURIComponent(cs)}`, { signal: AbortSignal.timeout(10000) });
+    if (r.status === 404) return { ok: true, route: null };
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const fr = (await r.json()).response?.flightroute;
+    if (!fr) return { ok: true, route: null };
+    const ap = a => ({ code: a.iata_code || a.icao_code, name: a.municipality || a.name, lat: a.latitude, lon: a.longitude });
+    return { ok: true, route: { org: ap(fr.origin), dst: ap(fr.destination), airline: fr.airline?.name || '' } };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+
 app.whenReady().then(() => {
   createWindow();
   app.on('activate', () => BrowserWindow.getAllWindows().length || createWindow());
