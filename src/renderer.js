@@ -142,7 +142,7 @@ async function poll() {
   if (!live) return; if (!r.ok) { $('st').textContent = 'hata: ' + r.error; return; }
   const seen = new Set(r.flights.map(d => d.id));
   flights.forEach((f, id) => { if (!seen.has(id)) { f.marker.remove(); flights.delete(id); if (selected === id) select(null); } });
-  r.flights.forEach(d => { const o = flights.get(d.id); if (o) d.tr = o.tr; upsert(d); }); $('st').textContent = 'canlı · ' + new Date().toLocaleTimeString('tr-TR');
+  r.flights.forEach(d => { const o = flights.get(d.id); if (o) d.tr = o.tr; upsert(d); }); $('st').textContent = 'son güncelleme · ' + new Date().toLocaleTimeString('tr-TR');
 }
 setInterval(poll, 30000);
 function setMode(l) {
@@ -206,12 +206,23 @@ function renderList() {
 }
 $('list').onpointerdown = e => { const r = e.target.closest('.row'); if (r) select(r.dataset.id); };
 $('q').oninput = renderList; setInterval(renderList, 2000);
-const applyF = () => {
-  flt.alt = +$('fA').value; flt.maxAlt = +$('fM').value; flt.spd = +$('fS').value; flt.fav = $('fF').checked;
-  if (flt.alt > flt.maxAlt) { flt.maxAlt = flt.alt; $('fM').value = flt.maxAlt; } // min, max'ı geçmesin
-  $('vA').textContent = flt.alt; $('vM').textContent = flt.maxAlt >= 45000 ? '45000+' : flt.maxAlt; $('vS').textContent = flt.spd;
+const applyF = e => {
+  // tek çubukta iki tutamaç: sol = en az, sağ = en çok irtifa; birbirinin üstünden geçemezler
+  const a = $('fA'), m = $('fM');
+  if (+a.value > +m.value) { if (e && e.target === m) m.value = a.value; else a.value = m.value; }
+  flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.fav = $('fF').checked;
+  a.style.zIndex = flt.alt > 22500 ? 3 : 1; // üst üste gelince sağ uçta da "en az" tutulabilsin
+  $('dr').style.setProperty('--a', flt.alt / 450 + '%'); $('dr').style.setProperty('--b', flt.maxAlt / 450 + '%');
+  $('vA').textContent = flt.alt.toLocaleString('tr-TR'); $('vM').textContent = flt.maxAlt >= 45000 ? '45.000+' : flt.maxAlt.toLocaleString('tr-TR'); $('vS').textContent = flt.spd;
   flights.forEach(f => paint(f)); renderList();
 };
 ['fA', 'fM', 'fS', 'fF'].forEach(i => $(i).oninput = applyF);
+
+/* ---------- açılır/kapanır menü + saat ---------- */
+const setMenu = open => { $('side').classList.toggle('hide', !open); document.body.classList.toggle('closed', !open); save('sky.menu', open); };
+$('close').onclick = () => setMenu(false); $('open').onclick = () => setMenu(true);
+$('side').addEventListener('transitionend', () => map.invalidateSize());
+setMenu(LS('sky.menu', true)); map.invalidateSize();
+const clock = () => $('clock').textContent = new Date().toLocaleTimeString('tr-TR'); clock(); setInterval(clock, 1000);
 map.on('click', e => { if (placing) { placing = false; zone = { lat: e.latlng.lat, lon: e.latlng.lng }; save('sky.zone', zone); flights.forEach(f => delete f.in); drawZone(); toast('Uyarı bölgesi ayarlandı (100 km)'); } else select(null); });
 setMode(false);

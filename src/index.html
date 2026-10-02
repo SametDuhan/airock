@@ -8,9 +8,15 @@
 :root{--bg:#141414;--pn:#1c1c1c;--ac:#f2c230;--fg:#f0e6d2;--mut:#8d877c;--line:#ffffff14}
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden}
 #app{display:flex;height:100%}
-aside{width:300px;background:var(--pn);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2}
-.brand{padding:16px;font:700 13px ui-monospace,monospace;letter-spacing:.2em;color:var(--ac)}
-#q{margin:0 14px 10px;padding:9px 11px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}
+aside{width:300px;flex-shrink:0;background:var(--pn);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2;transition:margin-left .35s cubic-bezier(.2,.7,.2,1)}
+aside.hide{margin-left:-301px}
+.brand{display:flex;justify-content:space-between;align-items:center;padding:12px 12px 8px 16px;font:700 13px ui-monospace,monospace;letter-spacing:.2em;color:var(--ac)}
+.ib{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1}.ib:hover{border-color:var(--ac);color:var(--ac)}
+#open{position:absolute;top:12px;left:12px;z-index:1000;background:var(--pn);width:38px;height:38px;font-size:18px;display:none}body.closed #open{display:block}
+.sec{padding:4px 16px 10px;border-bottom:1px solid var(--line)}.lbl{font:600 10px ui-monospace,monospace;letter-spacing:.14em;color:var(--mut);margin:6px 0 7px;text-transform:uppercase}
+.btns{display:flex;gap:6px}.btns button{flex:1;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:7px 6px;cursor:pointer;font-size:12px}
+.btns button:hover{border-color:var(--ac)}.btns button.on{background:var(--ac);color:#111;border-color:var(--ac);font-weight:700}
+#q{margin:10px 14px 10px;padding:9px 11px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}
 #q:focus{border-color:var(--ac)}
 #meta{padding:0 16px 8px;font:11px ui-monospace,monospace;color:var(--mut);letter-spacing:.08em}
 #list{flex:1;overflow:auto}
@@ -19,9 +25,8 @@ aside{width:300px;background:var(--pn);border-right:1px solid var(--line);displa
 .row b{font:600 13px ui-monospace,monospace}.row span{color:var(--mut);font-size:12px}
 main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 .bar{position:absolute;top:12px;right:12px;z-index:1000;display:flex;gap:8px;align-items:center;background:var(--pn);border:1px solid var(--line);border-radius:4px;padding:6px 10px}
-.bar button{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:6px 10px;cursor:pointer}
-.bar button.on{background:var(--ac);color:#111;border-color:var(--ac);font-weight:700}
-#st{font:11px ui-monospace,monospace;color:var(--mut)}
+#clock{font:600 15px ui-monospace,monospace;letter-spacing:.06em}
+#st{font:11px ui-monospace,monospace;color:var(--mut);margin-top:7px}
 #card{position:absolute;right:12px;top:64px;width:260px;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px;transform:translateX(300px);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
 #card.show{transform:none}#card h2{margin:0 0 2px;font:400 28px Georgia,serif}#card small{color:var(--mut)}
 .kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}.kv span{color:var(--mut)}
@@ -29,6 +34,14 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 .pl.sel .pi svg{fill:#fff;filter:drop-shadow(0 0 8px var(--ac))}
 .leaflet-container{background:#0e0e0e}
 .flt{padding:4px 16px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mut)}
+.dr{position:relative;height:20px;margin:4px 0 10px;--a:0%;--b:100%}
+.dr::before{content:'';position:absolute;left:0;right:0;top:8px;height:4px;border-radius:2px;background:linear-gradient(to right,var(--line) var(--a),var(--ac) var(--a),var(--ac) var(--b),var(--line) var(--b))}
+.flt .dr input{position:absolute;left:0;top:0;width:100%;height:20px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+#fM{z-index:2}
+.dr input::-webkit-slider-runnable-track{height:20px;background:none}
+.dr input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:16px;height:16px;margin-top:2px;border-radius:50%;background:var(--ac);border:2px solid #111;cursor:grab}
+.dr input::-moz-range-track{background:none}.dr input::-moz-range-thumb{pointer-events:auto;width:12px;height:12px;border-radius:50%;background:var(--ac);border:2px solid #111;cursor:grab}
+.dr .rmin,.dr .rmax{position:absolute;top:19px;font-size:10px}.dr .rmax{right:0}
 .flt label{display:block;margin:6px 0}.flt b{color:var(--fg)}.flt input[type=range]{width:100%;accent-color:var(--ac)}.flt .ck{display:flex;gap:6px;align-items:center;cursor:pointer}
 #card button{margin-top:12px;width:100%;background:transparent;color:var(--ac);border:1px solid var(--ac);border-radius:3px;padding:7px;cursor:pointer}#card button:hover{background:var(--ac);color:#111}
 #rp{position:absolute;left:14px;right:80px;bottom:14px;z-index:1000;display:flex;gap:12px;align-items:center;background:var(--pn);border:1px solid var(--line);border-radius:4px;padding:8px 12px}
@@ -43,13 +56,17 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 .rtx{font-size:11px;color:var(--mut);margin-bottom:6px}.leaflet-tooltip.apl{border:0;font:700 11px ui-monospace,monospace;color:#111;background:var(--ac);padding:1px 4px;border-radius:2px;box-shadow:none}.leaflet-tooltip.apl::before{display:none}
 </style></head>
 <body><div id="app">
-<aside><div class="brand">SKYTRACK</div><input id="q" placeholder="Çağrı kodu ara…"><div id="meta"></div>
-<div class="flt"><label>Min irtifa <b id="vA">0</b> ft<input id="fA" type="range" min="0" max="45000" step="1000" value="0"></label>
-<label>Max irtifa <b id="vM">45000</b> ft<input id="fM" type="range" min="0" max="45000" step="1000" value="45000"></label>
+<aside id="side"><div class="brand">SKYTRACK<button id="close" class="ib" title="Menüyü kapat">✕</button></div>
+<div class="sec"><div class="lbl">Veri</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Canlı</button></div><div id="st"></div></div>
+<div class="sec"><div class="lbl">Harita</div><div class="btns"><button id="bAp" class="on">Havalimanları</button><button id="bZ">Uyarı bölgesi</button></div></div>
+<div class="flt"><div class="lbl">Filtreler</div><div>İrtifa <b id="vA">0</b> – <b id="vM">45.000+</b> ft</div>
+<div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">en az</span><span class="rmax">en çok</span></div>
+<div style="height:8px"></div>
 <label>Min hız <b id="vS">0</b> kt<input id="fS" type="range" min="0" max="600" step="25" value="0"></label>
-<label class="ck"><input id="fF" type="checkbox"> Sadece favoriler ★</label></div><div id="list"></div></aside>
+<label class="ck"><input id="fF" type="checkbox"> Sadece favoriler ★</label></div>
+<input id="q" placeholder="Çağrı kodu ara…"><div id="meta"></div><div id="list"></div></aside>
 <main><div id="map"></div>
-<div class="bar"><span id="st"></span><button id="mDemo" class="on">Demo</button><button id="mLive">Canlı</button><button id="bAp" class="on">Havalimanları</button><button id="bZ">Uyarı bölgesi</button></div>
+<button id="open" class="ib" title="Menüyü aç">☰</button><div class="bar"><span id="clock"></span></div>
 <div id="card"></div><div id="toast"></div>
 <div id="rp"><button id="rpLive" class="on">● Canlı</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">geçmiş kaydı</span></div></main></div>
 <script src="loader.js"></script></body></html>
