@@ -23,7 +23,7 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
   - departure and/or arrival airport, by code (IST, LTFM) or city name
   - aircraft on the ground on or off, and a favorites-only option
 - **Favorites**: star a flight (☆) to find it again later.
-- **Alert zone** (*Uyarı bölgesi*): click the map to set a 100 km circle. You get a notification when an aircraft enters it.
+- **Alert zone** (*Uyarı bölgesi*): click the map to set a circle (100 km by default; change the radius in the menu, 10–500 km). You get a notification when an aircraft enters it, including one that first appears inside it.
 - **Replay**: rewind the last hour with the slider at the bottom, then press *● Canlı* to return to live.
 - **Map styles**: Standard, Light or Dark (*Standart / Açık / Koyu*).
 - **Fast with many planes**: all aircraft are drawn on a single canvas. Around 3,700 aircraft over Europe draw in about 8 ms.
@@ -46,6 +46,8 @@ npm run dist
 ```
 
 The installer is created in the `dist/` folder.
+
+The repository is named `airock`; the app itself is SkyTrack. Your filters and alert zone are remembered between sessions. Run the tests with `npm test`.
 
 ## How to use
 
@@ -88,6 +90,7 @@ main.js           Electron window; passes data requests from the app to src/data
 preload.js        Exposes those requests to the app safely
 src/index.html    Layout and styles
 src/loader.js     Loads Leaflet (local copy first, CDN as a fallback), then the app
+src/geo.js        Distance, bearing and great-circle helpers (unit-tested)
 src/data.js       All data sources: flights, routes, aircraft info
 src/renderer.js   Map, aircraft layer, flight card, list, filters, replay
 docs/             Screenshots used in this README

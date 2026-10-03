@@ -3,7 +3,6 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
 <title>SkyTrack</title>
 <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <style>
 :root{--bg:#141414;--pn:#1c1c1c;--ac:#f2c230;--fg:#f0e6d2;--mut:#8d877c;--line:#ffffff14}
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden}
@@ -44,6 +43,7 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 .dr input::-webkit-slider-runnable-track{height:20px;background:none}
 .dr input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:16px;height:16px;margin-top:2px;border-radius:50%;background:var(--ac);border:2px solid #111;cursor:grab}
 .dr input::-moz-range-track{background:none}.dr input::-moz-range-thumb{pointer-events:auto;width:12px;height:12px;border-radius:50%;background:var(--ac);border:2px solid #111;cursor:grab}
+.zr{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--mut)}.zr input{width:64px;padding:5px 6px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}.zr input:focus{border-color:var(--ac)}
 .apr{display:flex;gap:6px;align-items:center;margin:6px 0 4px}.apr .ib{flex:none;width:28px;height:30px}
 .apr input{flex:1;min-width:0;padding:7px 8px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0;font:600 12px ui-monospace,monospace;text-transform:uppercase}
 .apr input::placeholder{text-transform:none;font-weight:400}.apr input:focus{border-color:var(--ac)}.apr input.set{border-color:var(--ac);color:var(--ac)}
@@ -65,6 +65,7 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 <aside id="side"><div class="brand">SKYTRACK<button id="close" class="ib" title="Menüyü kapat">✕</button></div>
 <div class="sec"><div class="lbl">Veri</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Canlı</button></div><div id="st"></div></div>
 <div class="sec"><div class="lbl">Harita</div><div class="btns"><button id="bAp" class="on">Havalimanları</button><button id="bZ">Uyarı bölgesi</button></div>
+<label class="zr">Bölge yarıçapı <input id="zR" type="number" min="10" max="500" step="10" value="100"> km</label>
 <div class="btns" id="tiles" style="margin-top:6px"><button data-t="osm">Standart</button><button data-t="light">Açık</button><button data-t="dark">Koyu</button></div></div>
 <div class="flt"><div class="lbl">Filtreler</div><div>İrtifa <b id="vA">0</b> – <b id="vM">45.000+</b> ft</div>
 <div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">en az</span><span class="rmax">en çok</span></div>

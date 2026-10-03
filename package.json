@@ -1,10 +1,43 @@
 {
   "name": "skytrack",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Flightradar tarzı masaüstü uçuş takip şablonu",
   "main": "main.js",
-  "scripts": { "start": "electron .", "dist": "electron-builder" },
-  "dependencies": { "leaflet": "^1.9.4" },
-  "devDependencies": { "electron": "^33.0.0", "electron-builder": "^25.0.0" },
-  "build": { "appId": "com.example.skytrack", "productName": "SkyTrack", "files": ["main.js", "preload.js", "src/**", "node_modules/leaflet/dist/**"] }
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.example.skytrack",
+    "productName": "SkyTrack",
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**",
+      "node_modules/leaflet/dist/**"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.utilities"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Utility"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SametDuhan/airock.git"
+  }
 }

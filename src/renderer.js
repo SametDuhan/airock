@@ -60,26 +60,10 @@ const AP = [
 const AIRLINE = { THY: ['Turkish Airlines', 'TK'], PGT: ['Pegasus', 'PC'], AJA: ['AJet', 'VF'], KLM: ['KLM', 'KL'], DLH: ['Lufthansa', 'LH'],
   BAW: ['British Airways', 'BA'], UAE: ['Emirates', 'EK'], AZA: ['ITA Airways', 'AZ'], SXS: ['SunExpress', 'XQ'], WZZ: ['Wizz Air', 'W6'] };
 const AIRLINES = Object.keys(AIRLINE), DEMO_TYPES = [['A320', 'Airbus A320'], ['A21N', 'Airbus A321neo'], ['B738', 'Boeing 737-800'], ['B38M', 'Boeing 737 MAX 8'], ['A333', 'Airbus A330-300'], ['B77W', 'Boeing 777-300ER']];
-const ZONE_R = 100; // km
+const ZONE_R = 100; // km (varsayılan yarıçap)
+const zoneR = () => zone?.r || ZONE_R;
 const APO = AP.map(a => ({ code: a[0], name: a[1], lat: a[2], lon: a[3] }));
-const R = Math.PI / 180;
-const brg = (a, b, c, d) => { const y = Math.sin((d - b) * R) * Math.cos(c * R), x = Math.cos(a * R) * Math.sin(c * R) - Math.sin(a * R) * Math.cos(c * R) * Math.cos((d - b) * R); return (Math.atan2(y, x) / R + 360) % 360; };
-const km = (a, b, c, d) => { const x = Math.sin((c - a) * R / 2) ** 2 + Math.cos(a * R) * Math.cos(c * R) * Math.sin((d - b) * R / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
-// Büyük daire (dünya yüzeyindeki en kısa yol) üzerinde n parçalık noktalar
-function gc(a, b, n = 48) {
-  const [φ1, λ1, φ2, λ2] = [a[0] * R, a[1] * R, b[0] * R, b[1] * R];
-  const d = 2 * Math.asin(Math.sqrt(Math.sin((φ2 - φ1) / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin((λ2 - λ1) / 2) ** 2));
-  if (d < 1e-6) return [a, b];
-  const out = [];
-  for (let i = 0; i <= n; i++) {
-    const t = i / n, A = Math.sin((1 - t) * d) / Math.sin(d), B = Math.sin(t * d) / Math.sin(d);
-    const x = A * Math.cos(φ1) * Math.cos(λ1) + B * Math.cos(φ2) * Math.cos(λ2), y = A * Math.cos(φ1) * Math.sin(λ1) + B * Math.cos(φ2) * Math.sin(λ2), z = A * Math.sin(φ1) + B * Math.sin(φ2);
-    out.push([Math.atan2(z, Math.hypot(x, y)) / R, Math.atan2(y, x) / R]);
-  }
-  return out;
-}
-// Boylam 180°'yi geçerken çizgi haritanın öbür ucuna atlamasın diye boylamları sürekli tut
-const unwrap = pts => { for (let i = 1; i < pts.length; i++) { while (pts[i][1] - pts[i - 1][1] > 180) pts[i][1] -= 360; while (pts[i][1] - pts[i - 1][1] < -180) pts[i][1] += 360; } return pts; };
+const { R, brg, km, gc, unwrap, nearLon } = window.SkyGeo;
 const flights = new Map(), routeCache = new Map(), acCache = new Map(), fav = new Set(LS('sky.fav', [])), hist = [],
 flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false, ground: true, dep: '', arr: '' };
 let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
@@ -103,6 +87,7 @@ const PlaneLayer = L.Layer.extend({
     this._c = L.DomUtil.create('canvas', 'planes leaflet-zoom-hide', m.getPane('planes')); this._ctx = this._c.getContext('2d');
     m.on('move zoomend resize viewreset', this.redraw, this); this.redraw();
   },
+  onRemove(m) { m.off('move zoomend resize viewreset', this.redraw, this); cancelAnimationFrame(this._raf); this._raf = 0; L.DomUtil.remove(this._c); },
   redraw() { if (!this._raf) this._raf = requestAnimationFrame(() => { this._raf = 0; this._draw(); }); },
   _draw() {
     const s = map.getSize(), dpr = window.devicePixelRatio || 1, c = this._c, ctx = this._ctx;
@@ -111,10 +96,10 @@ const PlaneLayer = L.Layer.extend({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, s.x, s.y); ctx.lineWidth = .7; ctx.strokeStyle = '#000';
     // Uzaklaştıkça simgeler küçülür: kıta ölçeğinde binlerce uçak birbirine girmesin
     const z = map.getZoom(), k = z <= 4 ? .55 : z <= 5 ? .65 : z <= 6 ? .8 : 1;
-    let sel = null;
+    let sel = null; const cLon = map.getCenter().lng;
     flights.forEach(f => {
       f._p = null; if (f.gone || !vis(f)) return;
-      const [lat, lon, hdg] = f.rp || [f.lat, f.lon, f.hdg], p = map.latLngToContainerPoint([lat, lon]);
+      const [lat, lon, hdg] = f.rp || [f.lat, f.lon, f.hdg], p = map.latLngToContainerPoint([lat, nearLon(lon, cLon)]); // tarih değişim çizgisinde en yakın dünya kopyası
       if (p.x < -20 || p.y < -20 || p.x > s.x + 20 || p.y > s.y + 20) return;
       f._p = p; f._h = hdg; if (f.id === selected) { sel = f; return; }
       icon(ctx, p, hdg, (f.ground ? 16 : 24) * k, f.ground ? '#9aa0a6' : color(f.alt));
@@ -153,19 +138,27 @@ function seedDemo() {
 }
 function upsert(d) {
   let f = flights.get(d.id);
-  if (!f) { f = { tr: [] }; flights.set(d.id, f); }
+  if (!f) { f = { tr: [], gone: replay }; flights.set(d.id, f); } // replay sırasında gelen yeni uçak o karede yoktu
   Object.assign(f, d); return f;
 }
 function clearAll() { flights.clear(); hist.length = 0; select(null); redraw(); }
 
 /* ---------- rota (nereden → nereye) ---------- */
+// Önbellek: bulunan rota 6 saat, "yok" cevabı 10 dk geçerli. Hata (ağ, 429) önbelleğe girmez; uçak 60 sn sonra yeniden denenir, o sırada tüm istekler 30 sn bekler.
+const TTL_OK = 6 * 3600e3, TTL_NONE = 600e3, RETRY_MS = 60e3, BACKOFF_MS = 30e3;
+let dbPause = 0;
+const fresh = (c, k) => { const e = c.get(k); return e && Date.now() - e.t < (e.v ? TTL_OK : TTL_NONE) ? e : null; };
+const canLoad = (f, k) => !f[k] || (f[k] === 'err' && Date.now() - f[k + 'At'] > RETRY_MS);
+const failed = (f, k) => { f[k] = 'err'; f[k + 'At'] = Date.now(); dbPause = Date.now() + BACKOFF_MS; };
 async function loadRoute(f) {
-  if (f.rs) return; f.rs = 'loading';
-  let r = routeCache.get(f.cs);
-  if (r === undefined) { const res = await DATA.route(f.cs); if (!res.ok) { f.rs = 'err'; return showRoute(f); } r = res.route; routeCache.set(f.cs, r); }
-  f.route = r; f.rs = r ? 'ok' : 'none'; if (r) { addAp(r.org); addAp(r.dst); } showRoute(f);
+  if (!canLoad(f, 'rs')) return;
+  if (f.cs === f.id.toUpperCase()) { f.rs = 'none'; return showRoute(f); } // çağrı kodu yok (hex'e düşmüş): sorgulayacak bir şey yok
+  f.rs = 'loading'; let e = fresh(routeCache, f.cs);
+  if (!e) { if (Date.now() < dbPause) { f.rs = 'err'; f.rsAt = Date.now(); return showRoute(f); }
+    const res = await DATA.route(f.cs); if (!res.ok) { failed(f, 'rs'); return showRoute(f); } e = { v: res.route, t: Date.now() }; routeCache.set(f.cs, e); }
+  f.route = e.v; f.rs = e.v ? 'ok' : 'none'; if (e.v) { addAp(e.v.org); addAp(e.v.dst); } showRoute(f);
 }
-function showRoute(f) { if (f.id !== selected) return; drawRoute(f); renderCard(true); }
+function showRoute(f) { if (f.id !== selected) return; if (!replay) drawRoute(f); renderCard(true); }
 // Kalkış → uçak → varış, büyük daire yayları olarak
 const routePts = f => { const { org, dst } = f.route, p = [f.lat, f.lon]; return unwrap([...gc([org.lat, org.lon], p), ...gc(p, [dst.lat, dst.lon]).slice(1)]); };
 function drawRoute(f) {
@@ -178,10 +171,11 @@ function drawRoute(f) {
 
 /* ---------- uçak bilgisi (tip, tescil, fotoğraf) ---------- */
 async function loadAircraft(f) {
-  if (f.as) return; f.as = 'loading';
-  let a = acCache.get(f.id);
-  if (a === undefined) { const res = await DATA.aircraft(f.id); if (!res.ok) { f.as = 'err'; return; } a = res.aircraft; acCache.set(f.id, a); }
-  f.ac = a; f.as = a ? 'ok' : 'none'; if (f.id === selected) renderCard(true);
+  if (!canLoad(f, 'as')) return;
+  f.as = 'loading'; let e = fresh(acCache, f.id);
+  if (!e) { if (Date.now() < dbPause) { f.as = 'err'; f.asAt = Date.now(); return; }
+    const res = await DATA.aircraft(f.id); if (!res.ok) return failed(f, 'as'); e = { v: res.aircraft, t: Date.now() }; acCache.set(f.id, e); }
+  f.ac = e.v; f.as = e.v ? 'ok' : 'none'; if (f.id === selected) renderCard(true);
 }
 function nearest(f) { let b = null, m = 1e9; AP.forEach(a => { const d = km(f.lat, f.lon, a[2], a[3]); if (d < m) { m = d; b = a; } }); return `${b[0]} · ${Math.round(m)} km`; }
 // İz: uygulamanın bu uçağı gördüğü andan beri 5 sn'de bir kaydedilen konumlar
@@ -189,22 +183,25 @@ const drawTrail = f => trail.setLatLngs(f ? unwrap([...f.tr, [f.lat, f.lon]].map
 
 /* ---------- ana döngü (1 sn) ---------- */
 setInterval(() => {
-  if (replay) return;
   tick++;
   flights.forEach(f => {
     if (!live && f.route) { const d = f.route.dst;
-      if (km(f.lat, f.lon, d.lat, d.lon) < 15) { f.route = demoRoute(f.cs.slice(0, 3), d, pickDst(d)); f.tr = []; if (f.id === selected) { drawRoute(f); renderCard(true); } }
+      if (km(f.lat, f.lon, d.lat, d.lon) < 15) { f.route = demoRoute(f.cs.slice(0, 3), d, pickDst(d)); f.tr = []; if (f.id === selected) { if (!replay) drawRoute(f); renderCard(true); } }
       f.hdg = brg(f.lat, f.lon, f.route.dst.lat, f.route.dst.lon); }
     const dist = f.spd * ts, h = f.hdg * R;
     f.lat += Math.cos(h) * dist / 111320; f.lon += Math.sin(h) * dist / (111320 * Math.cos(f.lat * R));
     if (f.lon > 180) f.lon -= 360; else if (f.lon < -180) f.lon += 360;
-    if (zone) { const inn = km(f.lat, f.lon, zone.lat, zone.lon) < ZONE_R; if (inn && f.in === false) toast(`${f.cs} uyarı bölgesine girdi`); f.in = inn; }
+    if (zone) { const inn = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); if (inn && (f.in === false || (f.in === undefined && tick > 1))) toast(`${f.cs} uyarı bölgesine girdi`); f.in = inn; }
     if (tick % 5 === 0) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 360) f.tr.shift(); } // her uçağın son ~30 dk izi
   });
-  const s = flights.get(selected); if (s) { drawTrail(s); if (s.route) setRoute(routePts(s)); }
-  if (tick % 5 === 0) { // geçmiş kaydı: 5 sn'de bir, en fazla 720 kare
-    hist.push({ t: Date.now(), d: [...flights.values()].map(f => [f.id, f.lat, f.lon, f.hdg]) }); if (hist.length > 720) hist.shift();
-    $('rpS').max = hist.length - 1; $('rpS').value = hist.length - 1;
+  const s = flights.get(selected); if (s && !replay) { drawTrail(s); if (s.route) setRoute(routePts(s)); }
+  if (tick % 5 === 0) { // geçmiş kaydı: 5 sn'de bir, en fazla 720 kare. Replay izlenirken de kayıt sürer
+    // Kare başına tek Float32Array (lat, lon, hdg üçlüleri) + kimlik listesi: binlerce uçakta küçük dizi yığınından çok daha az bellek
+    const ids = [], buf = new Float32Array(flights.size * 3); let i = 0;
+    flights.forEach(f => { ids.push(f.id); buf[i++] = f.lat; buf[i++] = f.lon; buf[i++] = f.hdg; });
+    hist.push({ t: Date.now(), ids, buf });
+    if (hist.length > 720) { hist.shift(); if (replay) $('rpS').value = Math.max(0, +$('rpS').value - 1); } // en eski kare düştü: izlenen kare aynı kalsın
+    $('rpS').max = hist.length - 1; if (!replay) $('rpS').value = hist.length - 1;
   }
   redraw(); if (selected) renderCard();
 }, 1000);
@@ -212,15 +209,18 @@ setInterval(() => {
 /* ---------- canlı veri ---------- */
 // Görünen alanın biraz genişini ister; harita bu alanın içinde kaldıkça kaydırma/zoom yeni istek atmaz
 const LIVE_MS = 15000;
-let fetchedBox = null, fetchedAt = 0, reqId = 0, moveTimer = null;
+let fetchedBox = null, fetchedAt = 0, reqId = 0, moveTimer = null, lastReq = 0;
 async function poll(force) {
   if (!live) return; const v = map.getBounds();
   if (!force && fetchedBox && fetchedBox.contains(v) && Date.now() - fetchedAt < LIVE_MS) return;
+  if (!force && Date.now() - lastReq < 3000) return; lastReq = Date.now(); // hız sınırına takılmamak için kaydırma kaynaklı istekler arasında en az 3 sn
   const b = v.pad(.15), id = ++reqId, cl = (x, m) => Math.max(-m, Math.min(m, x)).toFixed(2);
   fetchedBox = b; fetchedAt = Date.now(); $('st').textContent = 'yükleniyor…';
   const r = await DATA.flights({ s: cl(b.getSouth(), 85), n: cl(b.getNorth(), 85), w: cl(b.getWest(), 180), e: cl(b.getEast(), 180) });
   if (!live || id !== reqId) return; // bu arada harita yine değiştiyse eski cevabı at
   if (!r.ok) { fetchedBox = null; $('st').textContent = 'hata: ' + r.error; return; }
+  // Kaynak alanın yalnız bir kısmını kapsadıysa (adsb.lol, geniş görünüm) yalnız kapsanan alanı "alındı" say; yoksa kaydırınca boş kalan kenarlar yüklenmez
+  if (r.covered) fetchedBox = L.latLngBounds([r.covered.s, r.covered.w], [r.covered.n, r.covered.e]);
   const seen = new Set(r.flights.map(d => d.id));
   flights.forEach((f, id) => { if (!seen.has(id)) { flights.delete(id); if (selected === id) select(null); } });
   r.flights.forEach(upsert); redraw();
@@ -244,24 +244,29 @@ $('bAp').onclick = function () { const on = !map.hasLayer(apLayer); on ? apLayer
 
 /* ---------- uyarı bölgesi ---------- */
 function drawZone() { zoneLayer && zoneLayer.remove(); zoneLayer = null; $('bZ').classList.toggle('on', !!zone);
-  if (zone) zoneLayer = L.circle([zone.lat, zone.lon], { radius: ZONE_R * 1000, color: '#ff6b5e', weight: 2, dashArray: '6 6', fillOpacity: .07, interactive: false }).addTo(map); }
+  if (zone) zoneLayer = L.circle([zone.lat, zone.lon], { radius: zoneR() * 1000, color: '#ff6b5e', weight: 2, dashArray: '6 6', fillOpacity: .07, interactive: false }).addTo(map); }
 $('bZ').onclick = () => { if (zone) { zone = null; save('sky.zone', null); drawZone(); } else { placing = true; toast('Bölge merkezi için haritaya tıkla'); } };
+$('zR').value = zoneR();
+$('zR').onchange = function () { const r = Math.max(10, Math.min(500, Math.round(+this.value) || ZONE_R)); this.value = r; if (zone) { zone.r = r; save('sky.zone', zone); initIn(); drawZone(); } else zoneRDef = r; };
+let zoneRDef = ZONE_R; // bölge yokken seçilen yarıçap, sonraki bölgeye uygulanır
+// Bölge değişince uçakların "içeride mi" durumunu sessizce yeniden hesapla (bildirim yağmuru olmasın)
+const initIn = () => flights.forEach(f => { if (zone) f.in = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); else delete f.in; });
 drawZone();
 
 /* ---------- geçmişi oynat ---------- */
 function exitReplay() { if (!replay) return; replay = false; $('rpLive').classList.add('on'); $('rpT').textContent = 'geçmiş kaydı';
-  flights.forEach(f => { f.gone = false; f.rp = null; }); const s = flights.get(selected); drawRoute(s); drawTrail(s); redraw(); }
+  flights.forEach(f => { f.gone = false; f.rp = null; }); $('rpS').value = $('rpS').max; const s = flights.get(selected); drawRoute(s); drawTrail(s); redraw(); }
 $('rpS').oninput = function () { const s = hist[+this.value]; if (!s) return; replay = true; $('rpLive').classList.remove('on');
-  const m = new Map(s.d.map(x => [x[0], x])); trail.setLatLngs([]); drawRoute(null);
-  flights.forEach(f => { const x = m.get(f.id); f.gone = !x; f.rp = x ? [x[1], x[2], x[3]] : null; }); redraw();
+  const m = new Map(s.ids.map((id, i) => [id, i * 3])); trail.setLatLngs([]); drawRoute(null);
+  flights.forEach(f => { const o = m.get(f.id); f.gone = o === undefined; f.rp = o === undefined ? null : [s.buf[o], s.buf[o + 1], s.buf[o + 2]]; }); redraw();
   $('rpT').textContent = new Date(s.t).toLocaleTimeString('tr-TR'); };
 $('rpLive').onclick = exitReplay;
 
 /* ---------- seçim, favori, panel, liste ---------- */
 function select(id) {
   selected = id; const f = flights.get(id);
-  if (f) { map.panTo([f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); } }
-  drawRoute(f); drawTrail(f); redraw();
+  if (f) { map.panTo(f.rp ? [f.rp[0], f.rp[1]] : [f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); } }
+  if (replay) { drawRoute(null); trail.setLatLngs([]); } else { drawRoute(f); drawTrail(f); } redraw(); // replay'de canlı konuma göre çizilmiş iz/rota karışmasın
   $('card').classList.toggle('show', !!f); if (f) renderCard(true); renderList();
 }
 const ft = m => Math.round(m * 3.281).toLocaleString('tr-TR') + ' ft';
@@ -317,12 +322,15 @@ const applyF = e => {
   flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.fav = $('fF').checked; flt.ground = $('fG').checked;
   flt.dep = apCode($('fDep').value); flt.arr = apCode($('fArr').value);
   $('fDep').classList.toggle('set', !!flt.dep); $('fArr').classList.toggle('set', !!flt.arr); pumpRoutes();
+  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value });
   a.style.zIndex = flt.alt > 22500 ? 3 : 1; // üst üste gelince sağ uçta da "en az" tutulabilsin
   $('dr').style.setProperty('--a', flt.alt / 450 + '%'); $('dr').style.setProperty('--b', flt.maxAlt / 450 + '%');
   $('vA').textContent = flt.alt.toLocaleString('tr-TR'); $('vM').textContent = flt.maxAlt >= 45000 ? '45.000+' : flt.maxAlt.toLocaleString('tr-TR'); $('vS').textContent = flt.spd;
   redraw(); renderList();
 };
 ['fA', 'fM', 'fS', 'fF', 'fG', 'fDep', 'fArr'].forEach(i => $(i).oninput = applyF);
+{ const v = LS('sky.flt', null); // son oturumdaki filtreleri geri yükle
+  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; } }
 $('fSw').onclick = () => { const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; applyF(); };
 
 /* ---------- havalimanı filtresi (kalkış / varış) ---------- */
@@ -339,12 +347,13 @@ function apCode(v) {
   return u;
 }
 // Canlı modda rota bilgisi yalnızca uçağa tıklanınca gelir; filtre açıkken ekrandaki uçakların rotalarını arka planda (aynı anda en fazla 3) yükle
-let routeJobs = 0;
+let routeJobs = 0, pumpT = null;
 function pumpRoutes() {
   if (!live || (!flt.dep && !flt.arr)) return; const v = map.getBounds();
+  if (Date.now() < dbPause) { clearTimeout(pumpT); pumpT = setTimeout(pumpRoutes, dbPause - Date.now() + 100); return; } // 429/hata sonrası bekle
   for (const f of flights.values()) {
     if (routeJobs >= 3) return;
-    if (f.rs || f.ground || !v.contains([f.lat, f.lon])) continue;
+    if (!canLoad(f, 'rs') || f.ground || !v.contains([f.lat, f.lon])) continue;
     routeJobs++; loadRoute(f).finally(() => { routeJobs--; redraw(); pumpRoutes(); });
   }
 }
@@ -356,7 +365,7 @@ $('side').addEventListener('transitionend', () => { map.invalidateSize(); redraw
 setMenu(LS('sky.menu', true)); map.invalidateSize();
 const clock = () => $('clock').textContent = new Date().toLocaleTimeString('tr-TR'); clock(); setInterval(clock, 1000);
 map.on('click', e => {
-  if (placing) { placing = false; zone = { lat: e.latlng.lat, lon: e.latlng.lng }; save('sky.zone', zone); flights.forEach(f => delete f.in); drawZone(); toast('Uyarı bölgesi ayarlandı (100 km)'); return; }
+  if (placing) { placing = false; zone = { lat: e.latlng.lat, lon: e.latlng.lng, r: zoneRDef }; save('sky.zone', zone); initIn(); drawZone(); toast(`Uyarı bölgesi ayarlandı (${zoneR()} km)`); return; }
   const f = hit(e.containerPoint); select(f ? f.id : null);
 });
-setMode(false);
+applyF(); setMode(false);

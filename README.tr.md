@@ -21,7 +21,7 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
   - kalkış ve/veya varış havalimanı; kodla (IST, LTFM) ya da şehir adıyla
   - yerdeki uçakları gösterme/gizleme ve sadece favoriler
 - **Favoriler**: bir uçuşu ☆ ile işaretleyip sonra kolayca bulabilirsin.
-- **Uyarı bölgesi**: haritaya tıklayarak 100 km'lik bir daire belirlersin. Bir uçak bu daireye girince bildirim gelir.
+- **Uyarı bölgesi**: haritaya tıklayarak bir daire belirlersin (varsayılan 100 km; yarıçapı menüden 10–500 km arasında değiştirebilirsin). Bir uçak daireye girince, ya da ilk kez daire içinde görününce bildirim gelir.
 - **Geçmişi oynatma**: alttaki çubukla son bir saati geri sarabilirsin. *● Canlı* düğmesi canlı görünüme döndürür.
 - **Harita stili**: Standart, Açık veya Koyu.
 - **Çok uçakta da hızlı**: bütün uçaklar tek bir tuvale (canvas) çizilir. Avrupa genelinde yaklaşık 3.700 uçak yaklaşık 8 ms'de çizilir.
@@ -86,6 +86,7 @@ main.js           Electron penceresi; uygulamadan gelen veri isteklerini src/dat
 preload.js        Bu istekleri uygulamaya güvenli şekilde açar
 src/index.html    Arayüz ve stiller
 src/loader.js     Leaflet'i yükler (önce yerel kopya, olmazsa CDN), sonra uygulamayı başlatır
+src/geo.js        Mesafe, yön ve büyük daire yardımcıları (testli)
 src/data.js       Bütün veri kaynakları: uçuşlar, rotalar, uçak bilgisi
 src/renderer.js   Harita, uçak katmanı, uçuş kartı, liste, filtreler, geçmiş oynatma
 docs/             README'deki ekran görüntüleri
