@@ -8,7 +8,7 @@
 
 SkyTrack is a free desktop app for tracking flights live on a map, similar to Flightradar24. It runs on Windows, macOS and Linux, and it uses open ADS-B data, so you don't need an account or an API key.
 
-![SkyTrack showing live flights around Istanbul, with a selected flight's route and details](docs/screenshot.jpg)
+![SkyTrack in demo mode, with a selected flight's route and details](docs/screenshot.jpg)
 
 ## Features
 
