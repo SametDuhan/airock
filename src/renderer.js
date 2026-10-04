@@ -69,7 +69,9 @@ flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false, ground: true, dep: '', arr: '
 let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
 
 /* ---------- appearance: altitude color + filter ---------- */
-const color = alt => `hsl(${Math.round(40 + Math.min(alt / 12000, 1) * 240)} 90% 58%)`;
+// Four altitude bands (amber < 5,000 ft, green < 16,000 ft, blue < 30,000 ft, violet above) so neighbouring planes don't turn into a rainbow
+const ALT_COLORS = ['hsl(45 90% 58%)', 'hsl(145 70% 50%)', 'hsl(205 85% 58%)', 'hsl(265 80% 62%)'];
+const color = alt => ALT_COLORS[alt < 1500 ? 0 : alt < 4900 ? 1 : alt < 9100 ? 2 : 3];
 const apIs = (a, c) => !!a && (a.code === c || a.icao === c);
 const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (!flt.fav || fav.has(f.id))
   && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)); };
