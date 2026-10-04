@@ -2,6 +2,8 @@
 
 **English** · [Türkçe](README.tr.md)
 
+[![tests](https://github.com/SametDuhan/airock/actions/workflows/test.yml/badge.svg)](https://github.com/SametDuhan/airock/actions/workflows/test.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![platforms](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
+
 SkyTrack is a free desktop app for tracking flights live on a map, similar to Flightradar24. It runs on Windows, macOS and Linux, and it uses open ADS-B data, so you don't need an account or an API key.
 
 ![SkyTrack showing live flights around Istanbul, with a selected flight's route and details](docs/screenshot.jpg)
@@ -27,6 +29,10 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
 - **Replay**: rewind the last hour with the slider at the bottom, then press *● Canlı* to return to live.
 - **Map styles**: Standard, Light or Dark (*Standart / Açık / Koyu*).
 - **Fast with many planes**: all aircraft are drawn on a single canvas. Around 3,700 aircraft over Europe draw in about 8 ms.
+
+## Download
+
+Get the installer for your system from the [latest release](https://github.com/SametDuhan/airock/releases/latest) (`.exe` for Windows, `.dmg` for macOS, AppImage for Linux). No account needed. To run from source instead, see below.
 
 ## Getting started
 
@@ -97,3 +103,9 @@ docs/             Screenshots used in this README
 ```
 
 Built with [Electron](https://www.electronjs.org) and [Leaflet](https://leafletjs.com).
+
+## Contributing
+
+Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [`good first issue`](https://github.com/SametDuhan/airock/labels/good%20first%20issue) list. If SkyTrack is useful to you, a ⭐ helps other people find it.
+
+Released under the [MIT License](LICENSE).

@@ -1,7 +1,10 @@
 {
   "name": "skytrack",
   "version": "0.4.1",
-  "description": "Flightradar tarzı masaüstü uçuş takip şablonu",
+  "description": "Free desktop flight tracker using open ADS-B data. No account or API key needed.",
+  "license": "MIT",
+  "author": "Samet Duhan Şahin",
+  "keywords": ["flight-tracker", "adsb", "electron", "leaflet"],
   "main": "main.js",
   "scripts": {
     "start": "electron .",

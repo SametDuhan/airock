@@ -2,6 +2,8 @@
 
 [English](README.md) · **Türkçe**
 
+[![tests](https://github.com/SametDuhan/airock/actions/workflows/test.yml/badge.svg)](https://github.com/SametDuhan/airock/actions/workflows/test.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![platforms](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
+
 SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 benzeri ücretsiz bir masaüstü uygulaması. Windows, macOS ve Linux'ta çalışıyor. Açık ADS-B verisi kullandığı için hesap ya da API anahtarı gerekmiyor.
 
 ![İstanbul çevresindeki canlı uçuşlar; seçili uçuşun rotası ve bilgileri](docs/screenshot.jpg)
@@ -25,6 +27,10 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 - **Geçmişi oynatma**: alttaki çubukla son bir saati geri sarabilirsin. *● Canlı* düğmesi canlı görünüme döndürür.
 - **Harita stili**: Standart, Açık veya Koyu.
 - **Çok uçakta da hızlı**: bütün uçaklar tek bir tuvale (canvas) çizilir. Avrupa genelinde yaklaşık 3.700 uçak yaklaşık 8 ms'de çizilir.
+
+## İndir
+
+Kendi sistemin için kurulum dosyasını [son sürümden](https://github.com/SametDuhan/airock/releases/latest) indir (Windows için `.exe`, macOS için `.dmg`, Linux için AppImage). Hesap gerekmez. Kaynaktan çalıştırmak istersen aşağıya bak.
 
 ## Kurulum ve çalıştırma
 
@@ -93,3 +99,9 @@ docs/             README'deki ekran görüntüleri
 ```
 
 [Electron](https://www.electronjs.org) ve [Leaflet](https://leafletjs.com) ile yapıldı.
+
+## Katkı
+
+Hata bildirimi, fikir ve pull request'ler memnuniyetle karşılanır. [CONTRIBUTING.md](CONTRIBUTING.md) dosyasına ve [`good first issue`](https://github.com/SametDuhan/airock/labels/good%20first%20issue) listesine bak. SkyTrack işine yaradıysa bir ⭐ başkalarının da bulmasına yardım eder.
+
+[MIT Lisansı](LICENSE) ile yayımlanmıştır.
