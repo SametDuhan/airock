@@ -1,20 +1,20 @@
 ---
-name: Bug report / Hata bildirimi
+name: Bug report
 about: Something doesn't work as expected
 labels: bug
 ---
 
-**What happened? / Ne oldu?**
+**What happened?**
 
-**What did you expect? / Ne bekliyordun?**
+**What did you expect?**
 
-**Steps to reproduce / Nasıl tekrarlanır?**
+**Steps to reproduce**
 1.
 2.
 
-**Environment / Ortam**
+**Environment**
 - OS (Windows / macOS / Linux):
 - SkyTrack version:
 - Mode (Live / Demo):
 
-Screenshot, if any / Varsa ekran görüntüsü:
+Screenshot, if any:

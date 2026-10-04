@@ -8,8 +8,6 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
 
 ![SkyTrack showing live flights around Istanbul, with a selected flight's route and details](docs/screenshot.jpg)
 
-> The app's interface is in Turkish. Each feature below gives the button name in parentheses so you can find it.
-
 ## Features
 
 - **Live flights**: aircraft positions refresh every 15 seconds. When you move or zoom the map, the new area loads right away.
@@ -25,9 +23,9 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
   - departure and/or arrival airport, by code (IST, LTFM) or city name
   - aircraft on the ground on or off, and a favorites-only option
 - **Favorites**: star a flight (☆) to find it again later.
-- **Alert zone** (*Uyarı bölgesi*): click the map to set a circle (100 km by default; change the radius in the menu, 10–500 km). You get a notification when an aircraft enters it, including one that first appears inside it.
-- **Replay**: rewind the last hour with the slider at the bottom, then press *● Canlı* to return to live.
-- **Map styles**: Standard, Light or Dark (*Standart / Açık / Koyu*).
+- **Alert zone** (*Alert zone*): click the map to set a circle (100 km by default; change the radius in the menu, 10–500 km). You get a notification when an aircraft enters it, including one that first appears inside it.
+- **Replay**: rewind the last hour with the slider at the bottom, then press *● Live* to return to live.
+- **Map styles**: Standard, Light or Dark.
 - **Fast with many planes**: all aircraft are drawn on a single canvas. Around 3,700 aircraft over Europe draw in about 8 ms.
 
 ## Download
@@ -59,10 +57,10 @@ The repository is named `airock`; the app itself is SkyTrack. Your filters and a
 
 | I want to… | Do this |
 |---|---|
-| See real flights | In the left menu, click **Canlı** (Live). **Demo** switches back to simulated flights. |
+| See real flights | In the left menu, click **Live**. **Demo** switches back to simulated flights. |
 | Get details about a plane | Click the plane on the map or in the list. Close the card with **✕**. |
 | Find a flight | Type a callsign (e.g. `THY1`) or registration (e.g. `TC-JPN`) into the search box. |
-| Show only flights from Istanbul to Frankfurt | Under *Filtreler* (Filters), type `IST` into **Kalkış** (Departure) and `FRA` into **Varış** (Arrival). Fill in only one box to see all departures or all arrivals for that airport. |
+| Show only flights from Istanbul to Frankfurt | Under *Filters*, type `IST` into **Departure** and `FRA` into **Arrival**. Fill in only one box to see all departures or all arrivals for that airport. |
 | Hide or show the side menu | Click **✕** at the top of the menu. Click **☰** on the map to bring it back. |
 | Go back in time | Drag the slider at the bottom of the map. |
 
@@ -86,7 +84,7 @@ All network requests are in [`src/data.js`](src/data.js).
   The free sources limit how many requests you can make. When OpenSky's daily limit runs out, SkyTrack shows only the center of the map and asks you to zoom in. Zooming in usually fixes it.
 - **Live mode doesn't work when I open `src/index.html` in a browser.**
   The data sources only allow requests from the desktop app, not from a web page (they block cross-origin requests from browsers). Use `npm start`. Demo mode works in both.
-- **A flight shows "Rota bilgisi bulunamadı" (route not found).**
+- **A flight shows "Route info not found".**
   The route database doesn't know this callsign. The rest of the details still work.
 
 ## Project structure

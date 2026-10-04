@@ -1,11 +1,11 @@
 ---
-name: Feature request / Özellik isteği
+name: Feature request
 about: Suggest an idea
 labels: enhancement
 ---
 
-**What would you like to see? / Ne görmek istersin?**
+**What would you like to see?**
 
-**Why is it useful? / Neden işe yarar?**
+**Why is it useful?**
 
-**Ideas for how it could work / Nasıl çalışabilir?**
+**Ideas for how it could work**

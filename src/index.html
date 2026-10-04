@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr"><head><meta charset="UTF-8">
+<html lang="en"><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
 <title>SkyTrack</title>
 <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
@@ -62,23 +62,23 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 .rtx{font-size:11px;color:var(--mut);margin-bottom:6px}.leaflet-tooltip.apl{border:0;font:700 12px ui-monospace,monospace;color:#fff;background:#e8245f;padding:2px 6px;border-radius:3px;box-shadow:0 1px 4px #0007}.leaflet-tooltip.apl::before{display:none}
 </style></head>
 <body><div id="app">
-<aside id="side"><div class="brand">SKYTRACK<button id="close" class="ib" title="Menüyü kapat">✕</button></div>
-<div class="sec"><div class="lbl">Veri</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Canlı</button></div><div id="st"></div></div>
-<div class="sec"><div class="lbl">Harita</div><div class="btns"><button id="bAp" class="on">Havalimanları</button><button id="bZ">Uyarı bölgesi</button></div>
-<label class="zr">Bölge yarıçapı <input id="zR" type="number" min="10" max="500" step="10" value="100"> km</label>
-<div class="btns" id="tiles" style="margin-top:6px"><button data-t="osm">Standart</button><button data-t="light">Açık</button><button data-t="dark">Koyu</button></div></div>
-<div class="flt"><div class="lbl">Filtreler</div><div>İrtifa <b id="vA">0</b> – <b id="vM">45.000+</b> ft</div>
-<div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">en az</span><span class="rmax">en çok</span></div>
+<aside id="side"><div class="brand">SKYTRACK<button id="close" class="ib" title="Close menu">✕</button></div>
+<div class="sec"><div class="lbl">Data</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Live</button></div><div id="st"></div></div>
+<div class="sec"><div class="lbl">Map</div><div class="btns"><button id="bAp" class="on">Airports</button><button id="bZ">Alert zone</button></div>
+<label class="zr">Zone radius <input id="zR" type="number" min="10" max="500" step="10" value="100"> km</label>
+<div class="btns" id="tiles" style="margin-top:6px"><button data-t="osm">Standard</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div></div>
+<div class="flt"><div class="lbl">Filters</div><div>Altitude <b id="vA">0</b> – <b id="vM">45.000+</b> ft</div>
+<div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">min</span><span class="rmax">max</span></div>
 <div style="height:8px"></div>
-<label>Min hız <b id="vS">0</b> kt<input id="fS" type="range" min="0" max="600" step="25" value="0"></label>
-<div>Havalimanı</div>
-<div class="apr"><input id="fDep" list="apList" placeholder="Kalkış" autocomplete="off"><button id="fSw" class="ib" title="Kalkış ↔ varış">⇄</button><input id="fArr" list="apList" placeholder="Varış" autocomplete="off"></div>
+<label>Min speed <b id="vS">0</b> kt<input id="fS" type="range" min="0" max="600" step="25" value="0"></label>
+<div>Airport</div>
+<div class="apr"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button id="fSw" class="ib" title="Departure ↔ arrival">⇄</button><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"></div>
 <div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
-<label class="ck"><input id="fG" type="checkbox" checked> Yerdeki uçakları göster</label>
-<label class="ck"><input id="fF" type="checkbox"> Sadece favoriler ★</label></div>
-<input id="q" placeholder="Çağrı kodu veya tescil ara…"><div id="meta"></div><div id="list"></div></aside>
+<label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
+<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div>
+<input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></aside>
 <main><div id="map"></div>
-<button id="open" class="ib" title="Menüyü aç">☰</button><div class="bar"><span id="clock"></span></div>
+<button id="open" class="ib" title="Open menu">☰</button><div class="bar"><span id="clock"></span></div>
 <div id="hov"></div><div id="card"></div><div id="toast"></div>
-<div id="rp"><button id="rpLive" class="on">● Canlı</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">geçmiş kaydı</span></div></main></div>
+<div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span></div></main></div>
 <script src="loader.js"></script></body></html>

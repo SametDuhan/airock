@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkyTrack — Free Live Flight Tracker</title>
+<meta name="description" content="SkyTrack is a free desktop flight tracker that runs on open ADS-B data. No account or API key needed.">
+<style>
+:root{--bg:#141414;--panel:#1d1d1d;--line:#2c2c2c;--text:#ececec;--muted:#9a9a9a;--accent:#f5c431;--accent-ink:#1a1500}
+@media (prefers-color-scheme:light){:root{--bg:#f6f4ee;--panel:#fff;--line:#e2ded3;--text:#1c1c1c;--muted:#6b675c;--accent:#e0a800;--accent-ink:#1a1500}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:inherit}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+header{border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-family:Georgia,"Times New Roman",serif;font-weight:700;letter-spacing:.18em;color:var(--accent);text-decoration:none}
+nav a{margin-left:20px;color:var(--muted);text-decoration:none;font-size:15px}
+nav a:hover{color:var(--text)}
+.hero{padding:72px 0 40px;text-align:center}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(32px,6vw,56px);line-height:1.1;margin:0 0 18px}
+h1 span{color:var(--accent)}
+.lead{max-width:620px;margin:0 auto 28px;color:var(--muted);font-size:18px}
+.btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-block;padding:12px 22px;border-radius:6px;font-weight:600;text-decoration:none;border:1px solid var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn:hover{filter:brightness(1.1)}
+.shot{margin:44px auto 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.shot img{display:block;width:100%;height:auto}
+section{padding:64px 0}
+h2{font-family:Georgia,"Times New Roman",serif;font-size:30px;margin:0 0 8px}
+.sub{color:var(--muted);margin:0 0 32px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px}
+.card h3{margin:0 0 6px;font-size:17px;color:var(--accent)}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0 0 24px}
+.steps li{counter-increment:s;padding:10px 0 10px 44px;position:relative}
+.steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:700;display:grid;place-items:center}
+pre{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;overflow-x:auto;font-size:14px;margin:0}
+.src{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.note{color:var(--muted);font-size:14px;margin-top:20px}
+footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <a class="logo" href="#">SKYTRACK</a>
+  <nav><a href="#features">Features</a><a href="#get-started">Get started</a><a href="#data">Data</a><a href="https://github.com/SametDuhan/airock">GitHub</a></nav>
+</div></header>
+
+<main>
+<div class="wrap hero">
+  <h1>Watch the sky <span>live</span>.</h1>
+  <p class="lead">SkyTrack is a free desktop flight tracker, similar to Flightradar24. It runs on Windows, macOS and Linux. No account or API key needed.</p>
+  <div class="btns">
+    <a class="btn primary" href="#get-started">Get started</a>
+    <a class="btn" href="https://github.com/SametDuhan/airock">View on GitHub</a>
+  </div>
+  <div class="shot"><img src="screenshot.jpg" alt="SkyTrack showing live flights around Istanbul, with a selected flight's route and details" width="1280" height="719"></div>
+</div>
+
+<section id="features"><div class="wrap">
+  <h2>Features</h2>
+  <p class="sub">Small, fast, and everything you need at hand.</p>
+  <div class="grid">
+    <div class="card"><h3>Live flights</h3><p>Aircraft positions refresh every 15 seconds. Move the map and the new area loads right away.</p></div>
+    <div class="card"><h3>Flight details</h3><p>Airline, aircraft type, registration, photo, route, distance and time left, altitude, speed and vertical speed.</p></div>
+    <div class="card"><h3>Route and trail</h3><p>The route is drawn as a great-circle arc. The last ~30 minutes of the flight path show as a trail.</p></div>
+    <div class="card"><h3>Filters</h3><p>Altitude range, minimum speed, departure/arrival airport, aircraft on the ground, and favorites only.</p></div>
+    <div class="card"><h3>Alert zone</h3><p>Pick a 10–500 km circle on the map. Get a notification when an aircraft enters it.</p></div>
+    <div class="card"><h3>Replay</h3><p>Rewind the last hour with the slider at the bottom, then press “Live” to return.</p></div>
+    <div class="card"><h3>Demo mode</h3><p>45 simulated flights, no internet needed. Time runs 30× faster.</p></div>
+    <div class="card"><h3>Map styles</h3><p>Standard, light and dark maps.</p></div>
+    <div class="card"><h3>Fast with many planes</h3><p>All aircraft are drawn on one canvas. Around 3,700 aircraft over Europe draw in about 8 ms.</p></div>
+  </div>
+</div></section>
+
+<section id="get-started" style="background:var(--panel);border-block:1px solid var(--line)"><div class="wrap">
+  <h2>Get started</h2>
+  <p class="sub">You need <a href="https://nodejs.org">Node.js</a> 18 or newer.</p>
+  <ol class="steps">
+    <li>Clone the project.</li>
+    <li>Install dependencies.</li>
+    <li>Start the app.</li>
+  </ol>
+<pre>git clone https://github.com/SametDuhan/airock.git
+cd airock
+npm install
+npm start</pre>
+  <p class="note">Note: live mode does not work if you open <code>index.html</code> in a browser. It only works from the desktop app.</p>
+</div></section>
+
+<section id="data"><div class="wrap">
+  <h2>Data sources</h2>
+  <p class="sub">Fully open data. Free sources have rate limits, so fewer aircraft may show when zoomed out.</p>
+  <div class="src">
+    <div class="card"><h3>adsb.lol</h3><p>Live positions for the zoomed-in view.</p></div>
+    <div class="card"><h3>OpenSky</h3><p>Wide view and backup source.</p></div>
+    <div class="card"><h3>adsbdb.com</h3><p>Route, aircraft type, registration and photo.</p></div>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <span>SkyTrack · MIT License</span>
+  <a href="https://github.com/SametDuhan/airock">github.com/SametDuhan/airock</a>
+</div></footer>
+</body>
+</html>
