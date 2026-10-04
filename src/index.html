@@ -1,37 +1,84 @@
 <!DOCTYPE html>
 <html lang="tr"><head><meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
 <title>SkyTrack</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
 <style>
 :root{--bg:#141414;--pn:#1c1c1c;--ac:#f2c230;--fg:#f0e6d2;--mut:#8d877c;--line:#ffffff14}
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden}
 #app{display:flex;height:100%}
-aside{width:300px;background:var(--pn);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2}
-.brand{padding:16px;font:700 13px ui-monospace,monospace;letter-spacing:.2em;color:var(--ac)}
-#q{margin:0 14px 10px;padding:9px 11px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}
+aside{width:300px;flex-shrink:0;overflow-y:auto;background:var(--pn);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2;transition:margin-left .35s cubic-bezier(.2,.7,.2,1)}
+aside.hide{margin-left:-301px}
+.brand{display:flex;justify-content:space-between;align-items:center;padding:12px 12px 8px 16px;font:700 13px ui-monospace,monospace;letter-spacing:.2em;color:var(--ac)}
+.ib{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1}.ib:hover{border-color:var(--ac);color:var(--ac)}
+#open{position:absolute;top:12px;left:12px;z-index:1000;background:var(--pn);width:38px;height:38px;font-size:18px;display:none}body.closed #open{display:block}
+.sec{padding:4px 16px 10px;border-bottom:1px solid var(--line)}.lbl{font:600 10px ui-monospace,monospace;letter-spacing:.14em;color:var(--mut);margin:6px 0 7px;text-transform:uppercase}
+.btns{display:flex;gap:6px}.btns button{flex:1;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:7px 6px;cursor:pointer;font-size:12px}
+.btns button:hover{border-color:var(--ac)}.btns button.on{background:var(--ac);color:#111;border-color:var(--ac);font-weight:700}
+#q{margin:10px 14px 10px;padding:9px 11px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}
 #q:focus{border-color:var(--ac)}
 #meta{padding:0 16px 8px;font:11px ui-monospace,monospace;color:var(--mut);letter-spacing:.08em}
-#list{flex:1;overflow:auto}
+#list{flex:1 1 0;min-height:150px;overflow:auto}
 .row{display:flex;justify-content:space-between;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:.2s}
 .row:hover{background:#ffffff0a;transform:translateX(3px)}.row.on{background:#f2c2301a;border-color:var(--ac)}
 .row b{font:600 13px ui-monospace,monospace}.row span{color:var(--mut);font-size:12px}
 main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 .bar{position:absolute;top:12px;right:12px;z-index:1000;display:flex;gap:8px;align-items:center;background:var(--pn);border:1px solid var(--line);border-radius:4px;padding:6px 10px}
-.bar button{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:6px 10px;cursor:pointer}
-.bar button.on{background:var(--ac);color:#111;border-color:var(--ac);font-weight:700}
-#st{font:11px ui-monospace,monospace;color:var(--mut)}
-#card{position:absolute;right:12px;top:64px;width:260px;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px;transform:translateX(300px);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
-#card.show{transform:none}#card h2{margin:0 0 2px;font:400 28px Georgia,serif}#card small{color:var(--mut)}
+#clock{font:600 15px ui-monospace,monospace;letter-spacing:.06em}
+#st{font:11px ui-monospace,monospace;color:var(--mut);margin-top:7px}
+#card{position:absolute;right:12px;top:64px;width:270px;max-height:calc(100% - 140px);overflow-y:auto;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px;transform:translateX(300px);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
+#card.show{transform:none}#card h2{margin:0 0 2px;font:400 26px Georgia,serif;word-break:break-all}#card small{color:var(--mut)}
+.ch{display:flex;gap:10px;align-items:flex-start}.ch .cn{flex:1;min-width:0}.logo{width:38px;height:38px;border-radius:4px;background:#fff;object-fit:contain;padding:2px;flex:none}
+#card .ib{width:28px;height:28px;margin:0;padding:0;color:var(--mut);border-color:var(--line);flex:none}#card .ib:hover{background:transparent;color:var(--ac);border-color:var(--ac)}
+.ph{display:block;margin:10px 0 2px;border-radius:3px;overflow:hidden;background:#111}.ph img{display:block;width:100%;height:auto}
+canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
+#hov{position:absolute;z-index:1000;display:none;pointer-events:none;background:var(--pn);color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:3px 7px;font:600 11px ui-monospace,monospace;white-space:nowrap}
 .kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}.kv span{color:var(--mut)}
-.pl{background:none;border:0}.pi{width:26px;height:26px;transition:transform .3s}.pi svg{width:100%;height:100%;fill:#f2c230;stroke:#000;stroke-width:.6;filter:drop-shadow(0 0 3px #0008)}
-.pl.sel .pi svg{fill:#fff;filter:drop-shadow(0 0 8px var(--ac))}
 .leaflet-container{background:#0e0e0e}
+.flt{padding:4px 16px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--mut)}
+.dr{position:relative;height:20px;margin:4px 0 10px;--a:0%;--b:100%}
+.dr::before{content:'';position:absolute;left:0;right:0;top:8px;height:4px;border-radius:2px;background:linear-gradient(to right,var(--line) var(--a),var(--ac) var(--a),var(--ac) var(--b),var(--line) var(--b))}
+.flt .dr input{position:absolute;left:0;top:0;width:100%;height:20px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+#fM{z-index:2}
+.dr input::-webkit-slider-runnable-track{height:20px;background:none}
+.dr input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:16px;height:16px;margin-top:2px;border-radius:50%;background:var(--ac);border:2px solid #111;cursor:grab}
+.dr input::-moz-range-track{background:none}.dr input::-moz-range-thumb{pointer-events:auto;width:12px;height:12px;border-radius:50%;background:var(--ac);border:2px solid #111;cursor:grab}
+.zr{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--mut)}.zr input{width:64px;padding:5px 6px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}.zr input:focus{border-color:var(--ac)}
+.apr{display:flex;gap:6px;align-items:center;margin:6px 0 4px}.apr .ib{flex:none;width:28px;height:30px}
+.apr input{flex:1;min-width:0;padding:7px 8px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0;font:600 12px ui-monospace,monospace;text-transform:uppercase}
+.apr input::placeholder{text-transform:none;font-weight:400}.apr input:focus{border-color:var(--ac)}.apr input.set{border-color:var(--ac);color:var(--ac)}
+.dr .rmin,.dr .rmax{position:absolute;top:19px;font-size:10px}.dr .rmax{right:0}
+.flt label{display:block;margin:6px 0}.flt b{color:var(--fg)}.flt input[type=range]{width:100%;accent-color:var(--ac)}.flt .ck{display:flex;gap:6px;align-items:center;cursor:pointer}
+#card button{margin-top:12px;width:100%;background:transparent;color:var(--ac);border:1px solid var(--ac);border-radius:3px;padding:7px;cursor:pointer}#card button:hover{background:var(--ac);color:#111}
+#rp{position:absolute;left:14px;right:80px;bottom:14px;z-index:1000;display:flex;gap:12px;align-items:center;background:var(--pn);border:1px solid var(--line);border-radius:4px;padding:8px 12px}
+#rp button{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:5px 10px;cursor:pointer}#rp button.on{color:#111;background:var(--ac);border-color:var(--ac)}
+#rp input{flex:1;accent-color:var(--ac)}#rpT{font:11px ui-monospace,monospace;color:var(--mut);min-width:90px;text-align:right}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:1100;display:flex;flex-direction:column;gap:8px;align-items:center}
+.tm{background:var(--ac);color:#111;padding:9px 16px;border-radius:3px;font-weight:600;animation:tin .4s cubic-bezier(.2,.7,.2,1),tout .4s 3.6s forwards}
+@keyframes tin{from{opacity:0;transform:translateY(-16px)}}@keyframes tout{to{opacity:0}}
+.rt{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 6px}.rt div{min-width:0}.rt div:last-child{text-align:right}
+.rt b{display:block;font:700 20px ui-monospace,monospace;color:var(--ac)}.rt small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:95px}.rt>span{color:var(--mut)}
+.pg{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:4px}.pg i{display:block;height:100%;background:var(--ac);transition:width .8s}
+.rtx{font-size:11px;color:var(--mut);margin-bottom:6px}.leaflet-tooltip.apl{border:0;font:700 12px ui-monospace,monospace;color:#fff;background:#e8245f;padding:2px 6px;border-radius:3px;box-shadow:0 1px 4px #0007}.leaflet-tooltip.apl::before{display:none}
 </style></head>
 <body><div id="app">
-<aside><div class="brand">SKYTRACK</div><input id="q" placeholder="Çağrı kodu ara…"><div id="meta"></div><div id="list"></div></aside>
+<aside id="side"><div class="brand">SKYTRACK<button id="close" class="ib" title="Menüyü kapat">✕</button></div>
+<div class="sec"><div class="lbl">Veri</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Canlı</button></div><div id="st"></div></div>
+<div class="sec"><div class="lbl">Harita</div><div class="btns"><button id="bAp" class="on">Havalimanları</button><button id="bZ">Uyarı bölgesi</button></div>
+<label class="zr">Bölge yarıçapı <input id="zR" type="number" min="10" max="500" step="10" value="100"> km</label>
+<div class="btns" id="tiles" style="margin-top:6px"><button data-t="osm">Standart</button><button data-t="light">Açık</button><button data-t="dark">Koyu</button></div></div>
+<div class="flt"><div class="lbl">Filtreler</div><div>İrtifa <b id="vA">0</b> – <b id="vM">45.000+</b> ft</div>
+<div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">en az</span><span class="rmax">en çok</span></div>
+<div style="height:8px"></div>
+<label>Min hız <b id="vS">0</b> kt<input id="fS" type="range" min="0" max="600" step="25" value="0"></label>
+<div>Havalimanı</div>
+<div class="apr"><input id="fDep" list="apList" placeholder="Kalkış" autocomplete="off"><button id="fSw" class="ib" title="Kalkış ↔ varış">⇄</button><input id="fArr" list="apList" placeholder="Varış" autocomplete="off"></div>
+<div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
+<label class="ck"><input id="fG" type="checkbox" checked> Yerdeki uçakları göster</label>
+<label class="ck"><input id="fF" type="checkbox"> Sadece favoriler ★</label></div>
+<input id="q" placeholder="Çağrı kodu veya tescil ara…"><div id="meta"></div><div id="list"></div></aside>
 <main><div id="map"></div>
-<div class="bar"><span id="st"></span><button id="mDemo" class="on">Demo</button><button id="mLive">Canlı</button></div>
-<div id="card"></div></main></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="renderer.js"></script>
+<button id="open" class="ib" title="Menüyü aç">☰</button><div class="bar"><span id="clock"></span></div>
+<div id="hov"></div><div id="card"></div><div id="toast"></div>
+<div id="rp"><button id="rpLive" class="on">● Canlı</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">geçmiş kaydı</span></div></main></div>
+<script src="loader.js"></script></body></html>
