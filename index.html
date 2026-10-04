@@ -43,9 +43,44 @@ pre{background:var(--panel);border:1px solid var(--line);border-radius:8px;paddi
 .note{color:var(--muted);font-size:14px;margin-top:20px}
 footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:14px}
 footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+/* ambient background: drifting planes + control tower (decorative, very subtle) */
+.sky{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;color:var(--accent)}
+header,main,footer{position:relative;z-index:1}
+.fly{position:absolute;left:-160px;display:flex;align-items:center;opacity:.14;animation:fly linear infinite}
+.fly svg{width:var(--s,34px);height:var(--s,34px);flex:none}
+.fly::before{content:"";order:-1;width:var(--t,160px);height:2px;background:linear-gradient(90deg,transparent,currentColor);opacity:.6;border-radius:2px}
+.fly.a{top:14%;--s:30px;animation-duration:46s;animation-delay:-6s}
+.fly.b{top:38%;--s:22px;--t:110px;animation-duration:62s;animation-delay:-30s;opacity:.1}
+.fly.c{top:66%;--s:38px;--t:200px;animation-duration:54s;animation-delay:-18s}
+.fly.d{top:84%;--s:20px;--t:90px;animation-duration:74s;animation-delay:-48s;opacity:.09}
+@keyframes fly{to{transform:translateX(calc(100vw + 360px))}}
+.tower{position:absolute;left:18px;bottom:0;width:78px;height:190px;opacity:.16}
+.tower svg{width:100%;height:100%;display:block}
+.dish{transform-box:fill-box;transform-origin:50% 100%;animation:sweep 6s linear infinite}
+.beacon{animation:blink 2.4s ease-in-out infinite}
+@keyframes sweep{0%{transform:rotate(-35deg)}50%{transform:rotate(35deg)}100%{transform:rotate(-35deg)}}
+@keyframes blink{0%,100%{opacity:.15}50%{opacity:1}}
+.pulse{transform-box:fill-box;transform-origin:center;animation:pulse 3s ease-out infinite}
+@keyframes pulse{from{transform:scale(.3);opacity:.9}to{transform:scale(1.6);opacity:0}}
+@media (max-width:640px){.tower{display:none}}
+@media (prefers-reduced-motion:reduce){.fly,.dish,.beacon,.pulse{animation:none}.fly{left:10%}}
 </style>
 </head>
 <body>
+<div class="sky" aria-hidden="true">
+  <div class="fly a"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12 3 4.5v5L13 12 3 14.5v5z"/></svg></div>
+  <div class="fly b"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12 3 4.5v5L13 12 3 14.5v5z"/></svg></div>
+  <div class="fly c"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12 3 4.5v5L13 12 3 14.5v5z"/></svg></div>
+  <div class="fly d"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12 3 4.5v5L13 12 3 14.5v5z"/></svg></div>
+  <div class="tower"><svg viewBox="0 0 78 190" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle class="pulse" cx="39" cy="38" r="26" stroke-width="1.5"/>
+    <path d="M30 190 33 82M48 190 45 82M33 82h12M32 120h14M31 156h16"/>
+    <path d="M24 82h30l5-16H19zM28 66V50h22v16M26 50h26l-4-10H30z"/>
+    <g class="dish"><path d="M39 40V26M29 26h20" /></g>
+    <circle class="beacon" cx="39" cy="18" r="3.5" fill="currentColor" stroke="none"/>
+  </svg></div>
+</div>
 <header><div class="wrap">
   <a class="logo" href="#">SKYTRACK</a>
   <nav><a href="#features">Features</a><a href="#get-started">Get started</a><a href="#data">Data</a><a href="https://github.com/SametDuhan/airock">GitHub</a></nav>
