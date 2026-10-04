@@ -67,7 +67,7 @@ header,main,footer{position:relative;z-index:1}
 @media (max-width:640px){.tower{display:none}}
 @media (prefers-reduced-motion:reduce){.fly,.dish,.beacon,.pulse{animation:none}.fly{left:10%}}
 
-.engine{position:fixed;right:14px;bottom:10px;width:84px;opacity:.28;z-index:2;pointer-events:none;color:var(--accent)}
+.engine{position:absolute;right:14px;bottom:10px;width:84px;opacity:.28;color:var(--accent)}
 .engine svg{display:block;width:100%;height:auto}
 .fan{transform-origin:0 0;animation:spin 9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -81,6 +81,15 @@ header,main,footer{position:relative;z-index:1}
   <div class="fly b"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12 3 4.5v5L13 12 3 14.5v5z"/></svg></div>
   <div class="fly c"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12 3 4.5v5L13 12 3 14.5v5z"/></svg></div>
   <div class="fly d"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12 3 4.5v5L13 12 3 14.5v5z"/></svg></div>
+  <div class="engine"><svg viewBox="0 0 70 70" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+    <circle cx="35" cy="35" r="33"/>
+    <circle cx="35" cy="35" r="30.5" stroke-opacity=".45"/>
+    <g transform="translate(35 35)"><g class="fan">
+      <g fill="currentColor" fill-opacity=".3" stroke="currentColor" stroke-width=".8" stroke-linejoin="round"><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(0.00)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(16.36)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(32.73)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(49.09)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(65.45)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(81.82)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(98.18)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(114.55)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(130.91)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(147.27)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(163.64)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(180.00)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(196.36)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(212.73)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(229.09)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(245.45)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(261.82)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(278.18)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(294.55)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(310.91)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(327.27)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(343.64)"/></g>
+      <circle r="11.5" fill="#141414" stroke-width="1.6"/>
+      <path transform="scale(1.45)" d="M3.6 0.4 C3.6 -2.8 0.4 -4.2 -2.2 -2.8 C-4.8 -1.3 -4.4 2.8 -1.2 4.4 C2 5.9 6.4 3.6 6.4 -0.6" stroke-width="1.5" stroke-linecap="round"/>
+    </g></g>
+  </svg></div>
   <div class="tower"><svg viewBox="0 0 78 190" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <circle class="pulse" cx="39" cy="38" r="26" stroke-width="1.5"/>
     <path d="M30 190 33 82M48 190 45 82M33 82h12M32 120h14M31 156h16"/>
@@ -151,15 +160,6 @@ npm start</pre>
   <span>SkyTrack · MIT License</span>
   <a href="https://github.com/SametDuhan/airock">github.com/SametDuhan/airock</a>
 </div></footer>
-  <div class="engine"><svg viewBox="0 0 70 70" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-    <circle cx="35" cy="35" r="33"/>
-    <circle cx="35" cy="35" r="30.5" stroke-opacity=".45"/>
-    <g transform="translate(35 35)"><g class="fan">
-      <g fill="currentColor" fill-opacity=".3" stroke="currentColor" stroke-width=".8" stroke-linejoin="round"><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(0.00)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(16.36)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(32.73)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(49.09)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(65.45)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(81.82)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(98.18)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(114.55)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(130.91)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(147.27)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(163.64)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(180.00)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(196.36)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(212.73)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(229.09)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(245.45)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(261.82)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(278.18)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(294.55)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(310.91)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(327.27)"/><path d="M-1.6 -11 C-6 -17 -5.2 -24 -1.6 -30 L2.6 -29.4 C-0.6 -23.5 -1 -17 0.8 -11Z" transform="rotate(343.64)"/></g>
-      <circle r="11.5" fill="#141414" stroke-width="1.6"/>
-      <path transform="scale(1.45)" d="M3.6 0.4 C3.6 -2.8 0.4 -4.2 -2.2 -2.8 C-4.8 -1.3 -4.4 2.8 -1.2 4.4 C2 5.9 6.4 3.6 6.4 -0.6" stroke-width="1.5" stroke-linecap="round"/>
-    </g></g>
-  </svg></div>
 
 </body>
 </html>
