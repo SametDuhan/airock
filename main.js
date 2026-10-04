@@ -5,7 +5,7 @@ const data = require('./src/data.js'); // flight, route and aircraft data (share
 function createWindow() {
   const w = new BrowserWindow({
     width: 1400, height: 860, minWidth: 900, minHeight: 600,
-    backgroundColor: '#141414', title: 'SkyTrack',
+    backgroundColor: '#141414', title: 'SkyTrack', icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
   });
   w.removeMenu();

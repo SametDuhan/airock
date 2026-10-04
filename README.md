@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.svg" alt="SkyTrack logo" width="96"></p>
+
 # SkyTrack
 
 **English** · [Türkçe](README.tr.md)
