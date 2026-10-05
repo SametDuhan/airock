@@ -252,7 +252,7 @@ function drawZone() { zoneLayer && zoneLayer.remove(); zoneLayer = null; $('bZ')
   if (zone) zoneLayer = L.circle([zone.lat, zone.lon], { radius: zoneR() * 1000, color: '#ff6b5e', weight: 2, dashArray: '6 6', fillOpacity: .07, interactive: false }).addTo(map); }
 $('bZ').onclick = () => { if (zone) { zone = null; save('sky.zone', null); drawZone(); } else { placing = true; toast('Click the map to set the zone center'); } };
 $('zR').value = zoneR();
-$('zR').onchange = function () { const r = Math.max(10, Math.min(500, Math.round(+this.value) || ZONE_R)); this.value = r; if (zone) { zone.r = r; save('sky.zone', zone); initIn(); drawZone(); } else zoneRDef = r; };
+$('zR').onchange = function () { const r = Math.max(3, Math.min(500, Math.round(+this.value) || ZONE_R)); this.value = r; if (zone) { zone.r = r; save('sky.zone', zone); initIn(); drawZone(); } else zoneRDef = r; };
 let zoneRDef = ZONE_R; // radius chosen while there's no zone; applied to the next zone
 // When the zone changes, silently recompute whether each aircraft is "inside" (to avoid a flood of notifications)
 const initIn = () => flights.forEach(f => { if (zone) f.in = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); else delete f.in; });
