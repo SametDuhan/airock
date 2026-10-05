@@ -25,7 +25,8 @@
       "main.js",
       "preload.js",
       "src/**",
-      "node_modules/leaflet/dist/**"
+      "node_modules/leaflet/dist/**",
+      "build/icon.png"
     ],
     "win": {
       "target": "nsis"

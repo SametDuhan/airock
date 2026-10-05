@@ -1,7 +1,6 @@
-# Contributing / Katkıda bulunma
+# Contributing
 
 Thanks for your interest in SkyTrack! Small fixes and new ideas are both welcome.
-SkyTrack'e ilgin için teşekkürler! Küçük düzeltmeler de yeni fikirler de değerli.
 
 ## Quick start
 
@@ -34,4 +33,4 @@ If you want to work on one, comment on it first so we don't duplicate work.
 3. Run `npm test` and make sure it passes. Add a test if you touch `src/geo.js` or `src/data.js`.
 4. Open a PR and describe what you changed and why. A screenshot helps for UI changes.
 
-Turkish or English are both fine in issues and PRs. / Issue ve PR'larda Türkçe de İngilizce de olur.
+Turkish or English are both fine in issues and PRs.

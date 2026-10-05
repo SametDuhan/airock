@@ -1,11 +1,11 @@
-// Coğrafya yardımcıları (saf fonksiyonlar). Hem tarayıcıda (script etiketi) hem testlerde (require) kullanılır.
+// Geography helpers (pure functions). Used both in the browser (script tag) and in tests (require).
 (function (root) {
   const R = Math.PI / 180;
-  // a=(lat1,lon1), b=(lat2,lon2): başlangıçtan varışa yön (derece)
+  // a=(lat1,lon1), b=(lat2,lon2): bearing from start to destination (degrees)
   const brg = (a, b, c, d) => { const y = Math.sin((d - b) * R) * Math.cos(c * R), x = Math.cos(a * R) * Math.sin(c * R) - Math.sin(a * R) * Math.cos(c * R) * Math.cos((d - b) * R); return (Math.atan2(y, x) / R + 360) % 360; };
-  // iki nokta arası büyük daire mesafesi (km)
+  // great-circle distance between two points (km)
   const km = (a, b, c, d) => { const x = Math.sin((c - a) * R / 2) ** 2 + Math.cos(a * R) * Math.cos(c * R) * Math.sin((d - b) * R / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
-  // Büyük daire (dünya yüzeyindeki en kısa yol) üzerinde n parçalık noktalar
+  // Points along a great circle (the shortest path over the globe), split into n segments
   function gc(a, b, n = 48) {
     const [φ1, λ1, φ2, λ2] = [a[0] * R, a[1] * R, b[0] * R, b[1] * R];
     const d = 2 * Math.asin(Math.sqrt(Math.sin((φ2 - φ1) / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin((λ2 - λ1) / 2) ** 2));
@@ -18,9 +18,9 @@
     }
     return out;
   }
-  // Boylam 180°'yi geçerken çizgi haritanın öbür ucuna atlamasın diye boylamları sürekli tut
+  // Keep longitudes continuous so a line crossing 180° doesn't jump to the other side of the map
   const unwrap = pts => { for (let i = 1; i < pts.length; i++) { while (pts[i][1] - pts[i - 1][1] > 180) pts[i][1] -= 360; while (pts[i][1] - pts[i - 1][1] < -180) pts[i][1] += 360; } return pts; };
-  // lon'u, merkez boylamına en yakın dünya kopyasına taşır (tarih değişim çizgisi civarında uçaklar kaybolmasın)
+  // Moves lon to the world copy nearest the center longitude (so aircraft don't vanish near the date line)
   const nearLon = (lon, center) => lon + 360 * Math.round((center - lon) / 360);
   const api = { R, brg, km, gc, unwrap, nearLon };
   root.SkyGeo = api;

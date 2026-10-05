@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html lang="tr"><head><meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
+<html lang="en"><head><meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://api.planespotters.net https://adsb.lol https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
 <title>SkyTrack</title>
 <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
 <style>
 :root{--bg:#141414;--pn:#1c1c1c;--ac:#f2c230;--fg:#f0e6d2;--mut:#8d877c;--line:#ffffff14}
-*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden}
+*{box-sizing:border-box}
+/* Scrollbars (all scrollable areas): yellow thumb on a black track */
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:#0e0e0e}
+::-webkit-scrollbar-thumb{background:var(--ac);border:3px solid #0e0e0e;border-radius:8px;min-height:36px}
+::-webkit-scrollbar-thumb:hover{background:#ffd75a}
+::-webkit-scrollbar-button{display:none}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden}
 #app{display:flex;height:100%}
 aside{width:300px;flex-shrink:0;overflow-y:auto;background:var(--pn);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2;transition:margin-left .35s cubic-bezier(.2,.7,.2,1)}
 aside.hide{margin-left:-301px}
@@ -30,7 +36,10 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 #card.show{transform:none}#card h2{margin:0 0 2px;font:400 26px Georgia,serif;word-break:break-all}#card small{color:var(--mut)}
 .ch{display:flex;gap:10px;align-items:flex-start}.ch .cn{flex:1;min-width:0}.logo{width:38px;height:38px;border-radius:4px;background:#fff;object-fit:contain;padding:2px;flex:none}
 #card .ib{width:28px;height:28px;margin:0;padding:0;color:var(--mut);border-color:var(--line);flex:none}#card .ib:hover{background:transparent;color:var(--ac);border-color:var(--ac)}
-.ph{display:block;margin:10px 0 2px;border-radius:3px;overflow:hidden;background:#111}.ph img{display:block;width:100%;height:auto}
+.ph{display:block;margin:10px 0 2px;border-radius:3px;overflow:hidden;background:#111}.ph{position:relative}.ph img{display:block;width:100%;height:auto}
+#card .pa{position:absolute;top:50%;margin:-17px 0 0;width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;font:700 22px/1 system-ui,sans-serif;background:var(--ac);color:#111;border:2px solid #111;border-radius:50%}
+#card .pa:hover{background:#ffd75a;color:#111}.pa.l{left:6px}.pa.r{right:6px}
+.pc,.by{position:absolute;bottom:6px;background:#000a;color:#fff;font:600 10px ui-monospace,monospace;padding:2px 6px;border-radius:3px}.pc{right:6px}.by{left:6px;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}
 canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 #hov{position:absolute;z-index:1000;display:none;pointer-events:none;background:var(--pn);color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:3px 7px;font:600 11px ui-monospace,monospace;white-space:nowrap}
 .kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}.kv span{color:var(--mut)}
@@ -46,7 +55,7 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 .zr{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--mut)}.zr input{width:64px;padding:5px 6px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}.zr input:focus{border-color:var(--ac)}
 .apr{display:flex;gap:6px;align-items:center;margin:6px 0 4px}.apr .ib{flex:none;width:28px;height:30px}
 .apr input{flex:1;min-width:0;padding:7px 8px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0;font:600 12px ui-monospace,monospace;text-transform:uppercase}
-.apr input::placeholder{text-transform:none;font-weight:400}.apr input:focus{border-color:var(--ac)}.apr input.set{border-color:var(--ac);color:var(--ac)}
+.apr input#fTp,.apr input#fAl{text-transform:none}.apr input::placeholder{text-transform:none;font-weight:400}.apr input:focus{border-color:var(--ac)}.apr input.set{border-color:var(--ac);color:var(--ac)}
 .dr .rmin,.dr .rmax{position:absolute;top:19px;font-size:10px}.dr .rmax{right:0}
 .flt label{display:block;margin:6px 0}.flt b{color:var(--fg)}.flt input[type=range]{width:100%;accent-color:var(--ac)}.flt .ck{display:flex;gap:6px;align-items:center;cursor:pointer}
 #card button{margin-top:12px;width:100%;background:transparent;color:var(--ac);border:1px solid var(--ac);border-radius:3px;padding:7px;cursor:pointer}#card button:hover{background:var(--ac);color:#111}
@@ -59,26 +68,30 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 .rt{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 6px}.rt div{min-width:0}.rt div:last-child{text-align:right}
 .rt b{display:block;font:700 20px ui-monospace,monospace;color:var(--ac)}.rt small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:95px}.rt>span{color:var(--mut)}
 .pg{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:4px}.pg i{display:block;height:100%;background:var(--ac);transition:width .8s}
-.rtx{font-size:11px;color:var(--mut);margin-bottom:6px}.leaflet-tooltip.apl{border:0;font:700 12px ui-monospace,monospace;color:#fff;background:#e8245f;padding:2px 6px;border-radius:3px;box-shadow:0 1px 4px #0007}.leaflet-tooltip.apl::before{display:none}
+.rtx{font-size:11px;color:var(--mut);margin-bottom:6px}.leaflet-tooltip.apl{border:0;font:700 12px ui-monospace,monospace;color:#fff;background:#2f8cff;padding:2px 6px;border-radius:3px;box-shadow:0 1px 4px #0007}.leaflet-tooltip.apl::before{display:none}
 </style></head>
 <body><div id="app">
-<aside id="side"><div class="brand">SKYTRACK<button id="close" class="ib" title="Menüyü kapat">✕</button></div>
-<div class="sec"><div class="lbl">Veri</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Canlı</button></div><div id="st"></div></div>
-<div class="sec"><div class="lbl">Harita</div><div class="btns"><button id="bAp" class="on">Havalimanları</button><button id="bZ">Uyarı bölgesi</button></div>
-<label class="zr">Bölge yarıçapı <input id="zR" type="number" min="10" max="500" step="10" value="100"> km</label>
-<div class="btns" id="tiles" style="margin-top:6px"><button data-t="osm">Standart</button><button data-t="light">Açık</button><button data-t="dark">Koyu</button></div></div>
-<div class="flt"><div class="lbl">Filtreler</div><div>İrtifa <b id="vA">0</b> – <b id="vM">45.000+</b> ft</div>
-<div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">en az</span><span class="rmax">en çok</span></div>
+<aside id="side"><div class="brand">SKYTRACK<button id="close" class="ib" title="Close menu">✕</button></div>
+<div class="sec"><div class="lbl">Data</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Live</button></div><div id="st"></div></div>
+<div class="sec"><div class="lbl">Map</div><div class="btns"><button id="bAp" class="on">Airports</button><button id="bZ">Alert zone</button></div>
+<label class="zr">Zone radius <input id="zR" type="number" min="3" max="500" step="1" value="100"> km</label>
+<div class="btns" id="tiles" style="margin-top:6px"><button data-t="osm">Standard</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div></div>
+<div class="flt"><div class="lbl">Filters</div><div>Altitude <b id="vA">0</b> – <b id="vM">45.000+</b> ft</div>
+<div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">min</span><span class="rmax">max</span></div>
 <div style="height:8px"></div>
-<label>Min hız <b id="vS">0</b> kt<input id="fS" type="range" min="0" max="600" step="25" value="0"></label>
-<div>Havalimanı</div>
-<div class="apr"><input id="fDep" list="apList" placeholder="Kalkış" autocomplete="off"><button id="fSw" class="ib" title="Kalkış ↔ varış">⇄</button><input id="fArr" list="apList" placeholder="Varış" autocomplete="off"></div>
+<label>Min speed <b id="vS">0</b> kt<input id="fS" type="range" min="0" max="600" step="25" value="0"></label>
+<div>Airport</div>
+<div class="apr"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button id="fSw" class="ib" title="Departure ↔ arrival">⇄</button><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"></div>
+<div>Airline</div>
+<div class="apr"><input id="fAl" list="alList" placeholder="e.g. THY, Pegasus, Lufthansa" autocomplete="off"></div><datalist id="alList"></datalist>
+<div>Aircraft type</div>
+<div class="apr"><input id="fTp" list="tpList" placeholder="e.g. B738, A320, boeing 777" autocomplete="off"></div><datalist id="tpList"></datalist>
 <div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
-<label class="ck"><input id="fG" type="checkbox" checked> Yerdeki uçakları göster</label>
-<label class="ck"><input id="fF" type="checkbox"> Sadece favoriler ★</label></div>
-<input id="q" placeholder="Çağrı kodu veya tescil ara…"><div id="meta"></div><div id="list"></div></aside>
+<label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
+<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div>
+<input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></aside>
 <main><div id="map"></div>
-<button id="open" class="ib" title="Menüyü aç">☰</button><div class="bar"><span id="clock"></span></div>
+<button id="open" class="ib" title="Open menu">☰</button><div class="bar"><span id="clock"></span></div>
 <div id="hov"></div><div id="card"></div><div id="toast"></div>
-<div id="rp"><button id="rpLive" class="on">● Canlı</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">geçmiş kaydı</span></div></main></div>
+<div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span></div></main></div>
 <script src="loader.js"></script></body></html>
