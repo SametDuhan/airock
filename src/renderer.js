@@ -71,9 +71,9 @@ flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false, ground: true, dep: '', arr: '
 let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
 
 /* ---------- appearance: altitude color + filter ---------- */
-// Four altitude bands (amber < 5,000 ft, green < 16,000 ft, blue < 30,000 ft, violet above) so neighbouring planes don't turn into a rainbow
-const ALT_COLORS = ['hsl(45 90% 58%)', 'hsl(145 70% 50%)', 'hsl(205 85% 58%)', 'hsl(265 80% 62%)'];
-const color = alt => ALT_COLORS[alt < 1500 ? 0 : alt < 4900 ? 1 : alt < 9100 ? 2 : 3];
+// Three altitude bands (amber < 5,000 ft, green < 16,000 ft, violet above) so neighbouring planes don't turn into a rainbow
+const ALT_COLORS = ['hsl(45 90% 58%)', 'hsl(145 70% 50%)', 'hsl(265 80% 62%)'];
+const color = alt => ALT_COLORS[alt < 1500 ? 0 : alt < 4900 ? 1 : 2];
 const apIs = (a, c) => !!a && (a.code === c || a.icao === c);
 // Aircraft type filter: matches the ICAO type code ("B738") or part of the type name ("boeing 737")
 const acCode = f => (f.ac?.icaoType || f.type || '').toUpperCase();
