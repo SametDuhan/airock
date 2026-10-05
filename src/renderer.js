@@ -65,7 +65,7 @@ const zoneR = () => zone?.r || ZONE_R;
 const APO = AP.map(a => ({ code: a[0], name: a[1], lat: a[2], lon: a[3] }));
 const { R, brg, km, gc, unwrap, nearLon } = window.SkyGeo;
 const flights = new Map(), routeCache = new Map(), acCache = new Map(), fav = new Set(LS('sky.fav', [])), hist = [],
-flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false, ground: true, dep: '', arr: '', type: '' };
+flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false, ground: true, dep: '', arr: '', type: '', air: '' };
 let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
 
 /* ---------- appearance: altitude color + filter ---------- */
@@ -76,8 +76,12 @@ const apIs = (a, c) => !!a && (a.code === c || a.icao === c);
 // Aircraft type filter: matches the ICAO type code ("B738") or part of the type name ("boeing 737")
 const acCode = f => (f.ac?.icaoType || f.type || '').toUpperCase();
 const typeIs = (f, t) => { const c = acCode(f); return c === t || c.startsWith(t) || (f.ac?.type || '').toUpperCase().includes(t); };
+// Airline filter: callsign prefix is the ICAO airline code ("THY123" → THY); also matches the name ("turkish") or IATA code ("TK")
+const airCode = f => /^[A-Z]{3}(?=\d)/.exec(f.cs.toUpperCase())?.[0] || '';
+const airIs = (f, a) => { const c = airCode(f), n = (f.route?.airline || AIRLINE[c]?.[0] || '').toUpperCase();
+  return c === a || (f.route?.airlineIata || '').toUpperCase() === a || (a.length > 2 && n.includes(a)); };
 const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (!flt.fav || fav.has(f.id))
-  && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)) && (!flt.type || typeIs(f, flt.type)); };
+  && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)) && (!flt.type || typeIs(f, flt.type)) && (!flt.air || airIs(f, flt.air)); };
 function toast(msg) {
   const d = document.createElement('div'); d.className = 'tm'; d.textContent = msg; $('toast').appendChild(d); setTimeout(() => d.remove(), 4000);
   try { new Notification('SkyTrack', { body: msg }); } catch {}
@@ -311,6 +315,7 @@ function renderList() {
   const q = $('q').value.trim().toLowerCase();
   const arr = [...flights.values()].filter(f => vis(f) && (f.cs.toLowerCase().includes(q) || (f.reg || '').toLowerCase().includes(q))).sort((a, b) => (a.ground - b.ground) || (/^[A-Z]{2,3}\d/.test(b.cs) - /^[A-Z]{2,3}\d/.test(a.cs)) || a.cs.localeCompare(b.cs)).slice(0, 200); // airborne flights with callsigns first
   for (const f of flights.values()) { const c = acCode(f); if (c && !knownTypes.has(c)) { knownTypes.add(c); const o = document.createElement('option'); o.value = c; if (f.ac?.type) o.label = f.ac.type; $('tpList').appendChild(o); } }
+  for (const f of flights.values()) { const c = airCode(f); if (c) addAir(c, f.route?.airline); }
   $('meta').textContent = `${arr.length} / ${flights.size} FLIGHTS`;
   let st = '';
   if (live && (flt.dep || flt.arr)) { const v = map.getBounds(), inV = [...flights.values()].filter(f => !f.ground && v.contains([f.lat, f.lon]));
@@ -321,23 +326,25 @@ function renderList() {
 }
 $('list').onpointerdown = e => { const r = e.target.closest('.row'); if (r) select(r.dataset.id); };
 $('q').oninput = renderList; setInterval(renderList, 2000);
-const knownTypes = new Set();
+const knownTypes = new Set(), knownAir = new Set();
+const addAir = (c, n) => { if (knownAir.has(c)) return; knownAir.add(c); const o = document.createElement('option'); o.value = c; if (n) o.label = n; $('alList').appendChild(o); };
+Object.entries(AIRLINE).forEach(([c, a]) => addAir(c, a[0]));
 const applyF = e => {
   // two handles on one bar: left = min, right = max altitude; they can't cross each other
   const a = $('fA'), m = $('fM');
   if (+a.value > +m.value) { if (e && e.target === m) m.value = a.value; else a.value = m.value; }
   flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.fav = $('fF').checked; flt.ground = $('fG').checked;
-  flt.dep = apCode($('fDep').value); flt.arr = apCode($('fArr').value); flt.type = $('fTp').value.trim().toUpperCase(); $('fTp').classList.toggle('set', !!flt.type);
+  flt.dep = apCode($('fDep').value); flt.arr = apCode($('fArr').value); flt.type = $('fTp').value.trim().toUpperCase(); $('fTp').classList.toggle('set', !!flt.type); flt.air = $('fAl').value.trim().toUpperCase(); $('fAl').classList.toggle('set', !!flt.air);
   $('fDep').classList.toggle('set', !!flt.dep); $('fArr').classList.toggle('set', !!flt.arr); pumpRoutes();
-  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value });
+  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value, al: $('fAl').value });
   a.style.zIndex = flt.alt > 22500 ? 3 : 1; // so "min" can still be grabbed at the right end when the handles overlap
   $('dr').style.setProperty('--a', flt.alt / 450 + '%'); $('dr').style.setProperty('--b', flt.maxAlt / 450 + '%');
   $('vA').textContent = flt.alt.toLocaleString('en-US'); $('vM').textContent = flt.maxAlt >= 45000 ? '45,000+' : flt.maxAlt.toLocaleString('en-US'); $('vS').textContent = flt.spd;
   redraw(); renderList();
 };
-['fA', 'fM', 'fS', 'fF', 'fG', 'fDep', 'fArr', 'fTp'].forEach(i => $(i).oninput = applyF);
+['fA', 'fM', 'fS', 'fF', 'fG', 'fDep', 'fArr', 'fTp', 'fAl'].forEach(i => $(i).oninput = applyF);
 { const v = LS('sky.flt', null); // restore the filters from the last session
-  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; } }
+  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; } }
 $('fSw').onclick = () => { const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; applyF(); };
 
 /* ---------- airport filter (departure / arrival) ---------- */

@@ -46,7 +46,7 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 .zr{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--mut)}.zr input{width:64px;padding:5px 6px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}.zr input:focus{border-color:var(--ac)}
 .apr{display:flex;gap:6px;align-items:center;margin:6px 0 4px}.apr .ib{flex:none;width:28px;height:30px}
 .apr input{flex:1;min-width:0;padding:7px 8px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0;font:600 12px ui-monospace,monospace;text-transform:uppercase}
-.apr input#fTp{text-transform:none}.apr input::placeholder{text-transform:none;font-weight:400}.apr input:focus{border-color:var(--ac)}.apr input.set{border-color:var(--ac);color:var(--ac)}
+.apr input#fTp,.apr input#fAl{text-transform:none}.apr input::placeholder{text-transform:none;font-weight:400}.apr input:focus{border-color:var(--ac)}.apr input.set{border-color:var(--ac);color:var(--ac)}
 .dr .rmin,.dr .rmax{position:absolute;top:19px;font-size:10px}.dr .rmax{right:0}
 .flt label{display:block;margin:6px 0}.flt b{color:var(--fg)}.flt input[type=range]{width:100%;accent-color:var(--ac)}.flt .ck{display:flex;gap:6px;align-items:center;cursor:pointer}
 #card button{margin-top:12px;width:100%;background:transparent;color:var(--ac);border:1px solid var(--ac);border-radius:3px;padding:7px;cursor:pointer}#card button:hover{background:var(--ac);color:#111}
@@ -73,6 +73,8 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 <label>Min speed <b id="vS">0</b> kt<input id="fS" type="range" min="0" max="600" step="25" value="0"></label>
 <div>Airport</div>
 <div class="apr"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button id="fSw" class="ib" title="Departure ↔ arrival">⇄</button><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"></div>
+<div>Airline</div>
+<div class="apr"><input id="fAl" list="alList" placeholder="e.g. THY, Pegasus, Lufthansa" autocomplete="off"></div><datalist id="alList"></datalist>
 <div>Aircraft type</div>
 <div class="apr"><input id="fTp" list="tpList" placeholder="e.g. B738, A320, boeing 777" autocomplete="off"></div><datalist id="tpList"></datalist>
 <div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
