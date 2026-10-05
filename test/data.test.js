@@ -22,3 +22,9 @@ test('route/aircraft: invalid input is rejected before any network call', async 
 test('flights: invalid bounds return an error', async () => {
   assert.equal((await D.flights({ s: 'a' })).ok, false);
 });
+
+test('legOf: keeps only the current flight of the day trace', () => {
+  const t = [[0, 1, 1, 'ground'], [1, 2, 2, 5000], [2, 3, 3, 'ground'], [3, 4, 4, 'ground'], [4, 5, 5, 3000], [5, 6, 6, 30000]];
+  assert.deepEqual(D.legOf(t), [[4, 4], [5, 5], [6, 6]]);
+  assert.deepEqual(D.legOf([]), []);
+});

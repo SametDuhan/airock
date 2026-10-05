@@ -25,9 +25,11 @@ setTiles(LS('sky.tiles', 'osm'));
 
 const trail = L.polyline([], { color: '#f2c230', weight: 2.5, opacity: .9, interactive: false }).addTo(map);
 // Route: a plain line with a dark casing, so it stands out on both light and dark maps
-const ROUTE_C = '#e8245f', routeCase = L.polyline([], { color: '#111', weight: 7, opacity: .5, interactive: false }).addTo(map);
+const ROUTE_C = '#2f8cff', routeCase = L.polyline([], { color: '#111', weight: 7, opacity: .5, interactive: false }).addTo(map);
 const routeLine = L.polyline([], { color: ROUTE_C, weight: 3.5, opacity: .95, interactive: false }).addTo(map), routeEnds = L.layerGroup().addTo(map);
-const setRoute = pts => { routeCase.setLatLngs(pts); routeLine.setLatLngs(pts); };
+// Flown part: solid blue; remaining part (current position → destination): dashed blue
+const routeRest = L.polyline([], { color: ROUTE_C, weight: 3.5, opacity: .95, dashArray: '9 9', interactive: false }).addTo(map);
+const setRoute = (done, rest = []) => { routeCase.setLatLngs(done); routeLine.setLatLngs(done); routeRest.setLatLngs(rest); };
 const AP = [
   // Turkey
   ['IST','Istanbul',41.26,28.74],['SAW','Sabiha Gökçen',40.90,29.31],['ESB','Ankara Esenboğa',40.13,32.99],
@@ -169,11 +171,20 @@ async function loadRoute(f) {
 }
 function showRoute(f) { if (f.id !== selected) return; if (!replay) drawRoute(f); renderCard(true); }
 // Departure → aircraft → arrival, as great-circle arcs
-const routePts = f => { const { org, dst } = f.route, p = [f.lat, f.lon]; return unwrap([...gc([org.lat, org.lon], p), ...gc(p, [dst.lat, dst.lon]).slice(1)]); };
+// Flown: the real trace from adsb.lol when available (otherwise a great-circle arc from the departure airport); rest: great circle to the destination
+const routePts = f => { const { org, dst } = f.route, p = [f.lat, f.lon];
+  const done = f.flown?.length > 1 ? [...f.flown, p] : gc([org.lat, org.lon], p);
+  return { done: unwrap(done), rest: unwrap(gc(p, [dst.lat, dst.lon])) }; };
+// Path flown so far (live only); refreshed at most once a minute while the aircraft is selected
+async function loadTrace(f) {
+  if (!live || f.trAt && Date.now() - f.trAt < 60000) return; f.trAt = Date.now();
+  const res = await DATA.trace(f.id); if (!res.ok) return;
+  f.flown = res.points; if (f.id === selected && !replay && f.route) { const p = routePts(f); setRoute(p.done, p.rest); }
+}
 function drawRoute(f) {
   routeEnds.clearLayers();
   if (!f || !f.route) return setRoute([]);
-  setRoute(routePts(f));
+  { const p = routePts(f); setRoute(p.done, p.rest); }
   [f.route.org, f.route.dst].forEach(a => L.circleMarker([a.lat, a.lon], { radius: 7, color: '#fff', weight: 2.5, fillColor: ROUTE_C, fillOpacity: 1, interactive: false })
     .bindTooltip(esc(a.code), { permanent: true, direction: 'top', offset: [0, -8], className: 'apl' }).addTo(routeEnds));
 }
@@ -188,7 +199,7 @@ async function loadAircraft(f) {
 }
 function nearest(f) { let b = null, m = 1e9; AP.forEach(a => { const d = km(f.lat, f.lon, a[2], a[3]); if (d < m) { m = d; b = a; } }); return `${b[0]} · ${Math.round(m)} km`; }
 // Trail: positions recorded every 5 s since the app first saw this aircraft
-const drawTrail = f => trail.setLatLngs(f ? unwrap([...f.tr, [f.lat, f.lon]].map(p => [p[0], p[1]])) : []);
+const drawTrail = f => trail.setLatLngs(f && !f.route ? unwrap([...f.tr, [f.lat, f.lon]].map(p => [p[0], p[1]])) : []); // the blue route replaces the trail once the route is known
 
 /* ---------- main loop (1 s) ---------- */
 setInterval(() => {
@@ -203,7 +214,7 @@ setInterval(() => {
     if (zone) { const inn = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); if (inn && (f.in === false || (f.in === undefined && tick > 1))) toast(`${f.cs} entered the alert zone`); f.in = inn; }
     if (tick % 5 === 0) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 360) f.tr.shift(); } // each aircraft's last ~30 min trail
   });
-  const s = flights.get(selected); if (s && !replay) { drawTrail(s); if (s.route) setRoute(routePts(s)); }
+  const s = flights.get(selected); if (s && !replay) { drawTrail(s); if (s.route) { const p = routePts(s); setRoute(p.done, p.rest); } if (tick % 30 === 0) loadTrace(s); }
   if (tick % 5 === 0) { // history recording: every 5 s, at most 720 frames. Recording continues while replaying
     // One Float32Array per frame (lat, lon, hdg triples) + an id list: far less memory than many small arrays with thousands of aircraft
     const ids = [], buf = new Float32Array(flights.size * 3); let i = 0;
@@ -274,7 +285,7 @@ $('rpLive').onclick = exitReplay;
 /* ---------- selection, favorites, panel, list ---------- */
 function select(id) {
   selected = id; const f = flights.get(id);
-  if (f) { map.panTo(f.rp ? [f.rp[0], f.rp[1]] : [f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); } }
+  if (f) { map.panTo(f.rp ? [f.rp[0], f.rp[1]] : [f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); loadTrace(f); } }
   if (replay) { drawRoute(null); trail.setLatLngs([]); } else { drawRoute(f); drawTrail(f); } redraw(); // don't mix a trail/route drawn for the live position into replay
   $('card').classList.toggle('show', !!f); if (f) renderCard(true); renderList();
 }
