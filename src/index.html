@@ -5,7 +5,13 @@
 <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
 <style>
 :root{--bg:#141414;--pn:#1c1c1c;--ac:#f2c230;--fg:#f0e6d2;--mut:#8d877c;--line:#ffffff14}
-*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden}
+*{box-sizing:border-box}
+/* Scrollbars (all scrollable areas): yellow thumb on a black track */
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:#0e0e0e}
+::-webkit-scrollbar-thumb{background:var(--ac);border:3px solid #0e0e0e;border-radius:8px;min-height:36px}
+::-webkit-scrollbar-thumb:hover{background:#ffd75a}
+::-webkit-scrollbar-button{display:none}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden}
 #app{display:flex;height:100%}
 aside{width:300px;flex-shrink:0;overflow-y:auto;background:var(--pn);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2;transition:margin-left .35s cubic-bezier(.2,.7,.2,1)}
 aside.hide{margin-left:-301px}
