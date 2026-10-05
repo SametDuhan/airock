@@ -28,3 +28,10 @@ test('legOf: keeps only the current flight of the day trace', () => {
   assert.deepEqual(D.legOf(t), [[4, 4], [5, 5], [6, 6]]);
   assert.deepEqual(D.legOf([]), []);
 });
+
+test('legOf: a long gap or a "new leg" flag also starts a new flight', () => {
+  const gap = [[0, 1, 1, 30000], [60, 2, 2, 30000], [5000, 3, 3, 20000], [5060, 4, 4, 20000]];
+  assert.deepEqual(D.legOf(gap), [[3, 3], [4, 4]]);
+  const flag = [[0, 1, 1, 30000, 0, 0, 0], [60, 2, 2, 30000, 0, 0, 2], [120, 3, 3, 30000, 0, 0, 0]];
+  assert.deepEqual(D.legOf(flag), [[2, 2], [3, 3]]);
+});

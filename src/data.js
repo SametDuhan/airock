@@ -100,12 +100,14 @@
   }
 
   /* ---------- adsb.lol trace: positions the aircraft actually flew today ---------- */
-  // trace_full holds the whole UTC day, which may include earlier legs: keep only the current flight (back to the last point on the ground).
-  // Point format: [seconds, lat, lon, altitude ft | "ground", ...]. Downsampled to MAX_PTS points.
+  // trace_full holds the whole UTC day, which may include earlier legs: keep only the current flight. A new leg starts at the last point on
+  // the ground, at a point flagged "new leg" (flags & 2), or after a long gap (a landing may never be seen, e.g. no coverage at the destination).
+  // Point format: [seconds, lat, lon, altitude ft | "ground", groundspeed, track, flags, ...]. Downsampled to MAX_PTS points.
+  const LEG_GAP_S = 1200;
   const MAX_PTS = 500;
   function legOf(trace) {
     let i = trace.length - 1;
-    while (i > 0 && trace[i][3] !== 'ground') i--;
+    while (i > 0 && trace[i][3] !== 'ground' && !(trace[i][6] & 2) && trace[i][0] - trace[i - 1][0] <= LEG_GAP_S) i--;
     const pts = trace.slice(i).filter(p => typeof p[1] === 'number' && typeof p[2] === 'number').map(p => [p[1], p[2]]);
     const step = Math.max(1, Math.ceil(pts.length / MAX_PTS));
     return pts.filter((_, k) => k % step === 0 || k === pts.length - 1);
