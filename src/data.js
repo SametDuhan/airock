@@ -99,6 +99,16 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
+  /* ---------- planespotters.net: photos of an aircraft (larger than the adsbdb thumbnail; there can be several) ---------- */
+  async function photos(hex) {
+    if (typeof hex !== 'string' || !/^[0-9a-fA-F]{6}$/.test(hex)) return { ok: false, error: 'invalid ICAO24' };
+    try {
+      const r = await get('https://api.planespotters.net/pub/photos/hex/' + hex.toLowerCase(), 10000);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return { ok: true, photos: ((await r.json()).photos || []).filter(p => p.thumbnail_large?.src).map(p => ({ src: p.thumbnail_large.src, link: p.link || '', by: p.photographer || '' })) };
+    } catch (e) { return { ok: false, error: e.message }; }
+  }
+
   /* ---------- adsb.lol trace: positions the aircraft actually flew today ---------- */
   // trace_full holds the whole UTC day, which may include earlier legs: keep only the current flight. A new leg starts at the last point on
   // the ground, at a point flagged "new leg" (flags & 2), or after a long gap (a landing may never be seen, e.g. no coverage at the destination).
@@ -123,7 +133,7 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  const api = { flights, route, aircraft, trace, legOf, cover, bounds };
+  const api = { flights, route, aircraft, photos, trace, legOf, cover, bounds };
   root.SkyData = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -20,6 +20,8 @@ ipcMain.handle('flights', (_, b) => data.flights(b));
 // Flight route (by callsign) and aircraft info (by ICAO24 code): adsbdb.com
 ipcMain.handle('route', (_, cs) => data.route(cs));
 ipcMain.handle('aircraft', (_, hex) => data.aircraft(hex));
+// Aircraft photos (planespotters.net)
+ipcMain.handle('photos', (_, hex) => data.photos(hex));
 // Path flown so far (adsb.lol trace)
 ipcMain.handle('trace', (_, hex) => data.trace(hex));
 

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://adsb.lol https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://api.planespotters.net https://adsb.lol https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
 <title>SkyTrack</title>
 <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
 <style>
@@ -36,7 +36,10 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 #card.show{transform:none}#card h2{margin:0 0 2px;font:400 26px Georgia,serif;word-break:break-all}#card small{color:var(--mut)}
 .ch{display:flex;gap:10px;align-items:flex-start}.ch .cn{flex:1;min-width:0}.logo{width:38px;height:38px;border-radius:4px;background:#fff;object-fit:contain;padding:2px;flex:none}
 #card .ib{width:28px;height:28px;margin:0;padding:0;color:var(--mut);border-color:var(--line);flex:none}#card .ib:hover{background:transparent;color:var(--ac);border-color:var(--ac)}
-.ph{display:block;margin:10px 0 2px;border-radius:3px;overflow:hidden;background:#111}.ph img{display:block;width:100%;height:auto}
+.ph{display:block;margin:10px 0 2px;border-radius:3px;overflow:hidden;background:#111}.ph{position:relative}.ph img{display:block;width:100%;height:auto}
+#card .pa{position:absolute;top:50%;margin:-17px 0 0;width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;font:700 22px/1 system-ui,sans-serif;background:var(--ac);color:#111;border:2px solid #111;border-radius:50%}
+#card .pa:hover{background:#ffd75a;color:#111}.pa.l{left:6px}.pa.r{right:6px}
+.pc,.by{position:absolute;bottom:6px;background:#000a;color:#fff;font:600 10px ui-monospace,monospace;padding:2px 6px;border-radius:3px}.pc{right:6px}.by{left:6px;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}
 canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 #hov{position:absolute;z-index:1000;display:none;pointer-events:none;background:var(--pn);color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:3px 7px;font:600 11px ui-monospace,monospace;white-space:nowrap}
 .kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}.kv span{color:var(--mut)}

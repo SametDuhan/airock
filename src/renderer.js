@@ -66,7 +66,7 @@ const ZONE_R = 100; // km (default radius)
 const zoneR = () => zone?.r || ZONE_R;
 const APO = AP.map(a => ({ code: a[0], name: a[1], lat: a[2], lon: a[3] }));
 const { R, brg, km, gc, unwrap, nearLon } = window.SkyGeo;
-const flights = new Map(), routeCache = new Map(), acCache = new Map(), fav = new Set(LS('sky.fav', [])), hist = [],
+const flights = new Map(), routeCache = new Map(), acCache = new Map(), picCache = new Map(), fav = new Set(LS('sky.fav', [])), hist = [],
 flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false, ground: true, dep: '', arr: '', type: '', air: '' };
 let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
 
@@ -196,7 +196,21 @@ async function loadAircraft(f) {
   if (!e) { if (Date.now() < dbPause) { f.as = 'err'; f.asAt = Date.now(); return; }
     const res = await DATA.aircraft(f.id); if (!res.ok) return failed(f, 'as'); e = { v: res.aircraft, t: Date.now() }; acCache.set(f.id, e); }
   f.ac = e.v; f.as = e.v ? 'ok' : 'none'; if (f.id === selected) renderCard(true);
+  loadPhotos(f);
 }
+// Photos: planespotters (448 px, possibly several) first, then the full-size adsbdb photo (or its thumbnail as a last resort)
+async function loadPhotos(f) {
+  if (f.pics) return; let e = fresh(picCache, f.id);
+  if (!e) { const res = await DATA.photos(f.id); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok) picCache.set(f.id, e); }
+  const ac = f.ac || {}, extra = ac.photo || ac.thumb;
+  f.pics = [...e.v, ...(extra && !e.v.length ? [{ src: extra, link: ac.photo || extra, by: '' }] : [])]; f.pi = 0;
+  if (f.id === selected) renderCard(true);
+}
+const photoHtml = f => { const ac = f.ac || {}, pics = f.pics || (ac.thumb ? [{ src: ac.thumb, link: ac.photo || ac.thumb, by: '' }] : []); if (!pics.length) return '';
+  const i = (f.pi || 0) % pics.length, p = pics[i], nav = pics.length > 1;
+  return `<div class="ph"><a href="${esc(p.link || p.src)}" target="_blank" title="Open photo"><img src="${esc(p.src)}" alt="" onerror="this.parentNode.parentNode.remove()"></a>`
+    + (nav ? `<button class="pa l" id="pp" title="Previous photo">‹</button><button class="pa r" id="pn" title="Next photo">›</button><span class="pc">${i + 1} / ${pics.length}</span>` : '')
+    + (p.by ? `<span class="by" title="Photo: ${esc(p.by)}">© ${esc(p.by)}</span>` : '') + `</div>`; };
 function nearest(f) { let b = null, m = 1e9; AP.forEach(a => { const d = km(f.lat, f.lon, a[2], a[3]); if (d < m) { m = d; b = a; } }); return `${b[0]} · ${Math.round(m)} km`; }
 // Trail: positions recorded every 5 s since the app first saw this aircraft
 const drawTrail = f => trail.setLatLngs(f && !f.route ? unwrap([...f.tr, [f.lat, f.lon]].map(p => [p[0], p[1]])) : []); // the blue route replaces the trail once the route is known
@@ -295,7 +309,7 @@ function renderCard(full) {
   const ac = f.ac || {};
   if (full) {
     const iata = f.route?.airlineIata, sub = f.route?.airline || ac.owner || ac.country || f.country || '';
-    const photo = ac.thumb ? `<a class="ph" href="${esc(ac.photo || ac.thumb)}" target="_blank" title="Enlarge photo"><img src="${esc(ac.thumb)}" alt="" onerror="this.parentNode.remove()"></a>` : '';
+    const photo = photoHtml(f);
     $('card').innerHTML = `<div class="ch">${iata ? `<img class="logo" src="https://images.kiwi.com/airlines/64/${esc(iata)}.png" alt="" onerror="this.remove()">` : ''}`
       + `<div class="cn"><h2>${esc(f.cs)}</h2><small>${esc(sub)}</small></div><button id="cx" class="ib" title="Close">✕</button></div>${photo}${routeHtml(f)}<div id="kvs"></div><button id="fv"></button>`;
   }
@@ -319,6 +333,8 @@ function routeHtml(f) {
 }
 $('card').onclick = e => {
   if (e.target.id === 'cx') return select(null);
+  if (e.target.id === 'pp' || e.target.id === 'pn') { const f = flights.get(selected), n = f?.pics?.length; if (!n) return;
+    f.pi = ((f.pi || 0) + (e.target.id === 'pn' ? 1 : n - 1)) % n; return renderCard(true); }
   if (e.target.id !== 'fv') return;
   fav.has(selected) ? fav.delete(selected) : fav.add(selected); save('sky.fav', [...fav]); renderCard(); renderList(); redraw();
 };
