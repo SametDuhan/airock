@@ -126,7 +126,7 @@ const planes = new PlaneLayer().addTo(map), redraw = () => planes.redraw();
 // Click/hover: the nearest aircraft from the last drawn screen positions (within 14 px)
 function hit(pt) { let best = null, bd = 12 * 12; flights.forEach(f => { if (!f._p) return; const d = (f._p.x - pt.x) ** 2 + (f._p.y - pt.y) ** 2; if (d < bd) { bd = d; best = f; } }); return best; }
 map.on('mousemove', e => { const f = hit(e.containerPoint), h = $('hov');
-  map.getContainer().style.cursor = f ? 'pointer' : '';
+  map.getContainer().style.cursor = f ? 'var(--ptr)' : '';
   if (!f) { h.style.display = 'none'; return; }
   h.style.display = 'block'; h.style.left = f._p.x + 16 + 'px'; h.style.top = f._p.y - 10 + 'px';
   h.textContent = `${f.cs}${f.route ? ' · ' + f.route.org.code + '→' + f.route.dst.code : ''} · ${f.ground ? 'on ground' : Math.round(f.alt * 3.281 / 100) * 100 + ' ft'}`; });
