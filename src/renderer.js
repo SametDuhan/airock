@@ -172,8 +172,13 @@ async function loadRoute(f) {
 function showRoute(f) { if (f.id !== selected) return; if (!replay) drawRoute(f); renderCard(true); }
 // Departure → aircraft → arrival, as great-circle arcs
 // Flown: the real trace from adsb.lol when available (otherwise a great-circle arc from the departure airport); rest: great circle to the destination
-const routePts = f => { const { org, dst } = f.route, p = [f.lat, f.lon];
-  const done = f.flown?.length > 1 ? [...f.flown, p] : gc([org.lat, org.lon], p);
+// The day's trace can still contain the previous leg (e.g. the aircraft landed here earlier and turned around quickly without ground reports):
+// start the drawn path at the last point near the departure airport, so it never reaches back into an earlier flight
+const flownLeg = f => { const t = f.flown, o = f.route.org; if (!(t?.length > 1)) return null;
+  for (let k = t.length - 1; k > 0; k--) if (km(t[k][0], t[k][1], o.lat, o.lon) < 40) return t.slice(k);
+  return t; };
+const routePts = f => { const { org, dst } = f.route, p = [f.lat, f.lon], fl = flownLeg(f);
+  const done = fl?.length > 1 ? [...fl, p] : gc([org.lat, org.lon], p);
   return { done: unwrap(done), rest: unwrap(gc(p, [dst.lat, dst.lon])) }; };
 // Path flown so far (live only); refreshed at most once a minute while the aircraft is selected
 async function loadTrace(f) {
