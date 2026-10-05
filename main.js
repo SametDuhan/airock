@@ -25,6 +25,9 @@ ipcMain.handle('photos', (_, hex) => data.photos(hex));
 // Path flown so far (adsb.lol trace)
 ipcMain.handle('trace', (_, hex) => data.trace(hex));
 
+// Airport panel: weather, city/country, photo
+ipcMain.handle('airport', (_, lat, lon) => data.airport(lat, lon));
+
 app.whenReady().then(() => {
   // OpenStreetMap's usage policy requires a Referer; file:// pages don't send one, so add it to tile requests
   session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['https://tile.openstreetmap.org/*'] }, (d, cb) => {

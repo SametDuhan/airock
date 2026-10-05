@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://api.planespotters.net https://adsb.lol https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://api.open-meteo.com https://nominatim.openstreetmap.org https://en.wikipedia.org https://api.planespotters.net https://adsb.lol https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
 <title>SkyTrack</title>
 <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
 <style>
@@ -32,10 +32,10 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 .bar{position:absolute;top:12px;right:12px;z-index:1000;display:flex;gap:8px;align-items:center;background:var(--pn);border:1px solid var(--line);border-radius:4px;padding:6px 10px}
 #clock{font:600 15px ui-monospace,monospace;letter-spacing:.06em}
 #st{font:11px ui-monospace,monospace;color:var(--mut);margin-top:7px}
-#card{position:absolute;right:12px;top:64px;width:270px;max-height:calc(100% - 140px);overflow-y:auto;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px;transform:translateX(300px);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
-#card.show{transform:none}#card h2{margin:0 0 2px;font:400 26px Georgia,serif;word-break:break-all}#card small{color:var(--mut)}
+#card,#apc{position:absolute;right:12px;top:64px;width:270px;max-height:calc(100% - 140px);overflow-y:auto;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px;transform:translateX(300px);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
+#card.show,#apc.show{transform:none}#card h2,#apc h2{margin:0 0 2px;font:400 26px Georgia,serif;word-break:break-all}#card small,#apc small{color:var(--mut)}
 .ch{display:flex;gap:10px;align-items:flex-start}.ch .cn{flex:1;min-width:0}.logo{width:38px;height:38px;border-radius:4px;background:#fff;object-fit:contain;padding:2px;flex:none}
-#card .ib{width:28px;height:28px;margin:0;padding:0;color:var(--mut);border-color:var(--line);flex:none}#card .ib:hover{background:transparent;color:var(--ac);border-color:var(--ac)}
+#card .ib,#apc .ib{width:28px;height:28px;margin:0;padding:0;color:var(--mut);border-color:var(--line);flex:none}#card .ib:hover,#apc .ib:hover{background:transparent;color:var(--ac);border-color:var(--ac)}
 .ph{display:block;margin:10px 0 2px;border-radius:3px;overflow:hidden;background:#111}.ph{position:relative}.ph img{display:block;width:100%;height:auto}
 #card .pa{position:absolute;top:50%;margin:-17px 0 0;width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;font:700 22px/1 system-ui,sans-serif;background:var(--ac);color:#111;border:2px solid #111;border-radius:50%}
 #card .pa:hover{background:#ffd75a;color:#111}.pa.l{left:6px}.pa.r{right:6px}
@@ -69,6 +69,12 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 .rt b{display:block;font:700 20px ui-monospace,monospace;color:var(--ac)}.rt small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:95px}.rt>span{color:var(--mut)}
 .pg{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:4px}.pg i{display:block;height:100%;background:var(--ac);transition:width .8s}
 .rtx{font-size:11px;color:var(--mut);margin-bottom:6px}.leaflet-tooltip.apl{border:0;font:700 12px ui-monospace,monospace;color:#fff;background:#2f8cff;padding:2px 6px;border-radius:3px;box-shadow:0 1px 4px #0007}.leaflet-tooltip.apl::before{display:none}
+#apc{width:300px;transform:translateX(330px);border-top-color:#2f8cff}
+#apc .wx{display:flex;align-items:center;gap:12px;margin:12px 0 4px}#apc .wx .t{font:300 34px Georgia,serif;line-height:1}#apc .wx .d{flex:1;font-size:13px}#apc .wx .i{font-size:30px}
+#apc .wg{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin:8px 0 4px;font-size:12px}#apc .wg span{color:var(--mut)}#apc .wg b{float:right;font:600 12px ui-monospace,monospace}
+#apc .tabs{display:flex;gap:6px;margin:14px 0 6px}#apc .tabs button{flex:1;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:7px 6px;cursor:pointer;font-size:12px}
+#apc .tabs button:hover{border-color:var(--ac)}#apc .tabs button.on{background:var(--ac);color:#111;border-color:var(--ac);font-weight:700}
+#apc .row{padding:8px 6px}#apc .none{padding:10px 6px;font-size:12px;color:var(--mut)}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand">SKYTRACK<button id="close" class="ib" title="Close menu">✕</button></div>
@@ -92,6 +98,6 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 <input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></aside>
 <main><div id="map"></div>
 <button id="open" class="ib" title="Open menu">☰</button><div class="bar"><span id="clock"></span></div>
-<div id="hov"></div><div id="card"></div><div id="toast"></div>
+<div id="hov"></div><div id="card"></div><div id="apc"></div><div id="toast"></div>
 <div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span></div></main></div>
 <script src="loader.js"></script></body></html>

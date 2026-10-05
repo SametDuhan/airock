@@ -133,7 +133,26 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  const api = { flights, route, aircraft, photos, trace, legOf, cover, bounds };
+  /* ---------- airport info: weather (open-meteo), city/country (OpenStreetMap), photo (Wikipedia) ---------- */
+  const json = async url => { const r = await get(url, 10000); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); };
+  async function airport(lat, lon) {
+    lat = +lat; lon = +lon; if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return { ok: false, error: 'invalid position' };
+    const [w, p, ph] = await Promise.allSettled([
+      json(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&wind_speed_unit=kn`),
+      json(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&accept-language=en&lat=${lat}&lon=${lon}`),
+      json(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${lat}%7C${lon}&ggsradius=6000&ggslimit=10&prop=pageimages%7Cinfo&inprop=url&piprop=thumbnail&pithumbsize=640`)]);
+    const c = w.status === 'fulfilled' ? w.value.current : null, ad = p.status === 'fulfilled' ? p.value.address || {} : {};
+    const pages = ph.status === 'fulfilled' ? Object.values(ph.value.query?.pages || {}).filter(x => x.thumbnail?.source).sort((a, b) => a.index - b.index) : [];
+    const pg = pages.find(x => /airport|airfield|aerodrome|international|havaliman|havaalan/i.test(x.title)) || null;
+    if (!c && p.status !== 'fulfilled') return { ok: false, error: 'no response' };
+    return { ok: true,
+      weather: c ? { temp: c.temperature_2m, feels: c.apparent_temperature, hum: c.relative_humidity_2m, code: c.weather_code, day: !!c.is_day, pres: c.surface_pressure,
+        wind: c.wind_speed_10m, dir: c.wind_direction_10m, gust: c.wind_gusts_10m, vis: c.visibility } : null,
+      place: { city: ad.province || ad.city || ad.town || ad.village || ad.municipality || ad.county || ad.state || '', region: ad.state || '', country: ad.country || '' },
+      photo: pg ? { src: pg.thumbnail.source, link: pg.fullurl || '', title: pg.title } : null };
+  }
+
+  const api = { flights, route, aircraft, photos, trace, airport, legOf, cover, bounds };
   root.SkyData = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

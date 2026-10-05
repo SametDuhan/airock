@@ -272,9 +272,62 @@ $('mDemo').onclick = () => setMode(false); $('mLive').onclick = () => setMode(tr
 
 /* ---------- airports ---------- */
 const apLayer = L.layerGroup().addTo(map);
-AP.forEach(a => L.circleMarker([a[2], a[3]], { radius: 4, color: '#000', weight: 1, fillColor: '#f2c230', fillOpacity: 1 }).bindTooltip(`${a[0]} · ${a[1]}`)
-  .on('click', e => { L.DomEvent.stopPropagation(e); toast(`${a[0]}: ${[...flights.values()].filter(f => km(f.lat, f.lon, a[2], a[3]) < 100).length} aircraft within 100 km`); }).addTo(apLayer));
+APO.forEach(a => L.circleMarker([a.lat, a.lon], { radius: 6, color: '#000', weight: 1, fillColor: '#f2c230', fillOpacity: 1 }).bindTooltip(`${a.code} · ${a.name}`)
+  .on('click', e => { L.DomEvent.stopPropagation(e); openAp(a); }).addTo(apLayer));
 $('bAp').onclick = function () { const on = !map.hasLayer(apLayer); on ? apLayer.addTo(map) : apLayer.remove(); this.classList.toggle('on', on); };
+
+/* ---------- airport panel: photo, weather, arrivals / departures ---------- */
+// Arrivals / departures come from the aircraft we already see: those within AP_R km whose route (adsbdb / demo) ends or starts at this airport
+const AP_R = 600, WX = { 0: ['Clear sky', '☀️'], 1: ['Mostly clear', '🌤️'], 2: ['Partly cloudy', '⛅'], 3: ['Overcast', '☁️'], 45: ['Fog', '🌫️'], 48: ['Freezing fog', '🌫️'],
+  51: ['Light drizzle', '🌦️'], 53: ['Drizzle', '🌦️'], 55: ['Heavy drizzle', '🌧️'], 56: ['Freezing drizzle', '🌧️'], 57: ['Freezing drizzle', '🌧️'], 61: ['Light rain', '🌦️'], 63: ['Rain', '🌧️'],
+  65: ['Heavy rain', '🌧️'], 66: ['Freezing rain', '🌧️'], 67: ['Freezing rain', '🌧️'], 71: ['Light snow', '🌨️'], 73: ['Snow', '🌨️'], 75: ['Heavy snow', '❄️'], 77: ['Snow grains', '🌨️'],
+  80: ['Rain showers', '🌦️'], 81: ['Rain showers', '🌧️'], 82: ['Violent showers', '⛈️'], 85: ['Snow showers', '🌨️'], 86: ['Snow showers', '🌨️'], 95: ['Thunderstorm', '⛈️'], 96: ['Thunderstorm, hail', '⛈️'], 99: ['Thunderstorm, hail', '⛈️'] };
+const apCache = new Map(); let apSel = null;
+function openAp(a) {
+  select(null); apSel = { ...a, tab: 'arr' }; $('apc').classList.add('show'); renderAp(); loadAp(apSel); pumpAp();
+}
+function closeAp() { apSel = null; $('apc').classList.remove('show'); }
+async function loadAp(s) {
+  let e = apCache.get(s.code);
+  if (!e || Date.now() - e.t > 600e3) { const r = await DATA.airport(s.lat, s.lon); e = r.ok ? { v: r, t: Date.now() } : null; if (e) apCache.set(s.code, e); }
+  if (apSel !== s) return; s.info = e?.v; s.err = !e; renderAp();
+}
+function apFlights(s, k) { // k: 'dst' (arrivals) | 'org' (departures)
+  return [...flights.values()].filter(f => !f.gone && apIs(f.route?.[k], s.code)).map(f => ({ f, d: km(f.lat, f.lon, s.lat, s.lon) })).filter(x => x.d < AP_R).sort((a, b) => a.d - b.d);
+}
+function apRows(s) {
+  const arr = s.tab === 'arr', k = arr ? 'dst' : 'org', o = arr ? 'org' : 'dst', list = apFlights(s, k);
+  if (!list.length) return `<div class="none">${live && !flights.size ? 'No aircraft loaded yet' : 'No ' + (arr ? 'arrivals' : 'departures') + ' found nearby'}</div>`;
+  return list.slice(0, 40).map(({ f, d }) => {
+    const st = f.ground ? (arr && d < 25 ? 'landed' : 'on ground') : `${Math.round(d)} km${arr && f.spd > 30 ? ' · ~' + eta(d / (f.spd * 3.6)) : ''}`;
+    return `<div class="row" data-id="${esc(f.id)}"><b>${esc(f.cs)}</b><span>${esc(f.route[o].code)} · ${st}</span></div>`; }).join('');
+}
+function renderAp() {
+  const s = apSel; if (!s) return; const i = s.info, w = i?.weather, p = i?.place, x = w && (WX[w.code] || ['—', '']);
+  const place = p ? [p.city, p.country].filter(Boolean).join(', ') : s.err ? 'Couldn\'t load airport info' : 'Loading…';
+  const ph = i?.photo ? `<div class="ph"><a href="${esc(i.photo.link || i.photo.src)}" target="_blank" title="Open on Wikipedia"><img src="${esc(i.photo.src)}" alt="" onerror="this.parentNode.parentNode.remove()"></a><span class="by">Wikipedia</span></div>` : '';
+  const wx = w ? `<div class="wx"><span class="i">${x[1]}</span><div class="d">${x[0]}<br><small>Feels like ${Math.round(w.feels)}°C</small></div><span class="t">${Math.round(w.temp)}°C</span></div>`
+    + `<div class="wg"><div><span>Wind</span><b>${Math.round(w.wind)} kt ${Math.round(w.dir)}°</b></div><div><span>Gusts</span><b>${Math.round(w.gust)} kt</b></div>`
+    + `<div><span>Humidity</span><b>${Math.round(w.hum)}%</b></div><div><span>Pressure</span><b>${Math.round(w.pres)} hPa</b></div>`
+    + `<div><span>Visibility</span><b>${w.vis == null ? '—' : w.vis >= 10000 ? (w.vis / 1000).toFixed(0) + ' km' : (w.vis / 1000).toFixed(1) + ' km'}</b></div></div>`
+    : `<div class="rtx" style="margin-top:12px">${s.err ? 'Weather unavailable' : 'Loading weather…'}</div>`;
+  $('apc').innerHTML = `<div class="ch"><div class="cn"><h2>${esc(s.code)}</h2><small>${esc(s.name)}</small><br><small>${esc(place)}</small></div><button id="ax" class="ib" title="Close">✕</button></div>`
+    + `${ph}${wx}<div class="tabs"><button data-t="arr" class="${s.tab === 'arr' ? 'on' : ''}">Arrivals</button><button data-t="dep" class="${s.tab === 'dep' ? 'on' : ''}">Departures</button></div><div id="apr">${apRows(s)}</div>`;
+}
+$('apc').onclick = e => {
+  if (e.target.id === 'ax') return closeAp();
+  const t = e.target.closest('.tabs button'); if (t && apSel) { apSel.tab = t.dataset.t; return renderAp(); }
+  const r = e.target.closest('.row'); if (r) select(r.dataset.id);
+};
+// Live mode: route info only arrives per aircraft, so load the routes of aircraft near the open airport in the background (at most 3 at a time)
+let apJobs = 0;
+function pumpAp() {
+  if (!live || !apSel) return; const s = apSel;
+  if (Date.now() < dbPause) { setTimeout(pumpAp, dbPause - Date.now() + 100); return; }
+  const near = [...flights.values()].filter(f => !f.gone && canLoad(f, 'rs') && km(f.lat, f.lon, s.lat, s.lon) < 300).sort((a, b) => km(a.lat, a.lon, s.lat, s.lon) - km(b.lat, b.lon, s.lat, s.lon));
+  for (const f of near) { if (apJobs >= 3) return; apJobs++; loadRoute(f).finally(() => { apJobs--; pumpAp(); }); }
+}
+setInterval(() => { if (apSel) { pumpAp(); if ($('apr')) $('apr').innerHTML = apRows(apSel); } }, 2000);
 
 /* ---------- alert zone ---------- */
 function drawZone() { zoneLayer && zoneLayer.remove(); zoneLayer = null; $('bZ').classList.toggle('on', !!zone);
@@ -298,7 +351,7 @@ $('rpLive').onclick = exitReplay;
 
 /* ---------- selection, favorites, panel, list ---------- */
 function select(id) {
-  selected = id; const f = flights.get(id);
+  closeAp(); selected = id; const f = flights.get(id);
   if (f) { map.panTo(f.rp ? [f.rp[0], f.rp[1]] : [f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); loadTrace(f); } }
   if (replay) { drawRoute(null); trail.setLatLngs([]); } else { drawRoute(f); drawTrail(f); } redraw(); // don't mix a trail/route drawn for the live position into replay
   $('card').classList.toggle('show', !!f); if (f) renderCard(true); renderList();
