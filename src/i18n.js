@@ -51,7 +51,65 @@ const TR = {
   'Your diary is empty. Add a flight above, or open a flight on the map and press “Add to diary”.': 'Günlüğün boş. Yukarıdan uçuş ekle ya da haritada bir uçuş açıp “Günlüğe ekle”ye bas.',
   'Unknown airport: use an IATA or ICAO code, e.g. IST or LTFM': 'Bilinmeyen havalimanı: IATA veya ICAO kodu kullan, örn. IST veya LTFM', 'Share image': 'Görsel paylaş', 'Add to diary': 'Günlüğe ekle', 'Added to your diary': 'Günlüğüne eklendi',
   'Free flight tracker · no account, no ads': 'Ücretsiz uçuş takibi · hesap yok, reklam yok', 'Image saved and copied to the clipboard': 'Görsel kaydedildi ve panoya kopyalandı', 'Image saved': 'Görsel kaydedildi', 'Altitude & speed': 'İrtifa ve hız',
-  'Landing': 'İniyor', 'Approaching': 'Yaklaşıyor', 'Departed': 'Kalktı', 'En route': 'Yolda'
+  'Landing': 'İniyor', 'Approaching': 'Yaklaşıyor', 'Departed': 'Kalktı', 'En route': 'Yolda',
+  // tools, tour, search, units
+  'A free flight tracker: no account, no ads. Here is a quick tour of what you can do.': 'Ücretsiz bir uçuş takip uygulaması: hesap yok, reklam yok. İşte neler yapabileceğine hızlı bir bakış.',
+  'Aircraft within {0} of your spot': 'Konumunun {0} çevresindeki uçaklar',
+  'Airline code': 'Havayolu kodu',
+  'Airport code': 'Havalimanı kodu',
+  'Alert zone set ({0})': 'Uyarı bölgesi ayarlandı ({0})',
+  'Alerts': 'Uyarılar',
+  'App': 'Uygulama',
+  'Back': 'Geri',
+  'Callsign contains': 'Çağrı kodu içerir',
+  'Choose where you are': 'Nerede olduğunu seç',
+  'Click a plane to see its route, photo, altitude, speed and more. Click an airport (yellow dot) for its weather and arrivals.': 'Bir uçağa tıkla: rotasını, fotoğrafını, irtifasını, hızını ve daha fazlasını gör. Bir havalimanına (sarı nokta) tıklarsan hava durumunu ve varışları görürsün.',
+  'Click any aircraft': 'Herhangi bir uçağa tıkla',
+  'Click the map to set your spot': 'Konumunu belirlemek için haritaya tıkla',
+  'Click the map where you are, or type an airport code. SkyTrack lists the aircraft flying around that spot, with the direction to look and how high in the sky.': 'Haritada olduğun yere tıkla ya da bir havalimanı kodu yaz. SkyTrack, o noktanın çevresinde uçan uçakları, hangi yöne bakacağını ve gökyüzünde ne kadar yüksekte olduklarını listeler.',
+  'Click the map': 'Haritaya tıkla',
+  'Move my spot': 'Konumumu taşı',
+  'Done': 'Bitti',
+  'Next': 'İleri',
+  'Download': 'İndir',
+  'Downloading update {0}…': '{0} güncellemesi indiriliyor…',
+  'Get a notification when an aircraft you care about shows up on the map.': 'İlgilendiğin bir uçak haritada görününce bildirim al.',
+  'Headwind {0}': 'Karşı rüzgar {0}',
+  'Tailwind {0}': 'Arka rüzgar {0}',
+  'Helicopters': 'Helikopterler',
+  'Hide or show the menu any time. Enjoy the sky!': 'Menüyü istediğin zaman gizle ya da göster. Gökyüzünün tadını çıkar!',
+  'High turbulence risk ahead (~{0})': 'Önünde yüksek türbülans ihtimali var (~{0})',
+  'Moderate turbulence possible ahead (~{0})': 'Önünde orta düzey türbülans ihtimali var (~{0})',
+  'Keep a flight diary, set alerts for rare aircraft, see what is flying overhead, and change units in Settings.': 'Uçuş günlüğü tut, nadir uçaklar için uyarı kur, tepende neyin uçtuğunu gör ve Ayarlar\'dan birimleri değiştir.',
+  'Menu button': 'Menü düğmesi',
+  'Military aircraft': 'Askeri uçaklar',
+  'Narrow the map by altitude, speed, airport, airline or aircraft type.': 'Haritayı irtifa, hız, havalimanı, havayolu veya uçak tipine göre daralt.',
+  'New version {0} available': 'Yeni sürüm {0} hazır',
+  'No alerts yet. Add one above.': 'Henüz uyarı yok. Yukarıdan bir tane ekle.',
+  'Nothing overhead right now.': 'Şu an tepende uçak yok.',
+  'Overhead': 'Tepemde',
+  'Radius': 'Yarıçap',
+  'Restart': 'Yeniden başlat',
+  'Search the whole world': 'Tüm dünyada ara',
+  'Settings': 'Ayarlar',
+  'Show the tour again': 'Turu tekrar göster',
+  'Skip': 'Atla',
+  'Switch the whole app between English, Turkish, Spanish, German and French.': 'Tüm uygulamayı İngilizce, Türkçe, İspanyolca, Almanca ve Fransızca arasında değiştir.',
+  'Temperature': 'Sıcaklık',
+  'Time': 'Saat',
+  'Type a callsign, registration, aircraft type or airport. Results are not limited to the part of the map you see.': 'Bir çağrı kodu, tescil, uçak tipi veya havalimanı yaz. Sonuçlar sadece haritada gördüğün bölgeyle sınırlı değil.',
+  'Units': 'Birimler',
+  'Update {0} is ready': '{0} güncellemesi hazır',
+  'Welcome to SkyTrack': 'SkyTrack\'e hoş geldin',
+  'Worldwide': 'Dünya genelinde',
+  'Your language': 'Dilin',
+  'Your tools': 'Araçların',
+  'e.g. A388, THY, TC-JNA': 'ör. A388, THY, TC-JNA',
+  '{0} flown · {1} to go': '{0} uçuldu · {1} kaldı',
+  '{0} more aircraft match your alerts': '{0} uçak daha uyarılarınla eşleşiyor',
+  '⚙ Settings': '⚙ Ayarlar',
+  '📍 Overhead': '📍 Tepemde',
+  '🔔 Alerts': '🔔 Uyarılar'
 };
 // Languages: English (default texts), Turkish (TR below), Spanish / German / French (DICT in langs.js)
 const LANGS = [{ c: 'en', n: 'English', loc: 'en-US' }, { c: 'tr', n: 'Türkçe', loc: 'tr-TR' }, { c: 'es', n: 'Español', loc: 'es-ES' }, { c: 'de', n: 'Deutsch', loc: 'de-DE' }, { c: 'fr', n: 'Français', loc: 'fr-FR' }];
@@ -72,3 +130,18 @@ function applyLang() {
     ['placeholder', 'title'].forEach(a => { if (!e.hasAttribute(a)) return; const k = 'o' + a; e.dataset[k] = e.dataset[k] ?? e.getAttribute(a); e.setAttribute(a, t(e.dataset[k])); });
   });
 }
+
+// ---- Units and time format (Settings): stored in localStorage 'sky.units'. Internal data stays in km / ft / kt / °C; these only format for display.
+const U = Object.assign({ dist: 'km', alt: 'ft', spd: 'kt', temp: 'c', h24: true }, (() => { try { return JSON.parse(localStorage.getItem('sky.units')) || {}; } catch { return {}; } })());
+const nf = (n, d = 0) => n.toLocaleString(LOC(), { maximumFractionDigits: d, minimumFractionDigits: 0 });
+const uDist = km => U.dist === 'mi' ? [km * .621371, 'mi'] : U.dist === 'nm' ? [km * .539957, 'nm'] : [km, 'km'];
+const uAlt = ft => U.alt === 'm' ? [ft * .3048, 'm'] : [ft, 'ft'];
+const uSpd = kt => U.spd === 'kmh' ? [kt * 1.852, 'km/h'] : U.spd === 'mph' ? [kt * 1.15078, 'mph'] : [kt, 'kt'];
+const uVs = fpm => U.alt === 'm' ? [fpm * .00508, 'm/s'] : [fpm, 'ft/min'];
+const uTemp = c => U.temp === 'f' ? [c * 9 / 5 + 32, '°F'] : [c, '°C'];
+const fmtDist = (km, d = 0) => { const [n, u] = uDist(km); return nf(n, d) + ' ' + u; };
+const fmtAlt = (ft, r = 1) => { const [n, u] = uAlt(ft); return nf(u === 'm' && r > 1 ? Math.round(n / 10) * 10 : Math.round(n / r) * r) + ' ' + u; };
+const fmtSpd = kt => { const [n, u] = uSpd(kt); return Math.round(n) + ' ' + u; };
+const fmtVs = fpm => { const [n, u] = uVs(fpm); return (u === 'm/s' ? n.toFixed(1) : Math.round(n)) + ' ' + u; };
+const fmtTemp = c => { const [n, u] = uTemp(c); return Math.round(n) + u; };
+const TF = (o = {}) => ({ ...o, hour12: !U.h24 });

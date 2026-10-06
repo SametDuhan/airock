@@ -41,6 +41,6 @@ jobs:
         shell: bash
         run: |
           shopt -s nullglob
-          files=(dist/*.exe dist/*.dmg dist/*.AppImage)
+          files=(dist/*.exe dist/*.dmg dist/*.AppImage dist/latest*.yml dist/*.blockmap)
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "SkyTrack ${TAG#v}" --notes "See the assets below."
           gh release upload "$TAG" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"

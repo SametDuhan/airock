@@ -16,6 +16,26 @@ function setupTray() {
   tray.setContextMenu(Menu.buildFromTemplate([{ label: 'Open SkyTrack', click: showWin }, { type: 'separator' }, { label: 'Quit', click: () => { quitting = true; app.quit(); } }]));
   tray.on('click', showWin);
 }
+// Updates: Windows / Linux AppImage download in the background and install on restart (electron-updater, GitHub releases).
+// macOS builds are not signed, so there we only tell the user a new version exists and open the download page.
+const sendUpdate = (state, extra = {}) => { try { win?.webContents.send('update', { state, ...extra }); } catch {} };
+function setupUpdates() {
+  if (!app.isPackaged) return;
+  if (process.platform === 'darwin') {
+    const check = async () => { try { const r = await fetch('https://api.github.com/repos/SametDuhan/airock/releases/latest', { headers: { 'User-Agent': 'SkyTrack' } }); if (!r.ok) return; const j = await r.json(), v = String(j.tag_name || '').replace(/^v/, '');
+      const nv = x => x.split('.').map(Number), a = nv(v), b = nv(app.getVersion()), newer = a[0] - b[0] || a[1] - b[1] || a[2] - b[2]; if (newer > 0) sendUpdate('manual', { version: v, url: j.html_url }); } catch {} };
+    setTimeout(check, 8000); setInterval(check, 6 * 3600e3); return;
+  }
+  const { autoUpdater } = require('electron-updater');
+  autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.on('update-available', i => sendUpdate('downloading', { version: i.version }));
+  autoUpdater.on('download-progress', p => sendUpdate('progress', { percent: Math.round(p.percent) }));
+  autoUpdater.on('update-downloaded', i => sendUpdate('ready', { version: i.version }));
+  autoUpdater.on('error', () => {});
+  ipcMain.handle('installUpdate', () => { quitting = true; autoUpdater.quitAndInstall(); });
+  const check = () => autoUpdater.checkForUpdates().catch(() => {});
+  setTimeout(check, 8000); setInterval(check, 6 * 3600e3);
+}
 if (!app.requestSingleInstanceLock()) app.quit(); else app.on('second-instance', showWin);
 function createWindow() {
   const w = new BrowserWindow({
@@ -50,6 +70,7 @@ ipcMain.handle('show', () => showWin());
 ipcMain.handle('airport', (_, lat, lon) => data.airport(lat, lon));
 
 // Watchlist, today's flights of an aircraft, METAR/TAF, rain radar
+ipcMain.handle('find', (_, q) => data.find(q));
 ipcMain.handle('watch', (_, hexes) => data.watch(hexes));
 ipcMain.handle('legs', (_, hex) => data.legs(hex));
 ipcMain.handle('metar', (_, lat, lon) => data.metar(lat, lon));
@@ -65,7 +86,7 @@ app.whenReady().then(() => {
   });
   // Only allow the notifications permission (alert zone); camera, location etc. are denied
   session.defaultSession.setPermissionRequestHandler((_, perm, cb) => cb(perm === 'notifications'));
-  createWindow();
+  createWindow(); setupUpdates();
   app.on('activate', () => BrowserWindow.getAllWindows().length || createWindow());
 });
 app.on('before-quit', () => { quitting = true; });

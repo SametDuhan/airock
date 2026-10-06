@@ -1,14 +1,6 @@
 // Extra features: settings (tray, notifications), flight diary, share image, altitude / speed profile.
 // Loaded after extras.js; it plugs into the card hooks in the `X` object.
 
-/* ---------- settings: run in the tray, desktop notifications ---------- */
-{ const tr = $('sTray'), nt = $('sNot');
-  tr.checked = !!LS('sky.tray', false); nt.checked = !!LS('sky.notif', true);
-  try { window.api?.tray?.(tr.checked); } catch {}
-  if (!window.api?.tray) tr.closest('label').style.display = 'none'; // browser build: no tray
-  tr.onchange = () => { save('sky.tray', tr.checked); try { window.api?.tray?.(tr.checked); } catch {} if (tr.checked) toast(t('SkyTrack keeps running in the tray when you close the window')); };
-  nt.onchange = () => save('sky.notif', nt.checked); }
-
 /* ---------- helpers ---------- */
 const saveFile = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
 const fmtDur = s => { const h = Math.floor(s / 3600), m = Math.round(s % 3600 / 60); return h ? h + t(' h ') + m + t(' min') : m + t(' min'); };
@@ -26,12 +18,12 @@ function diaryAdd(e) {
 }
 function renderDiary() {
   const km_ = diary.reduce((s, x) => s + x.km, 0), co2 = diary.reduce((s, x) => s + co2pp(x.km), 0), n = v => Math.round(v).toLocaleString(LOC());
-  const tiles = [[t('Flights'), diary.length], [t('Distance'), n(km_) + ' km'], [t('Around the Earth'), (km_ / 40075).toFixed(2) + '×'], ['CO₂ ' + t('(est.)'), n(co2) + ' kg']];
+  const tiles = [[t('Flights'), diary.length], [t('Distance'), fmtDist(km_)], [t('Around the Earth'), (km_ / 40075).toFixed(2) + '×'], ['CO₂ ' + t('(est.)'), n(co2) + ' kg']];
   dyEl.innerHTML = `<div class="bx"><div class="hd"><h2>${t('Flight diary')}</h2><button class="ib" data-x aria-label="${t('Close')}" title="${t('Close')}"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l8 8M11 3l-8 8"/></svg></button></div>`
     + `<div class="st4">${tiles.map(x => `<div><span>${esc(x[0])}</span><b>${esc(x[1])}</b></div>`).join('')}</div>`
     + `<form id="dyf"><input id="dyD" type="date" value="${new Date().toISOString().slice(0, 10)}" required><input id="dyA" list="apList" placeholder="${t('From')}" autocomplete="off" required><input id="dyB" list="apList" placeholder="${t('To')}" autocomplete="off" required>`
     + `<input id="dyN" placeholder="${t('Flight no.')}" autocomplete="off"><input id="dyT" placeholder="${t('Aircraft type')}" autocomplete="off"><button class="bt2" type="submit">${t('Add')}</button></form><div class="rtx" id="dyE"></div>`
-    + `<div class="ls">${diary.length ? diary.map(x => `<div class="de"><span class="dd">${esc(x.date)}</span><b>${esc(x.from)} → ${esc(x.to)}</b><span class="dm">${esc([x.fl, x.type].filter(Boolean).join(' · '))}</span><span class="dk">${x.km.toLocaleString(LOC())} km</span><button class="wx2" data-del="${x.id}" title="${t('Remove')}">✕</button></div>`).join('')
+    + `<div class="ls">${diary.length ? diary.map(x => `<div class="de"><span class="dd">${esc(x.date)}</span><b>${esc(x.from)} → ${esc(x.to)}</b><span class="dm">${esc([x.fl, x.type].filter(Boolean).join(' · '))}</span><span class="dk">${fmtDist(x.km)}</span><button class="wx2" data-del="${x.id}" title="${t('Remove')}">✕</button></div>`).join('')
       : `<div class="none">${t('Your diary is empty. Add a flight above, or open a flight on the map and press “Add to diary”.')}</div>`}</div>`
     + `<div class="ft"><button class="bt2" data-csv>${t('Export CSV')}</button></div></div>`;
 }
@@ -67,7 +59,7 @@ function shareImage(f) {
     [0, 1].forEach(k => { const p = pt(k); x.fillStyle = '#fff'; x.beginPath(); x.arc(p.x, p.y, 9, 0, 7); x.fill(); x.fillStyle = '#f2c230'; x.beginPath(); x.arc(p.x, p.y, 5, 0, 7); x.fill(); });
     const p = pt(prog), q = pt(Math.min(1, prog + .01)), hdg = Math.atan2(q.x - p.x, -(q.y - p.y)) * 180 / Math.PI; x.lineWidth = 1; x.strokeStyle = '#000'; icon(x, p, hdg, 64, '#fff', kindOf(f));
   } else { x.font = `600 40px ${F}`; x.fillStyle = '#f2c230'; x.fillText(f.lat.toFixed(2) + ', ' + f.lon.toFixed(2), 60, 330); }
-  const vs = Math.round(f.vr * 196.85), TL = TILE_L[LANG] || TILE_L.en, tiles = [[TL[0], f.ground ? t('on ground') : Math.round(f.alt * 3.281).toLocaleString(LOC()) + ' ft'], [TL[1], Math.round(f.spd * 1.944) + ' kt'], [t('Heading'), Math.round(f.hdg) + '°'], [TL[2], (vs > 0 ? '+' : vs < 0 ? '−' : '') + Math.abs(vs).toLocaleString(LOC()) + ' ft/min']];
+  const vs = Math.round(f.vr * 196.85), TL = TILE_L[LANG] || TILE_L.en, tiles = [[TL[0], f.ground ? t('on ground') : fmtAlt(f.alt * 3.281)], [TL[1], fmtSpd(f.spd * 1.944)], [t('Heading'), Math.round(f.hdg) + '°'], [TL[2], (vs > 0 ? '+' : vs < 0 ? '−' : '') + fmtVs(Math.abs(vs))]];
   tiles.forEach(([k, v], i) => { const tx = 60 + i * 280; x.fillStyle = 'rgba(255,255,255,.06)'; x.beginPath(); x.roundRect(tx, 450, 255, 100, 16); x.fill();
     x.fillStyle = '#8d877c'; x.font = `700 17px ${F}`; x.letterSpacing = '2px'; x.fillText(String(k).toUpperCase(), tx + 22, 487); x.letterSpacing = '0px'; x.fillStyle = '#fff'; x.font = `800 34px ${F}`; x.fillText(v, tx + 22, 531); });
   x.fillStyle = '#6f6a60'; x.font = `600 20px ${F}`; x.fillText(t('Free flight tracker · no account, no ads'), 60, 594); x.textAlign = 'right'; x.fillText('sametduhan.github.io/airock', W - 60, 594); x.textAlign = 'left';
@@ -81,7 +73,7 @@ function profSvg(p) {
   const al = p.map(r => `${X_(r[0]).toFixed(1)},${YA(r[1]).toFixed(1)}`).join(' '), sp = p.filter(r => r[2] != null).map(r => `${X_(r[0]).toFixed(1)},${YS(r[2]).toFixed(1)}`).join(' ');
   return `<svg viewBox="0 0 ${W} ${H}" width="100%"><polygon points="${X_(0)},${H - B} ${al} ${X_(tm)},${H - B}" fill="rgba(242,194,48,.18)"/><polyline points="${sp}" fill="none" stroke="#5aa9ff" stroke-width="1.4" opacity=".85"/><polyline points="${al}" fill="none" stroke="#f2c230" stroke-width="2" stroke-linejoin="round"/>`
     + `<circle cx="${X_(tm)}" cy="${YA(p[p.length - 1][1])}" r="3.5" fill="#fff" stroke="#f2c230" stroke-width="1.5"/><text x="${L}" y="${H - 2}" class="ax">0</text><text x="${W - L}" y="${H - 2}" class="ax" text-anchor="end">${fmtDur(tm)}</text></svg>`
-    + `<div class="lg2"><span><i style="background:#f2c230"></i>${t('Altitude')} · ${t('max')} ${Math.round(ma / 100) * 100} ft</span><span><i style="background:#5aa9ff"></i>${t('Speed')} · ${t('max')} ${ms} kt</span></div>`;
+    + `<div class="lg2"><span><i style="background:#f2c230"></i>${t('Altitude')} · ${t('max')} ${fmtAlt(ma, 100)}</span><span><i style="background:#5aa9ff"></i>${t('Speed')} · ${t('max')} ${fmtSpd(ms)}</span></div>`;
 }
 const drawProf = f => { const el = $('prf'); if (!el) return; const p = f.prof; if (!(p?.length > 5)) { el.innerHTML = ''; el.dataset.k = ''; return; }
   const k = f.id + p.length; if (el.dataset.k === k) return; el.dataset.k = k; el.innerHTML = `<div class="lbl" style="margin-top:14px">${t('Altitude & speed')}</div>` + profSvg(p); };

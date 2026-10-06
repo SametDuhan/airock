@@ -32,12 +32,12 @@
   const fromAdsb = a => { const g = a.alt_baro === 'ground', ft = g ? 0 : typeof a.alt_baro === 'number' ? a.alt_baro : a.alt_geom || 0;
     return { id: a.hex, cs: (a.flight || '').trim() || a.r || a.hex.toUpperCase(), reg: a.r || '', type: a.t || '', country: '', lat: a.lat, lon: a.lon,
       ground: g, alt: ft / 3.281, spd: (a.gs || 0) / 1.944, hdg: a.track ?? a.true_heading ?? 0, vr: (a.baro_rate ?? a.geom_rate ?? 0) / 196.85,
-      wd: a.wd ?? null, ws: a.ws ?? null, tas: a.tas ?? null, th: a.true_heading ?? null, sq: a.squawk || '', emg: a.emergency && a.emergency !== 'none' ? a.emergency : '', cat: a.category || '' }; };
+      wd: a.wd ?? null, ws: a.ws ?? null, tas: a.tas ?? null, th: a.true_heading ?? null, sq: a.squawk || '', emg: a.emergency && a.emergency !== 'none' ? a.emergency : '', cat: a.category || '', mil: !!((a.dbFlags || 0) & 1) }; };
   // Two free community feeds with the same data format. Circles are spread over both, so each one stays well under its own rate limit
   // and a wide view covers twice as much. If a feed fails (e.g. 429), its circle is retried on the other one.
   const FEEDS = [
-    { name: 'adsb.lol', point: (la, lo, r) => `https://api.adsb.lol/v2/point/${la}/${lo}/${r}`, hex: h => `https://api.adsb.lol/v2/hex/${h}` },
-    { name: 'adsb.fi', point: (la, lo, r) => `https://opendata.adsb.fi/api/v2/lat/${la}/lon/${lo}/dist/${r}`, hex: h => `https://opendata.adsb.fi/api/v2/hex/${h}` }];
+    { name: 'adsb.lol', point: (la, lo, r) => `https://api.adsb.lol/v2/point/${la}/${lo}/${r}`, hex: h => `https://api.adsb.lol/v2/hex/${h}`, by: (k, v) => `https://api.adsb.lol/v2/${k}/${v}` },
+    { name: 'adsb.fi', point: (la, lo, r) => `https://opendata.adsb.fi/api/v2/lat/${la}/lon/${lo}/dist/${r}`, hex: h => `https://opendata.adsb.fi/api/v2/hex/${h}`, by: (k, v) => `https://opendata.adsb.fi/api/v2/${k}/${v}` }];
   const feedPause = {}; // feed name → time until which we skip it (after a 429 or an error)
   async function fromFeeds(first, fetchUrl, delayMs) {
     await sleep(delayMs); const errs = [];
@@ -67,6 +67,16 @@
     try { const r = await fromFeeds(0, f => f.hex(hexes.join(',').toLowerCase()), 0);
       return { ok: true, flights: r.ac.filter(a => a.lat != null && a.lon != null).map(fromAdsb) };
     } catch (e) { return { ok: false, error: e.message }; }
+  }
+
+  // Worldwide search by callsign, registration, ICAO24 hex or aircraft type (not limited to what is on screen)
+  async function find(q) {
+    q = String(q || '').trim().toUpperCase(); if (!/^[A-Z0-9-]{2,10}$/.test(q)) return { ok: false, error: 'invalid query' };
+    const kinds = ['callsign', 'reg']; if (/^[0-9A-F]{6}$/.test(q)) kinds.push('hex'); if (/^[A-Z0-9]{3,4}$/.test(q)) kinds.push('type');
+    const rs = await Promise.allSettled(kinds.map(k => fromFeeds(0, f => f.by(k, k === 'hex' ? q.toLowerCase() : q), 0)));
+    const seen = new Map(); let any = false;
+    rs.forEach(r => { if (r.status !== 'fulfilled') return; any = true; r.value.ac.filter(a => a.lat != null && a.lon != null).forEach(a => { if (!seen.has(a.hex)) seen.set(a.hex, fromAdsb(a)); }); });
+    return any ? { ok: true, flights: [...seen.values()].slice(0, 30) } : { ok: false, error: 'no answer' };
   }
 
   /* ---------- OpenSky (fallback source: the daily credit limit is low for anonymous use) ---------- */
@@ -299,7 +309,7 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  const api = { flights, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
+  const api = { flights, find, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
   root.SkyData = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

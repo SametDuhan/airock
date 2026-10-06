@@ -15,4 +15,5 @@ const load = src => new Promise((ok, no) => { const s = document.createElement('
   await load('extras.js');
   await load('layers.js');
   await load('features.js');
+  await load('tools.js');
 })();

@@ -173,20 +173,49 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 #lmenu{position:absolute;right:0;top:38px;z-index:60;min-width:168px;padding:6px;background:#181818;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 34px #000b;display:flex;flex-direction:column;gap:2px;animation:lmin .16s ease-out}#lmenu[hidden]{display:none}@keyframes lmin{from{opacity:0;transform:translateY(-6px)}}
 #lmenu button{display:flex;align-items:center;gap:10px;background:transparent;border:0;border-radius:8px;padding:6px 8px;color:var(--fg);cursor:pointer;font:600 13px 'Segoe UI',system-ui,sans-serif;text-align:left}#lmenu button:hover{background:#ffffff10}
 #lmenu button i{font:700 11px ui-monospace,monospace;font-style:normal;letter-spacing:.08em;width:34px;height:22px;line-height:22px;text-align:center;border-radius:11px;background:#ffffff14;color:var(--mut);flex:none}#lmenu button.on i{background:linear-gradient(135deg,#ffd75e,var(--ac));color:#141414}#lmenu button.on{color:var(--ac)}
+.flt .fr u{text-decoration:none}
+
+/* ---- shared modal, settings, alerts, overhead, tour, update bar ---- */
+.mdl{position:absolute;inset:0;z-index:1260;background:#000a;display:none;align-items:center;justify-content:center}.mdl.show{display:flex}
+.mdl .bx{width:min(560px,94%);max-height:88%;overflow-y:auto;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:12px;padding:18px 20px 20px;box-shadow:0 20px 60px #000a}
+.mdl .hd{display:flex;align-items:center;margin-bottom:10px}.mdl h2{margin:0;flex:1;font:700 22px 'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif}.mdl .ib{border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center}
+.mdl h3{margin:16px 0 8px;font:700 11px 'Segoe UI',system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ac)}
+.sr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0}.sr>span{color:var(--fg);font-size:13px}.sr .btns{flex:none}.sr .btns button{flex:none;padding:6px 12px}
+.mdl .ck{margin:6px 0}.mdl .bt2{background:transparent;color:var(--ac);border:1px solid var(--ac);border-radius:7px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700}.mdl .bt2:hover{background:var(--ac);color:#111}
+.mdl .none{padding:14px 6px;color:var(--mut);font-size:13px}.mdl .vrs{margin-top:16px;color:var(--mut);font:11px ui-monospace,monospace}
+#alm .af{display:grid;grid-template-columns:150px 1fr auto;gap:6px;margin:8px 0}#alm select,#alm input{background:#111;border:1px solid var(--line);border-radius:7px;color:var(--fg);padding:8px 9px;outline:0;font:600 12px ui-monospace,monospace;min-width:0}#alm select:focus,#alm input:focus{border-color:var(--ac)}
+#alm .ch2{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}#alm .ch2 button{background:#ffffff0a;border:1px solid var(--line);border-radius:999px;color:var(--fg);padding:4px 11px;cursor:pointer;font-size:12px}#alm .ch2 button:hover{border-color:var(--ac);color:var(--ac)}
+#alm .ar2{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line)}#alm .ar2 b{font:700 13px ui-monospace,monospace;flex:1}#alm .ar2 span{color:var(--mut);font-size:12px}#alm .ar2 button{background:transparent;border:0;color:var(--mut);cursor:pointer}#alm .ar2 button:hover{color:#ff6b5e}
+#ovp{position:absolute;left:12px;top:64px;width:310px;max-height:calc(100% - 150px);overflow-y:auto;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid #2f8cff;border-radius:12px;padding:16px;box-shadow:0 10px 36px #000a;transform:translateX(-340px);visibility:hidden;transition:transform .4s cubic-bezier(.2,.7,.2,1),visibility 0s .4s}#ovp.show{transform:none;visibility:visible;transition:transform .4s cubic-bezier(.2,.7,.2,1)}
+#ovp h2{margin:0;font:700 22px 'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif}#ovp .ch{display:flex;align-items:center;gap:10px}#ovp .ch .cn{flex:1}#ovp small{color:var(--mut)}
+#ovp .ib{width:28px;height:28px;border-radius:50%;padding:0;color:var(--mut)}
+#ovp .ctl{display:flex;gap:6px;margin:12px 0 4px}#ovp .ctl button,#ovp .ctl input{flex:1;min-width:0;background:#ffffff08;border:1px solid var(--line);border-radius:8px;color:var(--fg);padding:7px 8px;font-size:12px;outline:0;cursor:pointer}#ovp .ctl input{cursor:text;font:600 12px ui-monospace,monospace;text-transform:uppercase}#ovp .ctl button:hover,#ovp .ctl input:focus{border-color:var(--ac)}
+#ovp .rg{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mut);margin:8px 0}#ovp .rg input{flex:1;accent-color:var(--ac)}
+#ovp .ov{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line);cursor:pointer}#ovp .ov:hover{background:#ffffff0a}#ovp .ov .rm{flex:1;min-width:0;display:flex;flex-direction:column}#ovp .ov b{font:700 13px 'Segoe UI',system-ui,sans-serif}#ovp .ov .rm small{font:11px ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ovp .ov .dir{width:46px;height:46px;flex:none;border-radius:50%;background:#ffffff08;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 12px ui-monospace,monospace;color:var(--ac);line-height:1.1}#ovp .ov .dir small{font-size:9px;color:var(--mut)}
+#ovp .ov .rs{text-align:right;font:600 11px ui-monospace,monospace;color:var(--mut)}#ovp .none{padding:16px 4px;color:var(--mut);font-size:13px}
+.ovm{width:18px;height:18px;border-radius:50%;background:#2f8cff;border:3px solid #fff;box-shadow:0 0 0 0 rgba(47,140,255,.6);animation:ovp 2s infinite}@keyframes ovp{70%{box-shadow:0 0 0 14px rgba(47,140,255,0)}100%{box-shadow:0 0 0 0 rgba(47,140,255,0)}}
+.placing,.placing .leaflet-container{cursor:crosshair!important}
+#upd{flex:none;position:sticky;bottom:34px;z-index:3;margin:0;padding:9px 14px;background:linear-gradient(135deg,#ffd75e,var(--ac));color:#141414;display:flex;align-items:center;gap:10px;font:700 12px 'Segoe UI',system-ui,sans-serif}#upd[hidden]{display:none}#upd span{flex:1}#upd button{background:#141414;color:var(--ac);border:0;border-radius:999px;padding:5px 12px;cursor:pointer;font-weight:700;font-size:11px}
+#upd .pbar{position:absolute;left:0;bottom:0;height:3px;background:#141414;transition:width .3s}
+#tour{position:fixed;inset:0;z-index:5000}#tour .spot{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.72),0 0 0 3px var(--ac);transition:all .35s cubic-bezier(.2,.7,.2,1);pointer-events:none}
+#tour .tip{position:fixed;width:300px;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:12px;padding:16px 16px 12px;box-shadow:0 14px 40px #000c;transition:all .35s cubic-bezier(.2,.7,.2,1)}
+#tour h4{margin:0 0 6px;font:700 17px 'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif}#tour p{margin:0;line-height:1.5;font-size:13px;color:#d6cfbf}#tour .nv{display:flex;align-items:center;gap:8px;margin-top:14px}#tour .dots{flex:1;display:flex;gap:5px}#tour .dots i{width:7px;height:7px;border-radius:50%;background:#ffffff26}#tour .dots i.on{background:var(--ac)}
+#tour button{background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--fg);padding:6px 12px;cursor:pointer;font-size:12px;font-weight:600}#tour button.pr{background:var(--ac);color:#111;border-color:var(--ac)}#tour button.sk{border:0;color:var(--mut)}
+#list .row.ap .ri,#list .row.rw .ri{width:20px;height:20px}#list .sh{padding:8px 16px 4px;font:700 10px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ac)}#list .row.ap .ai{width:20px;text-align:center;font-size:15px}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
 <div class="sec"><div class="lbl">Data</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Live</button></div><div id="st"></div></div>
 <div class="sec"><div class="lbl">Mode</div><div class="btns"><button id="mNorm" class="on">Normal</button><button id="mSpot">Plane spotter</button></div>
-<div class="btns" style="margin-top:8px"><button id="bDiary">📓 Flight diary</button></div>
-<div class="cks"><label class="ck"><input id="sTray" type="checkbox"> Keep running in the tray</label><label class="ck"><input id="sNot" type="checkbox" checked> Desktop notifications</label></div></div>
+<div class="btns wrap" style="margin-top:8px"><button id="bDiary">📓 Flight diary</button><button id="bAlerts">🔔 Alerts</button><button id="bOver">📍 Overhead</button><button id="bSet">⚙ Settings</button></div></div>
 <div class="sec" id="spt" style="display:none"></div>
 <div class="sec"><div class="lbl">Map</div><div class="btns seg" id="tiles"><button data-t="osm">Standard</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div><div class="btns wrap" style="margin-top:8px"><button id="bAp" class="on">Airports</button><button id="bZ">Alert zone</button><button id="bRd" title="Rain radar">Radar</button><button id="bTb" title="Turbulence advisories (SIGMET / G-AIRMET)">Turbulence</button><button id="bWd" title="Wind arrows">Wind</button><button id="bNt" title="Day / night">Night</button></div><select id="wdLv" style="display:none;width:100%;margin-top:6px"><option value="0">Wind: FL050</option><option value="1">Wind: FL100</option><option value="2">Wind: FL180</option><option value="3">Wind: FL300</option><option value="4" selected>Wind: FL340</option><option value="5">Wind: FL390</option></select>
 <label class="zr"><span>Zone radius</span> <input id="zR" type="number" min="3" max="500" step="1" value="100"> <span>km</span></label>
 </div>
-<div class="flt"><div class="lbl">Filters</div><div class="fr"><span>Altitude</span><span><b id="vA">0</b> – <b id="vM">45.000+</b> ft</span></div>
+<div class="flt"><div class="lbl">Filters</div><div class="fr"><span>Altitude</span><span><b id="vA">0</b> – <b id="vM">45.000+</b> <u id="uA">ft</u></span></div>
 <div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">min</span><span class="rmax">max</span></div>
-<div class="fr"><span>Speed</span><span><b id="vS">0</b> – <b id="vSM">600+</b> kt</span></div>
+<div class="fr"><span>Speed</span><span><b id="vS">0</b> – <b id="vSM">600+</b> <u id="uS">kt</u></span></div>
 <div class="dr" id="dr2"><input id="fS" type="range" min="0" max="600" step="25" value="0"><input id="fSM" type="range" min="0" max="600" step="25" value="600"><span class="rmin">min</span><span class="rmax">max</span></div>
 <div class="ff">Airport</div>
 <div class="apr"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button id="fSw" class="ib" title="Departure ↔ arrival">⇄</button><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"></div>
@@ -198,9 +227,9 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 <div class="cks"><label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
 <label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div></div>
 <div class="sec" id="wls" style="display:none"></div>
-<div class="sec" id="srch"><div class="lbl">Aircraft</div><input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></div><div id="ver">SkyTrack</div></aside>
+<div class="sec" id="srch"><div class="lbl">Aircraft</div><input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></div><div id="upd" hidden></div><div id="ver">SkyTrack</div></aside>
 <main><div id="map"></div>
 <button id="open" class="ib" title="Close menu" aria-label="Menu"><b></b><b></b><b></b></button><div class="bar"><span class="cdot"></span><div class="ct"><span id="clock"></span><small id="cdate"></small></div></div>
-<div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
+<div id="stm" class="mdl"></div><div id="alm" class="mdl"></div><div id="ovp"></div><div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
 <div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span><div id="rpTip"></div></div></main></div>
 <script src="loader.js"></script></body></html>

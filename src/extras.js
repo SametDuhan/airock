@@ -1,6 +1,6 @@
 // Extras on top of the map: emergency alerts, watchlist, today's flights, rain radar, plane spotter mode (logbook) and the language switch.
 // Loaded after renderer.js; it plugs into the hooks in the `X` object there.
-const hhmm = s => new Date(s * 1000).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' });
+const hhmm = s => new Date(s * 1000).toLocaleTimeString(LOC(), TF({ hour: '2-digit', minute: '2-digit' }));
 const nearAp = (lat, lon) => { let b = '', m = 40; knownAps.forEach(a => { const d = km(lat, lon, a.lat, a.lon); if (d < m) { m = d; b = a.code; } }); return b; };
 const HEX6 = /^[0-9a-f]{6}$/i;
 
@@ -57,7 +57,7 @@ function legsHtml(f) {
   if (!f.legs.length) return `<div class="rtx" style="margin-top:12px">${t('No flights recorded today')}</div>`;
   return `<div class="lbl" style="margin-top:14px">${t("Today's flights")}</div>` + f.legs.map((l, i) => ({ l, i })).reverse().map(({ l, i }) =>
     `<div class="lg" data-i="${i}"><b>${esc(nearAp(...l.from) || '?')} → ${l.open ? t('in flight') : esc(nearAp(...l.to) || '?')}</b>`
-    + `<span>${hhmm(l.t0)}–${l.open ? t('now') : hhmm(l.t1)} · ${l.km.toLocaleString(LOC())} km · ${Math.round(l.maxAlt).toLocaleString(LOC())} ft</span></div>`).join('');
+    + `<span>${hhmm(l.t0)}–${l.open ? t('now') : hhmm(l.t1)} · ${fmtDist(l.km)} · ${fmtAlt(l.maxAlt)}</span></div>`).join('');
 }
 function drawLeg(f, i) {
   const l = Array.isArray(f.legs) && f.legs[i]; if (!l) return; legLayer.clearLayers();
@@ -74,7 +74,7 @@ async function setRadar(on) {
   if (!r.ok) { toast(t('Radar unavailable')); $('bRd').classList.remove('on'); return; }
   radarLayer && radarLayer.remove();
   radarLayer = L.tileLayer(`${r.host}${r.path}/256/{z}/{x}/{y}/2/1_1.png`, { opacity: .6, zIndex: 5, maxNativeZoom: 7, maxZoom: 19, attribution: 'Radar &copy; RainViewer' }).addTo(map);
-  $('bRd').title = t('Rain radar') + ' · ' + new Date(r.time * 1000).toLocaleTimeString(LOC());
+  $('bRd').title = t('Rain radar') + ' · ' + new Date(r.time * 1000).toLocaleTimeString(LOC(), TF());
   clearInterval(radarT); radarT = setInterval(() => setRadar(true), 600e3); // radar images update about every 10 minutes
 }
 $('bRd').onclick = () => setRadar(!radarLayer);
