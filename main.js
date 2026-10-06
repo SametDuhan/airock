@@ -20,23 +20,34 @@ function setupTray() {
 }
 // Updates: Windows / Linux AppImage download in the background and install on restart (electron-updater, GitHub releases).
 // macOS builds are not signed, so there we only tell the user a new version exists and open the download page.
-const sendUpdate = (state, extra = {}) => { try { win?.webContents.send('update', { state, ...extra }); } catch {} };
+// Everything is written to update.log in the user data folder, failed checks are retried (2 min, 10 min, 30 min, then every 6 h), and the
+// last state is sent again when the window reloads, so the "update ready" bar cannot be missed.
+let updState = null, updFails = 0;
+const updLog = m => { try { fs.appendFileSync(path.join(app.getPath('userData'), 'update.log'), new Date().toISOString() + ' ' + m + '\n'); } catch {} };
+const sendUpdate = (state, extra = {}) => { updState = { state, ...extra }; try { win?.webContents.send('update', updState); } catch {} };
+const newerVer = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); return (x[0] - y[0] || x[1] - y[1] || x[2] - y[2]) > 0; };
+let checkNow = async () => ({ state: 'none' });
 function setupUpdates() {
-  if (!app.isPackaged) return;
+  ipcMain.handle('checkUpdate', () => checkNow());
+  if (!app.isPackaged) { checkNow = async () => ({ state: 'error', error: 'development build' }); return; }
   if (process.platform === 'darwin') {
-    const check = async () => { try { const r = await fetch('https://api.github.com/repos/SametDuhan/airock/releases/latest', { headers: { 'User-Agent': 'SkyTrack' } }); if (!r.ok) return; const j = await r.json(), v = String(j.tag_name || '').replace(/^v/, '');
-      const nv = x => x.split('.').map(Number), a = nv(v), b = nv(app.getVersion()), newer = a[0] - b[0] || a[1] - b[1] || a[2] - b[2]; if (newer > 0) sendUpdate('manual', { version: v, url: j.html_url }); } catch {} };
-    setTimeout(check, 8000); setInterval(check, 6 * 3600e3); return;
+    checkNow = async () => { try { const r = await fetch('https://api.github.com/repos/SametDuhan/airock/releases/latest', { headers: { 'User-Agent': 'SkyTrack' } }); if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json(), v = String(j.tag_name || '').replace(/^v/, ''); if (newerVer(v, app.getVersion())) { sendUpdate('manual', { version: v, url: j.html_url }); return { state: 'available', version: v }; } return { state: 'none' };
+    } catch (e) { updLog('mac check failed: ' + e.message); return { state: 'error', error: String(e.message).slice(0, 160) }; } };
+  } else {
+    const { autoUpdater } = require('electron-updater');
+    autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.logger = { info: m => updLog('info ' + m), warn: m => updLog('warn ' + m), error: m => updLog('error ' + m), debug() {} };
+    autoUpdater.on('update-available', i => sendUpdate('downloading', { version: i.version }));
+    autoUpdater.on('download-progress', p => sendUpdate('progress', { percent: Math.round(p.percent) }));
+    autoUpdater.on('update-downloaded', i => sendUpdate('ready', { version: i.version }));
+    autoUpdater.on('error', e => updLog('error event: ' + (e && e.message)));
+    ipcMain.handle('installUpdate', () => { quitting = true; autoUpdater.quitAndInstall(); });
+    checkNow = async () => { try { const r = await autoUpdater.checkForUpdates(); return r && r.isUpdateAvailable ? { state: 'available', version: r.updateInfo.version } : { state: 'none' };
+    } catch (e) { updLog('check failed: ' + e.message); return { state: 'error', error: String(e.message).split('\n')[0].slice(0, 160) }; } };
   }
-  const { autoUpdater } = require('electron-updater');
-  autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = true;
-  autoUpdater.on('update-available', i => sendUpdate('downloading', { version: i.version }));
-  autoUpdater.on('download-progress', p => sendUpdate('progress', { percent: Math.round(p.percent) }));
-  autoUpdater.on('update-downloaded', i => sendUpdate('ready', { version: i.version }));
-  autoUpdater.on('error', () => {});
-  ipcMain.handle('installUpdate', () => { quitting = true; autoUpdater.quitAndInstall(); });
-  const check = () => autoUpdater.checkForUpdates().catch(() => {});
-  setTimeout(check, 8000); setInterval(check, 6 * 3600e3);
+  const loop = async () => { const r = await checkNow(); const wait = r.state === 'error' ? [120e3, 600e3, 1800e3][Math.min(updFails++, 2)] : (updFails = 0, 6 * 3600e3); setTimeout(loop, wait); };
+  setTimeout(loop, 8000);
 }
 if (!app.requestSingleInstanceLock()) app.quit(); else app.on('second-instance', showWin);
 function createWindow() {
@@ -46,6 +57,7 @@ function createWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false }
   });
   win = w;
+  w.webContents.on('did-finish-load', () => { if (updState && updState.state !== 'progress') try { w.webContents.send('update', updState); } catch {} });
   w.on('close', e => { if (settings.tray && !quitting) { e.preventDefault(); w.hide(); setupTray(); } });
   w.on('closed', () => { win = null; });
   w.removeMenu();

@@ -15,7 +15,8 @@ function renderSettings() {
     + `<h3>${t('Replay history')}</h3><div class="sr"><span>${t('How far back you can rewind')}</span><div class="btns seg">${[[5, '1 h'], [15, '3 h'], [30, '6 h']].map(([v, tx]) => `<button data-h="${v}" class="${HSTEP === v ? 'on' : ''}">${tx}</button>`).join('')}</div></div>`
     + (window.api?.openskySet ? `<h3>${t('OpenSky account (optional)')}</h3><div class="rtx">${t('A free OpenSky API client gives the wide view a much higher daily limit. Create one in your OpenSky account. It is stored encrypted on this computer.')}</div><div class="os"><input id="osId" placeholder="Client ID" autocomplete="off"><input id="osSec" type="password" placeholder="Client secret" autocomplete="off"><button class="bt2" id="osSave">${t('Save')}</button></div><div class="rtx" id="osSt"></div>` : '')
     + `<h3>${t('App')}</h3><label class="ck" id="lTray"><input id="sTray" type="checkbox"> ${t('Keep running in the tray')}</label><label class="ck"><input id="sNot" type="checkbox"> ${t('Desktop notifications')}</label>`
-    + `<div style="margin-top:14px"><button class="bt2" id="tourAgain">${t('Show the tour again')}</button></div><div class="vrs">${esc($('ver').textContent)}</div></div>`;
+    + (window.api?.checkUpdate ? `<div class="sr"><span>${esc($('ver').textContent)}</span><button class="bt2" id="updCheck">${t('Check for updates')}</button></div><div class="rtx" id="updSt"></div>` : '')
+    + `<div style="margin-top:14px"><button class="bt2" id="tourAgain">${t('Show the tour again')}</button></div></div>`;
   if (window.api?.openskyGet) window.api.openskyGet().then(r => { if ($('osSt')) { $('osSt').textContent = r.set ? t('Connected as {0}', r.id) : ''; if (r.set && $('osId')) $('osId').placeholder = r.id; } });
   const tr = $('sTray'), nt = $('sNot'); tr.checked = !!LS('sky.tray', false); nt.checked = !!LS('sky.notif', true);
   if (!window.api?.tray) $('lTray').style.display = 'none';
@@ -27,6 +28,7 @@ stm.onclick = e => {
   const b = e.target.closest('[data-u]'); if (b) { U[b.dataset.u] = b.dataset.v === 'true' ? true : b.dataset.v === 'false' ? false : b.dataset.v; save('sky.units', U); renderSettings(); refreshAll(); return; }
   const hb = e.target.closest('[data-h]'); if (hb) { HSTEP = +hb.dataset.h; save('sky.hstep', HSTEP); renderSettings(); return; }
   if (e.target.id === 'osSave') { const id = $('osId').value.trim(), sec = $('osSec').value.trim(); window.api.openskySet(id, sec).then(r => { toast(r.ok ? t(r.set ? 'OpenSky account saved' : 'OpenSky account removed') : t('Could not store the credentials')); renderSettings(); }); return; }
+  if (e.target.id === 'updCheck') { const st = $('updSt'); st.textContent = t('Checking…'); window.api.checkUpdate().then(r => { st.textContent = r.state === 'none' ? t('You are up to date.') : r.state === 'available' ? t('Version {0} found, downloading…', r.version) : t('Could not check for updates: {0}', r.error || ''); }); return; }
   if (e.target.id === 'tourAgain') { modal(stm, false); startTour(); }
 };
 $('bSet').onclick = () => { renderSettings(); modal(stm, true); };

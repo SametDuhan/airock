@@ -150,7 +150,9 @@ const PlaneLayer = L.Layer.extend({
       const [lat, lon, hdg] = f.rp || [f.lat, f.lon, f.hdg], p = map.latLngToContainerPoint([lat, nearLon(lon, cLon)]); // nearest world copy at the date line
       if (p.x < -20 || p.y < -20 || p.x > s.x + 20 || p.y > s.y + 20) return;
       f._p = p; f._h = hdg; if (f.id === selected) { sel = f; return; }
-      icon(ctx, p, hdg, (f.ground ? 16 : 24) * k, f.ground ? '#9aa0a6' : color(f.alt), kindOf(f)); rings(ctx, f, p, (f.ground ? 16 : 24) * k);
+      if (f.seen && Date.now() - f.seen > 45000) ctx.globalAlpha = .5; // not reported for a while: shown fainter, still moving
+      icon(ctx, p, hdg, (f.ground ? 16 : 24) * k, f.ground ? '#9aa0a6' : color(f.alt), kindOf(f));
+      ctx.globalAlpha = 1; rings(ctx, f, p, (f.ground ? 16 : 24) * k);
     });
     if (sel) { ctx.shadowColor = '#f2c230'; ctx.shadowBlur = 12; icon(ctx, sel._p, sel._h, 30, '#fff', kindOf(sel)); ctx.shadowBlur = 0; rings(ctx, sel, sel._p, 30); }
   }
@@ -198,7 +200,7 @@ function seedDemo() {
 function upsert(d) {
   let f = flights.get(d.id);
   if (!f) { f = { tr: [], gone: replay }; flights.set(d.id, f); } // an aircraft that arrives during replay wasn't in that frame
-  Object.assign(f, d); X.event(f); return f;
+  Object.assign(f, d); f.seen = d.stale ? Date.now() - 60000 : Date.now(); X.event(f); return f;
 }
 function clearAll() { flights.clear(); hist.length = 0; replay = false; $('rpLive').classList.add('on'); $('rpT').textContent = t('history'); $('rpS').max = 0; $('rpS').value = 0; $('rpS').disabled = true; $('rpTip').classList.remove('show'); select(null); redraw(); }
 
@@ -321,10 +323,10 @@ setInterval(() => {
 
 /* ---------- live data ---------- */
 // Requests an area slightly larger than the visible one; panning/zooming within that area makes no new request
-const LIVE_MS = 15000;
+const LIVE_MS = 10000;
 let fetchedBox = null, fetchedAt = 0, reqId = 0, moveTimer = null, lastReq = 0;
 // Last good positions are kept for the next start, so the map is not empty while the first request is on its way (or when the data sources are busy)
-let cacheAt = 0;
+const GRACE_MS = 75000; let cacheAt = 0;
 function saveCache() { if (Date.now() - cacheAt < 60000) return; cacheAt = Date.now(); const v = map.getBounds();
   const a = [...flights.values()].filter(f => !f.gone && v.contains([f.lat, f.lon])).slice(0, 700).map(f => ({ id: f.id, cs: f.cs, reg: f.reg, type: f.type, country: f.country, lat: +f.lat.toFixed(4), lon: +f.lon.toFixed(4), ground: f.ground, alt: Math.round(f.alt), spd: Math.round(f.spd), hdg: Math.round(f.hdg), vr: f.vr, sq: f.sq, emg: f.emg, cat: f.cat }));
   save('sky.cache', { t: Date.now(), c: [map.getCenter().lat, map.getCenter().lng, map.getZoom()], f: a }); }
@@ -332,24 +334,37 @@ function loadCache() { const c = LS('sky.cache', null); if (!c || Date.now() - c
 async function poll(force) {
   if (!live) return; const v = map.getBounds();
   if (!force && fetchedBox && fetchedBox.contains(v) && Date.now() - fetchedAt < LIVE_MS) return;
-  if (!force && Date.now() - lastReq < 3000) return; lastReq = Date.now(); // at least 3 s between pan-triggered requests to stay under the rate limit
-  const b = v.pad(.15), id = ++reqId, cl = (x, m) => Math.max(-m, Math.min(m, x)).toFixed(2);
+  { const gap = Date.now() - lastReq; if (!force && gap < 1200) { clearTimeout(moveTimer); moveTimer = setTimeout(() => poll(), 1250 - gap); return; } } lastReq = Date.now(); // at least 1.2 s between pan-triggered requests (the data layer spreads the load over several servers)
+  const b = v.pad(.25), id = ++reqId, cl = (x, m) => Math.max(-m, Math.min(m, x)).toFixed(2);
   fetchedBox = b; fetchedAt = Date.now(); $('st').textContent = t('loading…');
   const r = await DATA.flights({ s: cl(b.getSouth(), 85), n: cl(b.getNorth(), 85), w: cl(b.getWest(), 180), e: cl(b.getEast(), 180) });
-  if (!live || id !== reqId) return; // the map changed again in the meantime: discard the stale response
-  if (!r.ok) { fetchedBox = null; const busy = /429|rate|paused|credit|limit/i.test(r.error || '');
+  if (!live) return;
+  if (id !== reqId) { if (r.ok) { r.flights.forEach(upsert); redraw(); } return; } // the map moved again meanwhile: the aircraft are still valid, so keep them, but do not touch the "fetched" area
+  if (!r.ok) { pollMs = 25000; fetchedBox = null; const busy = /429|rate|paused|credit|limit/i.test(r.error || '');
     $('st').textContent = t(busy ? 'Data sources are busy, retrying shortly. Showing the last known positions.' : 'No connection to the data sources. Showing the last known positions.') + (flights.size ? '' : ' ' + t('You can also try Demo mode.')); $('st').title = r.error || ''; return; }
   $('st').title = '';
   // If the source covered only part of the area (adsb.lol, wide view), count only the covered area as "fetched"; otherwise edges left empty won't load when panning
   if (r.covered) fetchedBox = L.latLngBounds([r.covered.s, r.covered.w], [r.covered.n, r.covered.e]);
   const seen = new Set(r.flights.map(d => d.id));
-  flights.forEach((f, id) => { if (!seen.has(id) && !watch.has(id)) { flights.delete(id); if (selected === id) select(null); } });
+  // An aircraft that one answer does not mention is NOT removed at once: free feeds skip aircraft now and then, and partial answers miss everything outside
+  // the covered area. It keeps flying (dead reckoning) and is dropped only after GRACE_MS without a sighting, and only if the area it is in was really covered.
+  { const now = Date.now(), inCov = f => r.cov ? r.cov.some(c => km(f.lat, f.lon, c[0], c[1]) <= c[2]) : b.contains([f.lat, f.lon]); // only where an answer really came from
+    flights.forEach((f, id) => { if (seen.has(id) || watch.has(id)) return; const age = now - (f.seen || 0);
+      if ((age > GRACE_MS && inCov(f)) || age > 600000) { flights.delete(id); if (selected === id) select(null); } }); }
   r.flights.forEach(upsert); redraw(); saveCache();
+  pollMs = r.partial || (r.src || '').includes('+ OpenSky') ? 15000 : LIVE_MS;
   $('st').textContent = `${r.src} · ${t('last updated')} ${new Date().toLocaleTimeString(LOC(), TF())}${r.partial ? ' · ' + t('wide view: center only, zoom in') : ''}`;
   pumpRoutes();
 }
-setInterval(() => poll(true), LIVE_MS);
-map.on('moveend', () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => { poll(); pumpRoutes(); }, 400); }); // when zooming/panning ends, request the new area right away
+// Self-scheduling refresh: 10 s normally, slower for wide views (more requests) and after errors, so the free feeds are not pushed into their rate limits
+let pollMs = LIVE_MS;
+(function loop() { setTimeout(async () => { try { await poll(true); } catch {} loop(); }, pollMs); })();
+// The aircraft you follow is asked for on its own every 5 s (one tiny request): it never drops out of the big area answers, and its data is fresher
+let trackBusy = false;
+async function trackSelected() { const f = flights.get(selected); if (!live || replay || trackBusy || !f || !/^[0-9a-f]{6}$/i.test(f.id)) return; trackBusy = true;
+  try { const r = await DATA.watch([f.id]); if (r.ok && live && selected === f.id) { r.flights.forEach(upsert); redraw(); } } finally { trackBusy = false; } }
+setInterval(trackSelected, 5000);
+map.on('moveend', () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => { poll(); pumpRoutes(); }, 250); }); // when zooming/panning ends, request the new area right away
 function setMode(l) {
   live = l; save('sky.live', l); ts = l ? 1 : 30; exitReplay(); $('mLive').classList.toggle('on', l); $('mDemo').classList.toggle('on', !l); clearAll(); fetchedBox = null;
   if (l) poll(true); else { seedDemo(); $('st').textContent = t('demo (30x speed)'); }
@@ -452,7 +467,7 @@ $('rpLive').onclick = exitReplay;
 /* ---------- selection, favorites, panel, list ---------- */
 function select(id) {
   closeAp(); X.sel(); selected = id; const f = flights.get(id);
-  if (f) { map.panTo(f.rp ? [f.rp[0], f.rp[1]] : [f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); loadTrace(f); loadTurb(f); } }
+  if (f) { map.panTo(f.rp ? [f.rp[0], f.rp[1]] : [f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); loadTrace(f); loadTurb(f); trackSelected(); } }
   if (replay) { drawRoute(null); trail.setLatLngs([]); } else { drawRoute(f); drawTrail(f); } redraw(); // don't mix a trail/route drawn for the live position into replay
   $('card').classList.toggle('show', !!f); if (f) renderCard(true); renderList();
 }

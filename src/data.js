@@ -35,9 +35,12 @@
       wd: a.wd ?? null, ws: a.ws ?? null, tas: a.tas ?? null, th: a.true_heading ?? null, sq: a.squawk || '', emg: a.emergency && a.emergency !== 'none' ? a.emergency : '', cat: a.category || '', mil: !!((a.dbFlags || 0) & 1) }; };
   // Two free community feeds with the same data format. Circles are spread over both, so each one stays well under its own rate limit
   // and a wide view covers twice as much. If a feed fails (e.g. 429), its circle is retried on the other one.
-  const FEEDS = [
+  const ALL_FEEDS = [
     { name: 'adsb.lol', point: (la, lo, r) => `https://api.adsb.lol/v2/point/${la}/${lo}/${r}`, hex: h => `https://api.adsb.lol/v2/hex/${h}`, by: (k, v) => `https://api.adsb.lol/v2/${k}/${v}` },
-    { name: 'adsb.fi', point: (la, lo, r) => `https://opendata.adsb.fi/api/v2/lat/${la}/lon/${lo}/dist/${r}`, hex: h => `https://opendata.adsb.fi/api/v2/hex/${h}`, by: (k, v) => `https://opendata.adsb.fi/api/v2/${k}/${v}` }];
+    { name: 'adsb.fi', point: (la, lo, r) => `https://opendata.adsb.fi/api/v2/lat/${la}/lon/${lo}/dist/${r}`, hex: h => `https://opendata.adsb.fi/api/v2/hex/${h}`, by: (k, v) => `https://opendata.adsb.fi/api/v2/${k}/${v}` },
+    // airplanes.live: free for projects, but access has to be requested (contact@airplanes.live), otherwise it answers 403. Set on: true once you have it.
+    { name: 'airplanes.live', on: false, point: (la, lo, r) => `https://api.airplanes.live/v2/point/${la}/${lo}/${r}`, hex: h => `https://api.airplanes.live/v2/hex/${h}`, by: (k, v) => `https://api.airplanes.live/v2/${k}/${v}` }];
+  const FEEDS = ALL_FEEDS.filter(f => f.on !== false);
   const feedPause = {}; // feed name → time until which we skip it (after a 429 or an error)
   async function fromFeeds(first, fetchUrl, delayMs) {
     await sleep(delayMs); const errs = [];
@@ -50,21 +53,22 @@
     throw new Error(errs.join(', '));
   }
   async function adsbLol(b) {
-    const { circles, partial, covered } = cover(b, MAX_CIRCLES * FEEDS.length), seen = new Map(), used = new Set(); let okN = 0, lastErr = '';
+    const { circles, partial, covered } = cover(b, MAX_CIRCLES * FEEDS.length), seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
     await Promise.all(circles.map(async (c, i) => {
       try {
-        const r = await fromFeeds(i % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 800);
-        r.ac.forEach(a => a.lat != null && a.lon != null && seen.set(a.hex, a)); used.add(r.name); okN++;
+        const r = await fromFeeds(i % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 350);
+        r.ac.forEach(a => a.lat != null && a.lon != null && seen.set(a.hex, a)); used.add(r.name); okN++; good.push(c);
       } catch (e) { lastErr = e.message; }
     }));
     if (!okN) throw new Error(lastErr || 'no response');
     const part = partial || okN < circles.length;
-    return { src: [...used].join(' + '), flights: [...seen.values()].map(fromAdsb), partial: part, covered: part ? covered : undefined };
+    // cov: the circles that really answered [lat, lon, radius km]: only aircraft inside them can be called "gone" when an answer does not list them
+    return { src: [...used].join(' + '), flights: [...seen.values()].map(fromAdsb), partial: part, covered: part ? covered : undefined, cov: good.map(c => [c.lat, c.lon, c.r * 1.852]) };
   }
   // Watchlist: current state of specific aircraft anywhere in the world (one request for all of them)
   async function watch(hexes) {
     if (!Array.isArray(hexes) || !hexes.length || hexes.length > 40 || !hexes.every(h => typeof h === 'string' && /^[0-9a-fA-F]{6}$/.test(h))) return { ok: false, error: 'invalid list' };
-    try { const r = await fromFeeds(0, f => f.hex(hexes.join(',').toLowerCase()), 0);
+    try { const r = await fromFeeds(Math.floor(Math.random() * FEEDS.length), f => f.hex(hexes.join(',').toLowerCase()), 0);
       return { ok: true, flights: r.ac.filter(a => a.lat != null && a.lon != null).map(fromAdsb) };
     } catch (e) { return { ok: false, error: e.message }; }
   }
@@ -113,11 +117,22 @@
   }
   async function flights(b) {
     try { b = bounds(b); } catch (e) { return { ok: false, error: e.message }; }
-    const order = cover(b).partial ? [['OpenSky', async () => ({ partial: false, flights: await openSky(b) })], ['adsb.lol', () => adsbLol(b)]]
-                                   : [['adsb.lol', () => adsbLol(b)], ['OpenSky', async () => ({ partial: false, flights: await openSky(b) })]];
-    const errs = [];
-    for (const [src, fn] of order) { try { return { ok: true, src, ...(await fn()) }; } catch (e) { errs.push(`${src}: ${e.message}`); } }
-    return { ok: false, error: errs.join(' · ') };
+    const os = async () => ({ partial: false, flights: await openSky(b) });
+    if (!cover(b).partial) { // zoomed in: the community feeds cover the whole area; OpenSky only as a backup
+      const errs = [];
+      for (const [src, fn] of [['adsb', () => adsbLol(b)], ['OpenSky', os]]) { try { const r = await fn(); return { ok: true, src: r.src || src, ...r }; } catch (e) { errs.push(`${src}: ${e.message}`); } }
+      return { ok: false, error: errs.join(' · ') };
+    }
+    // Wide view: the community feeds cover only the center, OpenSky covers everything. Ask both at the same time and merge (the community data wins),
+    // so aircraft do not appear and disappear when the source changes from one request to the next.
+    const [a, o] = await Promise.allSettled([adsbLol(b), os()]);
+    if (a.status === 'fulfilled' && o.status === 'fulfilled') {
+      const m = new Map(o.value.flights.map(f => [f.id, f])); a.value.flights.forEach(f => m.set(f.id, f));
+      return { ok: true, src: a.value.src + ' + OpenSky', partial: false, flights: [...m.values()] };
+    }
+    if (a.status === 'fulfilled') return { ok: true, src: a.value.src, ...a.value };
+    if (o.status === 'fulfilled') return { ok: true, src: 'OpenSky', ...o.value };
+    return { ok: false, error: `adsb: ${a.reason?.message} · OpenSky: ${o.reason?.message}` };
   }
 
   /* ---------- adsbdb.com: route (by callsign) and aircraft info (by ICAO24 code) ---------- */

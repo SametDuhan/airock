@@ -127,7 +127,12 @@ DICT.es = {
   '{0} aircraft with an emergency code': '{0} aeronaves con código de emergencia',
   '📊 Stats': '📊 Estadísticas',
   'OpenSky account saved': 'Cuenta de OpenSky guardada',
-  'OpenSky account removed': 'Cuenta de OpenSky eliminada'
+  'OpenSky account removed': 'Cuenta de OpenSky eliminada',
+  'Check for updates': 'Buscar actualizaciones',
+  'Checking…': 'Comprobando…',
+  'You are up to date.': 'Estás al día.',
+  'Version {0} found, downloading…': 'Versión {0} encontrada, descargando…',
+  'Could not check for updates: {0}': 'No se pudo buscar actualizaciones: {0}'
 };
 DICT.de = {
   'Close menu': 'Menü schließen', 'Open menu': 'Menü öffnen', 'Mode': 'Modus', 'Normal': 'Normal', 'Plane spotter': 'Planespotter', 'Data': 'Daten', 'Demo': 'Demo', 'Live': 'Live',
@@ -257,7 +262,12 @@ DICT.de = {
   '{0} aircraft with an emergency code': '{0} Flugzeuge mit Notfallcode',
   '📊 Stats': '📊 Statistiken',
   'OpenSky account saved': 'OpenSky-Konto gespeichert',
-  'OpenSky account removed': 'OpenSky-Konto entfernt'
+  'OpenSky account removed': 'OpenSky-Konto entfernt',
+  'Check for updates': 'Nach Updates suchen',
+  'Checking…': 'Wird geprüft…',
+  'You are up to date.': 'Du bist auf dem neuesten Stand.',
+  'Version {0} found, downloading…': 'Version {0} gefunden, wird geladen…',
+  'Could not check for updates: {0}': 'Updates konnten nicht geprüft werden: {0}'
 };
 DICT.fr = {
   'Close menu': 'Fermer le menu', 'Open menu': 'Ouvrir le menu', 'Mode': 'Mode', 'Normal': 'Normal', 'Plane spotter': 'Spotter', 'Data': 'Données', 'Demo': 'Démo', 'Live': 'En direct',
@@ -387,5 +397,10 @@ DICT.fr = {
   '{0} aircraft with an emergency code': '{0} appareils avec un code d\'urgence',
   '📊 Stats': '📊 Statistiques',
   'OpenSky account saved': 'Compte OpenSky enregistré',
-  'OpenSky account removed': 'Compte OpenSky supprimé'
+  'OpenSky account removed': 'Compte OpenSky supprimé',
+  'Check for updates': 'Rechercher des mises à jour',
+  'Checking…': 'Vérification…',
+  'You are up to date.': 'Vous êtes à jour.',
+  'Version {0} found, downloading…': 'Version {0} trouvée, téléchargement…',
+  'Could not check for updates: {0}': 'Impossible de rechercher les mises à jour : {0}'
 };
