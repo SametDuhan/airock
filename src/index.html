@@ -48,7 +48,7 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 .dr{position:relative;height:20px;margin:4px 0 10px;--a:0%;--b:100%}
 .dr::before{content:'';position:absolute;left:0;right:0;top:8px;height:4px;border-radius:2px;background:linear-gradient(to right,var(--line) var(--a),var(--ac) var(--a),var(--ac) var(--b),var(--line) var(--b))}
 .flt .dr input{position:absolute;left:0;top:0;width:100%;height:20px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
-#fM{z-index:2}
+#fM,#fSM{z-index:2}
 .dr input::-webkit-slider-runnable-track{height:20px;background:none}
 .dr input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:16px;height:16px;margin-top:2px;border-radius:50%;background:var(--ac);border:2px solid #111;cursor:grab}
 .dr input::-moz-range-track{background:none}.dr input::-moz-range-thumb{pointer-events:auto;width:12px;height:12px;border-radius:50%;background:var(--ac);border:2px solid #111;cursor:grab}
@@ -107,7 +107,8 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 <div class="flt"><div class="lbl">Filters</div><div>Altitude <b id="vA">0</b> – <b id="vM">45.000+</b> ft</div>
 <div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">min</span><span class="rmax">max</span></div>
 <div style="height:8px"></div>
-<label>Min speed <b id="vS">0</b> kt<input id="fS" type="range" min="0" max="600" step="25" value="0"></label>
+<div>Speed <b id="vS">0</b> – <b id="vSM">600+</b> kt</div>
+<div class="dr" id="dr2"><input id="fS" type="range" min="0" max="600" step="25" value="0"><input id="fSM" type="range" min="0" max="600" step="25" value="600"><span class="rmin">min</span><span class="rmax">max</span></div>
 <div>Airport</div>
 <div class="apr"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button id="fSw" class="ib" title="Departure ↔ arrival">⇄</button><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"></div>
 <div>Airline</div>
