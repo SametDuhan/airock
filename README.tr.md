@@ -35,7 +35,18 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 - **Harita katmanları**: yağış radarına ek olarak **Türbülans** düğmesi SIGMET / G-AIRMET türbülans alanlarını, **Rüzgar** rüzgar oklarını (açılan seçiciden irtifayı seç), **Gece** ise Dünya'nın gece tarafını çizer.
 - **Katlanan menü**: sol menüdeki bir bölümün başlığına (Veri, Mod, Harita, Filtreler, Uçaklar) tıklayınca o bölüm kapanır. Neyi kapattığını hatırlar.
 - **Uçak gözlemci modu**: **Mod** bölümünden açılır. Defter (uçuş kartında **📓 Gözlemi kaydet**, CSV dışa aktarma), *yeni uçak* / *yeni tip* rozetleri ve ek bilgiler (ICAO24, squawk, kategori) ekler. Normal modda bunların hiçbiri görünmez.
-- **Türkçe ve İngilizce**: menünün üstündeki **TR / EN** düğmesi bütün arayüzü değiştirir. Sistem dilinle başlar.
+- **Beş dil**: menünün üstündeki dil düğmesi tüm arayüzü İngilizce, Türkçe, İspanyolca, Almanca ve Fransızca arasında değiştirir. Sistem diliyle açılır. Yeni dil eklemek için `src/langs.js` içine bir tablo ve `src/i18n.js` içindeki `LANGS` listesine bir satır eklemen yeter.
+- **Farklı uçak simgeleri**: helikopterlerin rotorlu simgesi var, dört motorlu yolcu uçakları dört motoruyla daha büyük çizilir; iki motorlu yolcu uçakları, küçük jetler ve diğer uçaklar ayrı şekillerde. Hepsi irtifaya göre renklenir.
+- **İrtifa ve hız grafiği**: canlı uçuş kartında, uçuş boyunca irtifa ve hızı gösteren küçük bir grafik çıkar.
+- **Görsel paylaş**: uçuş kartındaki **📷 Görsel paylaş**, uçuşun rotası, çağrı kodu ve sayılarıyla bir resim kaydeder (panoya da kopyalar).
+- **Uçuş günlüğü**: **Mod** altındaki **📓 Uçuş günlüğü** kendi uçuşlarını tutar (tarih, rota, uçuş no, uçak); toplam mesafe, Dünya turu sayısı, yolcu başına tahmini CO₂ ve CSV dışa aktarma var. Uçuş kartındaki **Günlüğe ekle** bunu senin yerine doldurur.
+- **Tepsi ve bildirimler**: **Mod** altında pencereyi kapatınca SkyTrack'i sistem tepsisinde çalışır tutabilir (takip listesi bildirimleri gelmeye devam eder) ve masaüstü bildirimlerini açıp kapatabilirsin.
+- **Her sistem için indirme**: Windows kurulumu, macOS (.dmg, Apple silikon ve Intel) ve Linux (.AppImage) her sürüme derleme akışıyla eklenir.
+- **Uydu bulutları ve izler:** **Bulutlar** düğmesi uçakların altında NASA'nın son uydu görüntüsünü (bulutlarla) gösterir; **İzler** her uçağın nereden geldiğini (5 ya da 30 dakika, irtifaya göre renkli) çizer.
+- **İstatistikler:** **📊 İstatistikler**, SkyTrack'in şu an gördüklerini özetler: havadaki ve yerdeki uçaklar, en yüksek ve en hızlı uçak, en çok görülen havayolları ve tipler, en yoğun havalimanları.
+- **Daha uzun geri sarma:** Ayarlar'dan 1, 3 ya da 6 saat geriye sarabilirsin.
+- **Daha güvenilir veri:** SkyTrack canlı modda açılır ve harita son bilinen konumlarla dolu gelir; ücretsiz veri kaynakları yoğunsa anlaşılır bir mesaj gösterir ve daha yüksek günlük limit için kendi ücretsiz OpenSky API istemcini kullanabilir.
+- **Kendi yönteminle kur:** kurulum dosyalarına ek olarak winget ve Arch (AUR) için manifestolar [`packaging/`](packaging/) klasöründe, bkz. [docs/PACKAGING.md](docs/PACKAGING.md).
 - **Favoriler**: bir uçuşu ☆ ile işaretleyip sonra kolayca bulabilirsin.
 - **Uyarı bölgesi**: haritaya tıklayarak bir daire belirlersin (varsayılan 100 km; yarıçapı menüden 10–500 km arasında değiştirebilirsin). Bir uçak daireye girince, ya da ilk kez daire içinde görününce bildirim gelir.
 - **Geçmişi oynatma**: alttaki çubukla son bir saati geri sarabilirsin. *● Canlı* düğmesi canlı görünüme döndürür.

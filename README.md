@@ -37,7 +37,18 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
 - **Map layers**: besides rain radar, the **Turbulence** button draws SIGMET / G-AIRMET turbulence areas, **Wind** draws wind arrows (pick the flight level in the selector that appears) and **Night** shades the night side of the Earth.
 - **Foldable menu**: click a section title in the left menu (Data, Mode, Map, Filters, Aircraft) to fold it. SkyTrack remembers what you folded.
 - **Plane spotter mode**: switch to it under **Mode**. It adds a logbook (**📓 Log sighting** on a flight card, CSV export), *new aircraft* / *new type* badges, and extra details (ICAO24, squawk, category). In normal mode none of this is shown.
-- **English and Turkish**: the **TR / EN** button at the top of the menu switches the whole interface. It starts in your system language.
+- **Five languages**: the language button at the top of the menu switches the whole interface between English, Turkish, Spanish, German and French. It starts in your system language. To add another language, add a table to `src/langs.js` and an entry to `LANGS` in `src/i18n.js`.
+- **Different aircraft icons**: helicopters get a rotor icon, four-engine airliners are drawn larger with all four engines, and twin-engine airliners, small jets and other aircraft each have their own shape. All are colored by altitude.
+- **Altitude and speed profile**: on a live flight card, a small chart shows the altitude and speed over the current flight.
+- **Share image**: **📷 Share image** on a flight card saves (and copies) a picture of the flight with its route, callsign and numbers.
+- **Flight diary**: **📓 Flight diary** under **Mode** keeps your own flights (date, route, flight number, aircraft), with total distance, trips around the Earth, an estimated CO₂ per passenger, and CSV export. **Add to diary** on a flight card fills it in for you.
+- **Tray and notifications**: under **Mode** you can keep SkyTrack running in the system tray when the window is closed (so watchlist notifications keep coming), and turn desktop notifications on or off.
+- **Downloads for every system**: Windows installer, macOS (.dmg, Apple silicon and Intel) and Linux (.AppImage) are attached to each release by the build workflow.
+- **Satellite clouds and trails:** the **Clouds** button shows the latest NASA satellite image (with clouds) under the aircraft, and **Trails** draws where every aircraft has been (5 or 30 minutes, colored by altitude).
+- **Stats:** **📊 Stats** shows what SkyTrack currently sees: aircraft in the air and on the ground, the highest and fastest one, top airlines and aircraft types, and the busiest airports.
+- **Longer replay:** in Settings you can rewind 1, 3 or 6 hours instead of one.
+- **More reliable data:** SkyTrack starts in live mode with the last known positions already on the map, shows a friendly message when the free data sources are busy, and can use your own free OpenSky API client for a higher daily limit.
+- **Install your way:** besides the installers, there are manifests for winget and Arch (AUR) in [`packaging/`](packaging/), see [docs/PACKAGING.md](docs/PACKAGING.md).
 - **Favorites**: star a flight (☆) to find it again later.
 - **Alert zone** (*Alert zone*): click the map to set a circle (100 km by default; change the radius in the menu, 10–500 km). You get a notification when an aircraft enters it, including one that first appears inside it.
 - **Replay**: rewind the last hour with the slider at the bottom, then press *● Live* to return to live.
@@ -137,3 +148,7 @@ Built with [Electron](https://www.electronjs.org) and [Leaflet](https://leafletj
 Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [`good first issue`](https://github.com/SametDuhan/airock/labels/good%20first%20issue) list. If SkyTrack is useful to you, a ⭐ helps other people find it.
 
 Released under the [MIT License](LICENSE).
+
+## Code signing policy
+
+The Windows installer is not code-signed yet, so Windows SmartScreen may warn on the first run. Free code signing for open source projects is provided by [SignPath.io](https://signpath.io), with a certificate from the [SignPath Foundation](https://signpath.org). The plan and the steps are in [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md). Until then the full source code is here, and every installer is built from it by the public GitHub Actions workflow, so you can check how it was made.

@@ -1,0 +1,23 @@
+PackageIdentifier: SametDuhan.SkyTrack
+PackageVersion: 0.7.1
+PackageLocale: en-US
+Publisher: Samet Duhan Şahin
+PublisherUrl: https://github.com/SametDuhan
+PublisherSupportUrl: https://github.com/SametDuhan/airock/issues
+PackageName: SkyTrack
+PackageUrl: https://sametduhan.github.io/airock/
+License: MIT
+LicenseUrl: https://github.com/SametDuhan/airock/blob/main/LICENSE
+ShortDescription: Free live flight tracker for the desktop, built on open ADS-B data. No account or API key.
+Description: SkyTrack shows live flights on a map with turbulence ahead, wind, satellite clouds, airport weather, alerts, an overhead view and a flight diary. It is free and open source, and needs no account or API key.
+Moniker: skytrack
+Tags:
+- adsb
+- aviation
+- flight-tracker
+- flights
+- map
+- open-source
+ReleaseNotesUrl: https://github.com/SametDuhan/airock/releases/tag/v0.7.1
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

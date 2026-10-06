@@ -1,21 +1,77 @@
+# Builds the installers for Windows, macOS and Linux and publishes the GitHub release of the pushed tag (v*).
+# The release is created as a DRAFT first and only published after every installer and update file (latest*.yml) is attached, so the
+# apps never see a release without its update files (the auto-updater reads "the latest release").
+# Release notes come from docs/release-notes/<tag>.md (English, then --- and the Turkish text).
+# Can also be run by hand: Actions → release → Run workflow, with the tag (e.g. v0.7.2).
 name: release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build and publish (e.g. v0.7.2)
+        required: true
 permissions:
   contents: write
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+  prepare:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - name: Create the draft release
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=true
+          else
+            notes="docs/release-notes/$TAG.md"; [ -f "$notes" ] || { echo "See the assets below." > "$notes"; }
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --verify-tag --title "SkyTrack ${TAG#v}" --notes-file "$notes"
+          fi
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            args: --win
+          - os: macos-latest
+            args: --mac --x64 --arm64
+          - os: ubuntu-latest
+            args: --linux
+    runs-on: ${{ matrix.os }}
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: npm ci
       - run: npm test
-      - run: npx electron-builder --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npx electron-builder ${{ matrix.args }} --publish never
+      - name: Attach the installers and update files to the draft release
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(dist/*.exe dist/*.dmg dist/*.AppImage dist/latest*.yml dist/*.blockmap)
+          # the three jobs upload at the same time and GitHub sometimes answers "already exists" for a race: retry, the upload is idempotent (--clobber)
+          for i in 1 2 3 4; do gh release upload "$TAG" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY" && break; echo "upload attempt $i failed, retrying"; sleep $((i * 20)); done
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check that every file is there
+        run: |
+          names=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].name')
+          for f in SkyTrack-Setup.exe latest.yml SkyTrack-mac-arm64.dmg SkyTrack-mac-x64.dmg latest-mac.yml SkyTrack-linux-x86_64.AppImage latest-linux.yml; do
+            echo "$names" | grep -qx "$f" || { echo "missing $f"; exit 1; }
+          done
+      - name: Publish the release (only now do the apps see it)
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest

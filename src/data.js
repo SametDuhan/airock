@@ -32,12 +32,15 @@
   const fromAdsb = a => { const g = a.alt_baro === 'ground', ft = g ? 0 : typeof a.alt_baro === 'number' ? a.alt_baro : a.alt_geom || 0;
     return { id: a.hex, cs: (a.flight || '').trim() || a.r || a.hex.toUpperCase(), reg: a.r || '', type: a.t || '', country: '', lat: a.lat, lon: a.lon,
       ground: g, alt: ft / 3.281, spd: (a.gs || 0) / 1.944, hdg: a.track ?? a.true_heading ?? 0, vr: (a.baro_rate ?? a.geom_rate ?? 0) / 196.85,
-      wd: a.wd ?? null, ws: a.ws ?? null, tas: a.tas ?? null, th: a.true_heading ?? null, sq: a.squawk || '', emg: a.emergency && a.emergency !== 'none' ? a.emergency : '', cat: a.category || '' }; };
+      wd: a.wd ?? null, ws: a.ws ?? null, tas: a.tas ?? null, th: a.true_heading ?? null, sq: a.squawk || '', emg: a.emergency && a.emergency !== 'none' ? a.emergency : '', cat: a.category || '', mil: !!((a.dbFlags || 0) & 1) }; };
   // Two free community feeds with the same data format. Circles are spread over both, so each one stays well under its own rate limit
   // and a wide view covers twice as much. If a feed fails (e.g. 429), its circle is retried on the other one.
-  const FEEDS = [
-    { name: 'adsb.lol', point: (la, lo, r) => `https://api.adsb.lol/v2/point/${la}/${lo}/${r}`, hex: h => `https://api.adsb.lol/v2/hex/${h}` },
-    { name: 'adsb.fi', point: (la, lo, r) => `https://opendata.adsb.fi/api/v2/lat/${la}/lon/${lo}/dist/${r}`, hex: h => `https://opendata.adsb.fi/api/v2/hex/${h}` }];
+  const ALL_FEEDS = [
+    { name: 'adsb.lol', point: (la, lo, r) => `https://api.adsb.lol/v2/point/${la}/${lo}/${r}`, hex: h => `https://api.adsb.lol/v2/hex/${h}`, by: (k, v) => `https://api.adsb.lol/v2/${k}/${v}` },
+    { name: 'adsb.fi', point: (la, lo, r) => `https://opendata.adsb.fi/api/v2/lat/${la}/lon/${lo}/dist/${r}`, hex: h => `https://opendata.adsb.fi/api/v2/hex/${h}`, by: (k, v) => `https://opendata.adsb.fi/api/v2/${k}/${v}` },
+    // airplanes.live: free for projects, but access has to be requested (contact@airplanes.live), otherwise it answers 403. Set on: true once you have it.
+    { name: 'airplanes.live', on: false, point: (la, lo, r) => `https://api.airplanes.live/v2/point/${la}/${lo}/${r}`, hex: h => `https://api.airplanes.live/v2/hex/${h}`, by: (k, v) => `https://api.airplanes.live/v2/${k}/${v}` }];
+  const FEEDS = ALL_FEEDS.filter(f => f.on !== false);
   const feedPause = {}; // feed name → time until which we skip it (after a 429 or an error)
   async function fromFeeds(first, fetchUrl, delayMs) {
     await sleep(delayMs); const errs = [];
@@ -50,30 +53,54 @@
     throw new Error(errs.join(', '));
   }
   async function adsbLol(b) {
-    const { circles, partial, covered } = cover(b, MAX_CIRCLES * FEEDS.length), seen = new Map(), used = new Set(); let okN = 0, lastErr = '';
+    const { circles, partial, covered } = cover(b, MAX_CIRCLES * FEEDS.length), seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
     await Promise.all(circles.map(async (c, i) => {
       try {
-        const r = await fromFeeds(i % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 800);
-        r.ac.forEach(a => a.lat != null && a.lon != null && seen.set(a.hex, a)); used.add(r.name); okN++;
+        const r = await fromFeeds(i % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 350);
+        r.ac.forEach(a => a.lat != null && a.lon != null && seen.set(a.hex, a)); used.add(r.name); okN++; good.push(c);
       } catch (e) { lastErr = e.message; }
     }));
     if (!okN) throw new Error(lastErr || 'no response');
     const part = partial || okN < circles.length;
-    return { src: [...used].join(' + '), flights: [...seen.values()].map(fromAdsb), partial: part, covered: part ? covered : undefined };
+    // cov: the circles that really answered [lat, lon, radius km]: only aircraft inside them can be called "gone" when an answer does not list them
+    return { src: [...used].join(' + '), flights: [...seen.values()].map(fromAdsb), partial: part, covered: part ? covered : undefined, cov: good.map(c => [c.lat, c.lon, c.r * 1.852]) };
   }
   // Watchlist: current state of specific aircraft anywhere in the world (one request for all of them)
   async function watch(hexes) {
     if (!Array.isArray(hexes) || !hexes.length || hexes.length > 40 || !hexes.every(h => typeof h === 'string' && /^[0-9a-fA-F]{6}$/.test(h))) return { ok: false, error: 'invalid list' };
-    try { const r = await fromFeeds(0, f => f.hex(hexes.join(',').toLowerCase()), 0);
+    try { const r = await fromFeeds(Math.floor(Math.random() * FEEDS.length), f => f.hex(hexes.join(',').toLowerCase()), 0);
       return { ok: true, flights: r.ac.filter(a => a.lat != null && a.lon != null).map(fromAdsb) };
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
+  // Worldwide search by callsign, registration, ICAO24 hex or aircraft type (not limited to what is on screen)
+  async function find(q) {
+    q = String(q || '').trim().toUpperCase(); if (!/^[A-Z0-9-]{2,10}$/.test(q)) return { ok: false, error: 'invalid query' };
+    const kinds = ['callsign', 'reg']; if (/^[0-9A-F]{6}$/.test(q)) kinds.push('hex'); if (/^[A-Z0-9]{3,4}$/.test(q)) kinds.push('type');
+    const rs = await Promise.allSettled(kinds.map(k => fromFeeds(0, f => f.by(k, k === 'hex' ? q.toLowerCase() : q), 0)));
+    const seen = new Map(); let any = false;
+    rs.forEach(r => { if (r.status !== 'fulfilled') return; any = true; r.value.ac.filter(a => a.lat != null && a.lon != null).forEach(a => { if (!seen.has(a.hex)) seen.set(a.hex, fromAdsb(a)); }); });
+    return any ? { ok: true, flights: [...seen.values()].slice(0, 30) } : { ok: false, error: 'no answer' };
+  }
+
   /* ---------- OpenSky (fallback source: the daily credit limit is low for anonymous use) ---------- */
   let openSkyPause = 0; // when credits run out (429), don't query OpenSky for 10 min
+  // Optional OpenSky API client (client credentials, OAuth2): gives a much higher daily limit than anonymous use. Set from the app's Settings.
+  let osAuth = null, osToken = null;
+  function setOpenSky(id, secret) { osAuth = id && secret ? { id: String(id), secret: String(secret) } : null; osToken = null; openSkyPause = 0; return { ok: true, set: !!osAuth }; }
+  async function osHeaders() {
+    if (!osAuth) return {};
+    if (!osToken || Date.now() > osToken.exp - 60000) {
+      const r = await fetch('https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token', { method: 'POST', headers: { ...HEADERS, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ grant_type: 'client_credentials', client_id: osAuth.id, client_secret: osAuth.secret }), signal: AbortSignal.timeout(12000) });
+      if (!r.ok) { osToken = null; return {}; } // wrong credentials: fall back to anonymous access
+      const j = await r.json(); osToken = { t: j.access_token, exp: Date.now() + (j.expires_in || 1800) * 1000 };
+    }
+    return { Authorization: 'Bearer ' + osToken.t };
+  }
   async function openSky(b) {
     if (Date.now() < openSkyPause) throw new Error('daily credits used up, waiting');
-    const r = await get(`https://opensky-network.org/api/states/all?lamin=${b.s}&lomin=${b.w}&lamax=${b.n}&lomax=${b.e}`, 15000);
+    const r = await fetch(`https://opensky-network.org/api/states/all?lamin=${b.s}&lomin=${b.w}&lamax=${b.n}&lomax=${b.e}`, { headers: { ...HEADERS, ...(await osHeaders().catch(() => ({}))) }, signal: AbortSignal.timeout(15000) });
     if (r.status === 429) { openSkyPause = Date.now() + 600000; throw new Error('daily credits used up (429)'); }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return ((await r.json()).states || []).filter(s => s[5] != null && s[6] != null).map(s => ({ id: s[0], cs: (s[1] || '').trim() || s[0].toUpperCase(), reg: '', type: '', country: s[2],
@@ -90,11 +117,22 @@
   }
   async function flights(b) {
     try { b = bounds(b); } catch (e) { return { ok: false, error: e.message }; }
-    const order = cover(b).partial ? [['OpenSky', async () => ({ partial: false, flights: await openSky(b) })], ['adsb.lol', () => adsbLol(b)]]
-                                   : [['adsb.lol', () => adsbLol(b)], ['OpenSky', async () => ({ partial: false, flights: await openSky(b) })]];
-    const errs = [];
-    for (const [src, fn] of order) { try { return { ok: true, src, ...(await fn()) }; } catch (e) { errs.push(`${src}: ${e.message}`); } }
-    return { ok: false, error: errs.join(' · ') };
+    const os = async () => ({ partial: false, flights: await openSky(b) });
+    if (!cover(b).partial) { // zoomed in: the community feeds cover the whole area; OpenSky only as a backup
+      const errs = [];
+      for (const [src, fn] of [['adsb', () => adsbLol(b)], ['OpenSky', os]]) { try { const r = await fn(); return { ok: true, src: r.src || src, ...r }; } catch (e) { errs.push(`${src}: ${e.message}`); } }
+      return { ok: false, error: errs.join(' · ') };
+    }
+    // Wide view: the community feeds cover only the center, OpenSky covers everything. Ask both at the same time and merge (the community data wins),
+    // so aircraft do not appear and disappear when the source changes from one request to the next.
+    const [a, o] = await Promise.allSettled([adsbLol(b), os()]);
+    if (a.status === 'fulfilled' && o.status === 'fulfilled') {
+      const m = new Map(o.value.flights.map(f => [f.id, f])); a.value.flights.forEach(f => m.set(f.id, f));
+      return { ok: true, src: a.value.src + ' + OpenSky', partial: false, flights: [...m.values()] };
+    }
+    if (a.status === 'fulfilled') return { ok: true, src: a.value.src, ...a.value };
+    if (o.status === 'fulfilled') return { ok: true, src: 'OpenSky', ...o.value };
+    return { ok: false, error: `adsb: ${a.reason?.message} · OpenSky: ${o.reason?.message}` };
   }
 
   /* ---------- adsbdb.com: route (by callsign) and aircraft info (by ICAO24 code) ---------- */
@@ -148,9 +186,16 @@
     const d = 12742 * Math.asin(Math.sqrt(Math.sin((b[1] - a[1]) * Math.PI / 360) ** 2 + Math.cos(a[1] * Math.PI / 180) * Math.cos(b[1] * Math.PI / 180) * Math.sin((b[2] - a[2]) * Math.PI / 360) ** 2)); return d > .4 * gs * 1.852 * dt; };
   const gapBreak = (a, b) => b[0] - a[0] > LEG_GAP_S && (lowAlt(a) || lowAlt(b) || !flewThrough(a, b));
   const MAX_PTS = 500;
+  const legStart = trace => { let i = trace.length - 1;
+    while (i > 0 && trace[i][3] !== 'ground' && !(trace[i][6] & 2) && !gapBreak(trace[i - 1], trace[i])) i--; return i; };
+  // Altitude / speed profile of the current flight: [seconds since the flight's first point, altitude ft, groundspeed kt], downsampled
+  function profOf(trace) {
+    const a = trace.slice(legStart(trace)).filter(p => typeof p[3] === 'number' || p[3] === 'ground'); if (!a.length) return [];
+    const t0 = a[0][0], rows = a.map(p => [Math.round(p[0] - t0), p[3] === 'ground' ? 0 : p[3], typeof p[4] === 'number' ? Math.round(p[4]) : null]);
+    const step = Math.max(1, Math.ceil(rows.length / 140)); return rows.filter((_, k) => k % step === 0 || k === rows.length - 1);
+  }
   function legOf(trace) {
-    let i = trace.length - 1;
-    while (i > 0 && trace[i][3] !== 'ground' && !(trace[i][6] & 2) && !gapBreak(trace[i - 1], trace[i])) i--;
+    const i = legStart(trace);
     const pts = trace.slice(i).filter(p => typeof p[1] === 'number' && typeof p[2] === 'number').map(p => [p[1], p[2]]);
     const step = Math.max(1, Math.ceil(pts.length / MAX_PTS));
     return pts.filter((_, k) => k % step === 0 || k === pts.length - 1);
@@ -162,7 +207,7 @@
       const r = await get(`https://adsb.lol/data/traces/${hex.slice(-2)}/trace_full_${hex}.json`, 15000);
       if (r.status === 404) return { ok: true, points: [] };
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      return { ok: true, points: legOf((await r.json()).trace || []) };
+      const tr = (await r.json()).trace || []; return { ok: true, points: legOf(tr), prof: profOf(tr) };
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
@@ -292,7 +337,7 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  const api = { flights, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
+  const api = { flights, find, setOpenSky, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
   root.SkyData = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
