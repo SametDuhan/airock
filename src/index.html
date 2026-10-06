@@ -21,7 +21,7 @@ aside.hide{margin-left:-301px}
 .sec{padding:4px 16px 10px;border-bottom:1px solid var(--line)}.lbl{font:600 10px ui-monospace,monospace;letter-spacing:.14em;color:var(--mut);margin:6px 0 7px;text-transform:uppercase}
 .btns{display:flex;gap:6px}.btns button{flex:1;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:7px 6px;cursor:pointer;font-size:12px}
 .btns.wrap{flex-wrap:wrap}.btns.wrap button{flex:1 1 calc(50% - 6px);min-width:0}.btns button:hover{border-color:var(--ac)}.btns button.on{background:var(--ac);color:#111;border-color:var(--ac);font-weight:700}
-#q{margin:10px 14px 10px;padding:9px 11px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}
+#srch{display:flex;flex-direction:column;flex:1 1 0;min-height:0;padding:4px 0 0;border-bottom:0}#srch>.lbl{padding:0 16px}#srch.collapsed{flex:none}#q{margin:10px 14px 10px;padding:9px 11px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}
 #q:focus{border-color:var(--ac)}
 #meta{padding:0 16px 8px;font:11px ui-monospace,monospace;color:var(--mut);letter-spacing:.08em}
 #list{flex:1 1 0;min-height:150px;overflow:auto}
@@ -122,7 +122,7 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 <label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
 <label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div>
 <div class="sec" id="wls" style="display:none"></div>
-<input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></aside>
+<div class="sec" id="srch"><div class="lbl">Aircraft</div><input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></div></aside>
 <main><div id="map"></div>
 <button id="open" class="ib" title="Open menu">☰</button><div class="bar"><span id="clock"></span></div>
 <div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
