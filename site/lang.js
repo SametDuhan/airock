@@ -14,7 +14,7 @@ window.SKY_I18N = {
   },
   dicts: {
     es: {
-      'top.dl': 'descargas hasta ahora', 'top.new': 'Ver las novedades', 'new.eyebrow': 'Novedades', 'new.h2': 'En la última versión', 'new.fb': 'Cargando las notas de la versión…',
+      'top.dl': 'personas lo han descargado', 'top.new': 'Ver las novedades', 'new.eyebrow': 'Novedades', 'new.h2': 'En la última versión', 'new.fb': 'Cargando las notas de la versión…',
       'nav.features': 'Funciones', 'nav.download': 'Descargar', 'nav.faq': 'Preguntas', 'nav.data': 'Datos',
       'hero.badge': 'Gratis y de código abierto · v0.7.0', 'hero.h1a': 'Mira el cielo', 'hero.h1b': 'en vivo.',
       'hero.lead': 'SkyTrack es un seguidor de vuelos gratuito para escritorio, parecido a Flightradar24. Mira cada vuelo en el mapa, con la turbulencia por delante, el viento, el tiempo y más. No necesitas cuenta ni clave de API.',
@@ -74,7 +74,7 @@ window.SKY_I18N = {
       'ft.made': 'Hecho por Samet Duhan Şahin'
     },
     de: {
-      'top.dl': 'Downloads bisher', 'top.new': 'Neuigkeiten ansehen', 'new.eyebrow': 'Neuigkeiten', 'new.h2': 'In der neuesten Version', 'new.fb': 'Versionshinweise werden geladen…',
+      'top.dl': 'Personen haben es geladen', 'top.new': 'Neuigkeiten ansehen', 'new.eyebrow': 'Neuigkeiten', 'new.h2': 'In der neuesten Version', 'new.fb': 'Versionshinweise werden geladen…',
       'nav.features': 'Funktionen', 'nav.download': 'Download', 'nav.faq': 'FAQ', 'nav.data': 'Daten',
       'hero.badge': 'Kostenlos & Open Source · v0.7.0', 'hero.h1a': 'Beobachte den Himmel', 'hero.h1b': 'live.',
       'hero.lead': 'SkyTrack ist ein kostenloser Desktop-Flugtracker, ähnlich wie Flightradar24. Sieh jeden Flug auf der Karte, mit Turbulenzen voraus, Wind, Wetter und mehr. Kein Konto und kein API-Schlüssel nötig.',
@@ -134,7 +134,7 @@ window.SKY_I18N = {
       'ft.made': 'Gemacht von Samet Duhan Şahin'
     },
     fr: {
-      'top.dl': 'téléchargements à ce jour', 'top.new': 'Voir les nouveautés', 'new.eyebrow': 'Nouveautés', 'new.h2': 'Dans la dernière version', 'new.fb': 'Chargement des notes de version…',
+      'top.dl': 'personnes l\'ont téléchargé', 'top.new': 'Voir les nouveautés', 'new.eyebrow': 'Nouveautés', 'new.h2': 'Dans la dernière version', 'new.fb': 'Chargement des notes de version…',
       'nav.features': 'Fonctions', 'nav.download': 'Télécharger', 'nav.faq': 'FAQ', 'nav.data': 'Données',
       'hero.badge': 'Gratuit et open source · v0.7.0', 'hero.h1a': 'Regardez le ciel', 'hero.h1b': 'en direct.',
       'hero.lead': 'SkyTrack est un suivi de vols gratuit pour ordinateur, semblable à Flightradar24. Voyez chaque vol sur la carte, avec les turbulences devant, le vent, la météo et plus encore. Aucun compte ni clé d\'API nécessaire.',
