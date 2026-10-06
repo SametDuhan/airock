@@ -8,5 +8,7 @@ const load = src => new Promise((ok, no) => { const s = document.createElement('
   catch { document.getElementById('map').innerHTML = '<p style="padding:30px">Could not load the map library. Run "npm install" or check your internet connection.</p>'; return; } }
   await load('geo.js');
   await load('data.js');
+  await load('i18n.js');
   await load('renderer.js');
+  await load('extras.js');
 })();
