@@ -15,7 +15,9 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 - **Uçuş bilgisi**: bir uçağa tıklayınca şunları görürsün:
   - havayolu ve logosu, uçak tipi, tescil ve (varsa) fotoğraf
   - rota (kalkış → varış), ilerleme çubuğu, kalan mesafe ve tahmini kalan süre
-  - irtifa, hız ve dikey hız
+  - irtifa, hız ve dikey hız, karşı/arka rüzgar ile kalan yol için kaba bir yakıt ve CO₂ tahmini (tahmini kalan yakıt için bir çubukla)
+  - **türbülans** satırı: önündeki yolda, uçağın irtifasında türbülans bildirimi ya da tahmini yoksa yeşil, orta ihtimalde sarı, yüksek ihtimalde kırmızı (SIGMET / G-AIRMET uyarıları ve son pilot raporları)
+  - tescilinin ait olduğu ülkenin bayrağı ve tahmini varış saati
 - **Rota ve iz**: rota büyük daire yayı olarak, yani dünya üzerindeki gerçek en kısa yol olarak çizilir. İz, uçağın son ~30 dakikada nereden geçtiğini gösterir. Canlı modda uçulan kısım uçağın gerçek izini izler ve kalkış havalimanından başlar; aynı uçağın daha önceki bir uçuşu çizgiye karışmaz.
 - **Havalimanı paneli**: bir havalimanına (sarı nokta) tıklayınca sağda bir panel açılır:
   - havalimanının fotoğrafı, bulunduğu şehir ve ülke
@@ -23,13 +25,15 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
   - görebildiğin uçakların **Varışlar** ve **Kalkışlar** listesi; birine tıklayınca haritada tıklamış gibi uçuş kartı açılır
 - **Filtreler**:
   - tek çubukta irtifa aralığı (sol tutamaç en az, sağ tutamaç en çok)
-  - en düşük hız
+  - hız aralığı (sol tutamaç en az, sağ tutamaç en çok)
   - kalkış ve/veya varış havalimanı; kodla (IST, LTFM) ya da şehir adıyla
   - yerdeki uçakları gösterme/gizleme ve sadece favoriler
 - **Acil durum**: 7500, 7600 ya da 7700 squawk kodu veren uçağın etrafında yanıp sönen kırmızı halka çıkar ve bildirim gelir; listede ⚠ görünür.
 - **Takip listesi**: uçuş kartında **🔔 Takip et**'e bas. SkyTrack takip ettiğin uçakları dünyanın neresinde olursa olsun 45 saniyede bir sorar; biri kalkınca ya da inince bildirim gelir.
 - **Bugünkü uçuşlar**: canlı bir uçuş kartında **Bugünkü uçuşlar**, uçağın bugün yaptığı bütün uçuşları (saat, mesafe, en yüksek irtifa) listeler. Birine tıklayınca haritada çizilir.
 - **Yağış radarı**: **Radar** düğmesi canlı yağış katmanı ekler. Havalimanı paneli ayrıca havalimanının METAR ve TAF raporunu, VFR/IFR uçuş kategorisiyle birlikte gösterir.
+- **Harita katmanları**: yağış radarına ek olarak **Türbülans** düğmesi SIGMET / G-AIRMET türbülans alanlarını, **Rüzgar** rüzgar oklarını (açılan seçiciden irtifayı seç), **Gece** ise Dünya'nın gece tarafını çizer.
+- **Katlanan menü**: sol menüdeki bir bölümün başlığına (Veri, Mod, Harita, Filtreler, Uçaklar) tıklayınca o bölüm kapanır. Neyi kapattığını hatırlar.
 - **Uçak gözlemci modu**: **Mod** bölümünden açılır. Defter (uçuş kartında **📓 Gözlemi kaydet**, CSV dışa aktarma), *yeni uçak* / *yeni tip* rozetleri ve ek bilgiler (ICAO24, squawk, kategori) ekler. Normal modda bunların hiçbiri görünmez.
 - **Türkçe ve İngilizce**: menünün üstündeki **TR / EN** düğmesi bütün arayüzü değiştirir. Sistem dilinle başlar.
 - **Favoriler**: bir uçuşu ☆ ile işaretleyip sonra kolayca bulabilirsin.
@@ -83,8 +87,8 @@ Kurulum dosyası `dist/` klasöründe oluşur.
 | Uçak konumları (geniş görünüm / yedek) | [OpenSky Network](https://opensky-network.org) | Geniş bir alanı tek istekte getirir. Giriş yapmadan kullanımda günlük sınır düşük. |
 | Rota, uçak tipi, tescil, fotoğraf | [adsbdb.com](https://www.adsbdb.com) | Ücretsiz, anahtarsız. Bazı uçuşlarda eksik ya da eski olabilir. |
 | Havayolu logoları | images.kiwi.com | |
-| Havalimanı hava durumu | [Open-Meteo](https://open-meteo.com) | Ücretsiz, anahtarsız. |
-| METAR ve TAF | [aviationweather.gov](https://aviationweather.gov) | Ücretsiz, anahtarsız. |
+| Havalimanı hava durumu, uçuş seviyelerinde rüzgar | [Open-Meteo](https://open-meteo.com) | Ücretsiz, anahtarsız. |
+| METAR ve TAF, türbülans uyarıları, pilot raporları | [aviationweather.gov](https://aviationweather.gov) | Ücretsiz, anahtarsız. Türbülans için "yok", bildirilmiş ya da tahmin edilmiş bir şey olmadığı anlamına gelir; garanti değildir. |
 | Yağış radarı | [RainViewer](https://www.rainviewer.com) | Ücretsiz, anahtarsız. |
 | Bir uçağın bugünkü uçuşları | [adsb.lol](https://adsb.lol) günlük izleri | Ücretsiz, anahtarsız. |
 | Havalimanının şehri ve ülkesi | [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org) | Ücretsiz, anahtarsız. |
