@@ -214,6 +214,12 @@ header{position:sticky;top:0;z-index:20}
 .dlsplit{position:relative;display:inline-flex}.dlsplit .btn.primary:first-child{border-radius:8px 0 0 8px}.dlsplit .btn.dd{padding:13px 13px;border-radius:0 8px 8px 0;border-left:1px solid rgba(0,0,0,.28);margin-left:-1px}.dlsplit .btn.dd svg{width:18px;height:18px;transition:transform .2s}.dlsplit .btn.dd[aria-expanded=true] svg{transform:rotate(180deg)}
 .dmenu{position:absolute;top:calc(100% + 8px);right:0;z-index:30;min-width:300px;padding:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 46px var(--shadow);text-align:left}.dmenu[hidden]{display:none}
 .dmenu a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:14px;font-weight:600}.dmenu a:hover{background:var(--panel2)}.dmenu a small{display:block;font-weight:500;color:var(--muted);font-size:12px;margin-top:1px}.dmenu a .ico{width:30px;height:30px;border-radius:8px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}.dmenu a.cur{box-shadow:inset 0 0 0 1.5px var(--accent)}.dmenu a .go{margin-left:auto;color:var(--accent)}.dmenu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.langw{position:relative;display:inline-flex}
+.lsw{display:flex;align-items:center;gap:4px;height:34px;padding:2px 9px 2px 2px;border:1px solid var(--line);border-radius:17px;background:var(--panel);cursor:pointer;color:var(--muted);transition:border-color .2s}.lsw:hover,.lsw[aria-expanded=true]{border-color:var(--accent);color:var(--accent)}
+.lsw .lc{font:700 12px ui-monospace,Consolas,monospace;font-style:normal;letter-spacing:.08em;min-width:38px;height:28px;line-height:28px;text-align:center;border-radius:14px;background:linear-gradient(135deg,var(--g1),var(--accent));color:var(--accent-ink);box-shadow:0 0 12px var(--glow)}.lsw svg{transition:transform .25s}.lsw[aria-expanded=true] svg{transform:rotate(180deg)}
+#lmenu{position:absolute;right:0;top:calc(100% + 8px);z-index:60;min-width:176px;padding:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 38px var(--shadow);display:flex;flex-direction:column;gap:2px}#lmenu[hidden]{display:none}
+#lmenu button{display:flex;align-items:center;gap:10px;background:transparent;border:0;border-radius:8px;padding:7px 9px;color:var(--text);cursor:pointer;font:600 14px system-ui,sans-serif;text-align:left}#lmenu button:hover{background:var(--panel2)}
+#lmenu button i{font:700 11px ui-monospace,Consolas,monospace;font-style:normal;letter-spacing:.08em;width:36px;height:24px;line-height:24px;text-align:center;border-radius:12px;background:var(--panel2);color:var(--muted);flex:none}#lmenu button.on i{background:linear-gradient(135deg,var(--g1),var(--accent));color:var(--accent-ink)}#lmenu button.on{color:var(--accent)}
 </style>
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
 </head>
@@ -250,7 +256,7 @@ header{position:sticky;top:0;z-index:20}
     <a class="l" href="#faq" data-i18n="nav.faq">FAQ</a>
     <a class="l" href="#data" data-i18n="nav.data">Data</a>
     <a class="l" href="https://github.com/SametDuhan/airock">GitHub</a>
-    <span class="tools"><button class="tool" id="langBtn" title="Language / Dil" aria-label="Language">TR</button><button class="tool" id="themeBtn" title="Light / dark" aria-label="Toggle theme">◐</button></span>
+    <span class="tools"><span class="langw"><button class="lsw" id="langBtn" title="Language / Dil" aria-label="Language" aria-haspopup="true" aria-expanded="false"><i class="lc">EN</i><svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span><button class="tool" id="themeBtn" title="Light / dark" aria-label="Toggle theme">◐</button></span>
   </nav>
 </div></header>
 
@@ -269,15 +275,15 @@ header{position:sticky;top:0;z-index:20}
 
   <div class="frame reveal">
     <div class="top"><i></i><i></i><i></i><span>SKYTRACK</span></div>
-    <video id="heroVid" autoplay muted loop playsinline preload="metadata" poster="screenshot.jpg?v=5" aria-label="SkyTrack demo: selecting a flight, wind and turbulence layers, airport panel and history replay"><source src="demo.webm?v=5" type="video/webm"><img src="screenshot.jpg?v=5" alt="SkyTrack with wind arrows and a selected flight" width="1903" height="974"></video>
+    <video id="heroVid" autoplay muted loop playsinline preload="metadata" poster="screenshot.jpg?v=7" aria-label="SkyTrack demo: selecting a live flight, the wind layer, an airport panel, switching languages and the Overhead panel"><source src="demo.webm?v=7" type="video/webm"><img src="screenshot.jpg?v=7" alt="SkyTrack with wind arrows and a selected flight" width="1600" height="820"></video>
   </div>
-  <p class="cap" data-i18n="hero.cap">Demo mode: simulated flights, real wind and turbulence data.</p>
+  <p class="cap" data-i18n="hero.cap">Real flights and live data, straight from the app.</p>
 
   <div class="stats reveal">
     <div><b data-i18n="st.freeb">Free</b><span data-i18n="st.free">Open source, MIT license</span></div>
     <div><b data-i18n="st.nokey">No key</b><span data-i18n="st.nokeyd">No account, no API key</span></div>
     <div><b>3,700</b><span data-i18n="st.planes">aircraft drawn in about 8 ms</span></div>
-    <div><b>EN · TR</b><span data-i18n="st.lang">English and Turkish interface</span></div>
+    <div><b>5</b><span data-i18n="st.lang">interface languages</span></div>
   </div>
 </div>
 
@@ -298,9 +304,10 @@ header{position:sticky;top:0;z-index:20}
         <li data-i18n="a.l2">Route with an animated flight line, distance left and estimated arrival time</li>
         <li data-i18n="a.l3">Altitude, speed, vertical speed, and head or tail wind</li>
         <li data-i18n="a.l4">Today's flights of the same aircraft, drawn on the map with one click</li>
+        <li data-i18n="a.l5">An altitude and speed chart, and a button that saves a picture of the flight to share</li>
       </ul>
     </div>
-    <div class="shotbox narrow"><img src="feature-card.png?v=5" alt="A SkyTrack flight card with route, wind, fuel estimate and a green turbulence line" width="338" height="800" loading="lazy"></div>
+    <div class="shotbox narrow"><img src="feature-card.png?v=7" alt="A SkyTrack flight card with route, wind, fuel estimate and a green turbulence line" width="395" height="969" loading="lazy"></div>
   </div>
 
   <div class="grid c3 reveal" style="margin-bottom:8px">
@@ -327,7 +334,7 @@ header{position:sticky;top:0;z-index:20}
       </ul>
       <p class="note" data-i18n="b.note">Based on advisories and recent pilot reports. Green means nothing is reported, not a guarantee.</p>
     </div>
-    <div class="shotbox"><img src="feature-turb.jpg?v=5" alt="Map with yellow and red turbulence areas over North America" width="1903" height="974" loading="lazy"></div>
+    <div class="shotbox"><img src="feature-turb.jpg?v=7" alt="Map with yellow and red turbulence areas over North America" width="1600" height="820" loading="lazy"></div>
   </div>
 
   <div class="feat rev reveal">
@@ -341,7 +348,7 @@ header{position:sticky;top:0;z-index:20}
         <li data-i18n="c.l3">Estimated arrival time based on the current ground speed</li>
       </ul>
     </div>
-    <div class="shotbox"><img src="feature-wind.jpg?v=5" alt="Map covered with colored wind arrows over Europe" width="1903" height="974" loading="lazy"></div>
+    <div class="shotbox"><img src="feature-wind.jpg?v=7" alt="Map covered with colored wind arrows over Europe" width="1600" height="820" loading="lazy"></div>
   </div>
 
   <div class="feat reveal">
@@ -351,11 +358,50 @@ header{position:sticky;top:0;z-index:20}
       <p data-i18n="d.p">Current weather, the raw METAR and TAF with its VFR/IFR category, and live arrivals and departures. Click a flight in the list to open it.</p>
       <ul>
         <li data-i18n="d.l1">Temperature, wind, gusts, visibility and pressure</li>
-        <li data-i18n="d.l2">Arrivals and departures with distance and time</li>
+        <li data-i18n="d.l2">Arrivals and departures with status (approaching, landing), distance and time</li>
         <li data-i18n="d.l3">City and country, and a rain radar layer on the map</li>
       </ul>
     </div>
-    <div class="shotbox narrow"><img src="feature-airport.png?v=5" alt="Airport panel for Istanbul with weather, METAR and arrivals" width="375" height="548" loading="lazy"></div>
+    <div class="shotbox narrow"><img src="feature-airport.png?v=7" alt="Airport panel for Istanbul with weather, METAR and arrivals" width="390" height="750" loading="lazy"></div>
+  </div>
+
+  <div class="group-title" data-i18n="g.tools">Make it yours</div>
+
+  <div class="feat reveal">
+    <div class="txt">
+      <span class="tag" data-i18n="o.tag">Overhead</span>
+      <h3 data-i18n="o.h">See what is flying right above you</h3>
+      <p data-i18n="o.p">Pick your spot on the map or type an airport code. SkyTrack lists the aircraft around you and tells you where to look.</p>
+      <ul>
+        <li data-i18n="o.l1">Compass direction and how high in the sky, for every aircraft</li>
+        <li data-i18n="o.l2">Airline, route, aircraft type, distance and altitude</li>
+        <li data-i18n="o.l3">Your own radius, from 5 km up, drawn on the map</li>
+      </ul>
+    </div>
+    <div class="shotbox"><img src="feature-overhead.jpg?v=7" alt="The Overhead panel listing aircraft around Frankfurt with direction and height in the sky" width="1600" height="820" loading="lazy"></div>
+  </div>
+
+  <div class="feat rev reveal">
+    <div class="txt">
+      <span class="tag" data-i18n="p.tag">Share &amp; diary</span>
+      <h3 data-i18n="p.h">Keep your flights and share them</h3>
+      <p data-i18n="p.p">Save a good-looking picture of any flight with one click, and keep your own flight diary.</p>
+      <ul>
+        <li data-i18n="p.l1">Share image: route, callsign and numbers, saved and copied to the clipboard</li>
+        <li data-i18n="p.l2">Flight diary with total distance, trips around the Earth and estimated CO₂</li>
+        <li data-i18n="p.l3">CSV export, and “Add to diary” right from a flight card</li>
+      </ul>
+    </div>
+    <div class="shotbox"><img src="feature-share.png?v=7" alt="A shareable picture of a flight with its route, callsign, altitude and speed" width="1200" height="630" loading="lazy"></div>
+  </div>
+
+  <div class="grid c3 reveal" style="margin-bottom:8px">
+    <div class="card"><h3 data-i18n="n.search">Worldwide search</h3><p data-i18n="n.searchp">Find a callsign, registration, aircraft type or airport anywhere in the world, not only on screen.</p></div>
+    <div class="card"><h3 data-i18n="n.alerts">Alerts for what you love</h3><p data-i18n="n.alertsp">Get notified when a rare type like the A380, a helicopter, a military aircraft or your favorite airline shows up.</p></div>
+    <div class="card"><h3 data-i18n="n.units">Your units</h3><p data-i18n="n.unitsp">Kilometers, miles or nautical miles, feet or meters, knots, km/h or mph, °C or °F, 12 or 24-hour time.</p></div>
+    <div class="card"><h3 data-i18n="n.upd">Updates itself</h3><p data-i18n="n.updp">New versions download in the background and install when you restart. No need to visit this page again.</p></div>
+    <div class="card"><h3 data-i18n="n.tray">Runs in the tray</h3><p data-i18n="n.trayp">Close the window and SkyTrack keeps watching your list, so notifications still arrive.</p></div>
+    <div class="card"><h3 data-i18n="n.tour">Easy to start</h3><p data-i18n="n.tourp">A short tour on the first launch shows what everything does. You can replay it any time.</p></div>
   </div>
 
   <div class="group-title" data-i18n="g.explore">Explore &amp; spot</div>
@@ -371,13 +417,13 @@ header{position:sticky;top:0;z-index:20}
         <li data-i18n="e.l3">Fold any menu section, even the aircraft list. SkyTrack remembers what you folded.</li>
       </ul>
     </div>
-    <div class="shotbox"><img src="feature-night.jpg?v=5" alt="World map with the night side of the Earth shaded" width="1903" height="974" loading="lazy"></div>
+    <div class="shotbox"><img src="feature-night.jpg?v=7" alt="World map with the night side of the Earth shaded" width="1600" height="820" loading="lazy"></div>
   </div>
 
   <div class="grid reveal">
     <div class="card"><h3 data-i18n="m.spot">Plane spotter mode</h3><p data-i18n="m.spotp">A logbook, “new aircraft” and “new type” badges, extra details and CSV export. Off by default.</p></div>
     <div class="card"><h3 data-i18n="m.demo">Demo mode</h3><p data-i18n="m.demop">45 simulated flights, no internet needed. Time runs 30× faster.</p></div>
-    <div class="card"><h3 data-i18n="m.lang">English and Turkish</h3><p data-i18n="m.langp">Switch the whole interface between English and Turkish with one button.</p></div>
+    <div class="card"><h3 data-i18n="m.lang">Five languages</h3><p data-i18n="m.langp">Switch the whole interface between English, Turkish, Spanish, German and French.</p></div>
     <div class="card"><h3 data-i18n="m.fast">Fast with many planes</h3><p data-i18n="m.fastp">All aircraft are drawn on one canvas. About 3,700 aircraft over Europe draw in around 8 ms.</p></div>
   </div>
 </div></section>
@@ -421,11 +467,12 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   <div class="reveal" style="margin-top:28px">
   <details><summary data-i18n="q1">Is SkyTrack really free?</summary><p data-i18n="q1a">Yes. It is free and open source under the MIT license. There are no ads, no account and no API key.</p></details>
   <details><summary data-i18n="q2">Why does Windows warn me when I run the installer?</summary><p data-i18n="q2a">The installer is not code-signed yet, and Windows warns about every unsigned app. Choose “More info”, then “Run anyway”. The full source code is on GitHub if you want to check it or build it yourself.</p></details>
-  <details><summary data-i18n="q3">Does it work on macOS and Linux?</summary><p data-i18n="q3a">Yes, from source: clone the project, run npm install and npm start. A ready-made installer is only built for Windows for now.</p></details>
+  <details><summary data-i18n="q3">Does it work on macOS and Linux?</summary><p data-i18n="q3a">Yes. Installers for Windows, macOS (.dmg) and Linux (.AppImage) are built with every release, and the download button picks the right one for your computer. macOS may warn because the app is not signed yet: right-click the app and choose Open.</p></details>
   <details><summary data-i18n="q4">Where does the data come from?</summary><p data-i18n="q4a">Open community data: adsb.lol and adsb.fi for live positions, OpenSky as a backup, adsbdb.com for routes and photos, Open-Meteo and aviationweather.gov for weather, wind and turbulence. See the list below.</p></details>
   <details><summary data-i18n="q5">I only see a few planes. Why?</summary><p data-i18n="q5a">The free feeds have strict rate limits and only cover part of a wide view. Zoom in and more aircraft appear. Coverage is thinner over oceans and some countries.</p></details>
   <details><summary data-i18n="q6">What does a green turbulence line mean?</summary><p data-i18n="q6a">It means no turbulence is reported or forecast on the route ahead, at that altitude. It is not a guarantee: clear-air turbulence often cannot be predicted.</p></details>
   <details><summary data-i18n="q7">How accurate are the fuel and CO₂ numbers?</summary><p data-i18n="q7a">They are rough estimates from typical cruise fuel burn per aircraft type. The real fuel load of a flight is not public, so treat the bar as an illustration.</p></details>
+  <details><summary data-i18n="q9">How do I update SkyTrack?</summary><p data-i18n="q9a">From version 0.7.0 the Windows and Linux apps update themselves: a bar appears at the bottom of the menu when a new version is ready. On macOS the bar links to the download. Older versions need one manual update to 0.7.0 first.</p></details>
   <details><summary data-i18n="q8">Can I help or report a bug?</summary><p><span data-i18n="q8a">Yes, please. Open an issue or a pull request on</span> <a href="https://github.com/SametDuhan/airock">GitHub</a>.</p></details>
   </div>
 </div></section>
@@ -451,17 +498,30 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   <span><a href="https://github.com/SametDuhan/airock">github.com/SametDuhan/airock</a></span>
 </div></footer>
 
+<script src="lang.js"></script>
 <script>
 (() => {
   const TR = {
+    'st.lang':'arayüz dili','a.l5':'İrtifa ve hız grafiği ve uçuşun resmini paylaşmak için kaydeden bir düğme','d.l2':'Durumla (yaklaşıyor, iniyor), mesafeyle ve süreyle gelen ve kalkan uçuşlar',
+    'g.tools':'Sana göre ayarla','o.tag':'Tepemde','o.h':'Tam üstünden neyin uçtuğunu gör','o.p':'Haritada yerini seç ya da bir havalimanı kodu yaz. SkyTrack çevrendeki uçakları listeler ve nereye bakacağını söyler.',
+    'o.l1':'Her uçak için pusula yönü ve gökyüzündeki yüksekliği','o.l2':'Havayolu, rota, uçak tipi, mesafe ve irtifa','o.l3':'5 km\'den başlayan kendi yarıçapın, haritada çizili',
+    'p.tag':'Paylaş ve kaydet','p.h':'Uçuşlarını tut ve paylaş','p.p':'Herhangi bir uçuşun güzel bir resmini tek tıkla kaydet ve kendi uçuş günlüğünü tut.',
+    'p.l1':'Görsel paylaş: rota, çağrı kodu ve sayılar; kaydedilir ve panoya kopyalanır','p.l2':'Toplam mesafe, Dünya turu sayısı ve tahmini CO₂ ile uçuş günlüğü','p.l3':'CSV dışa aktarma ve uçuş kartından “Günlüğe ekle”',
+    'n.search':'Dünya genelinde arama','n.searchp':'Çağrı kodu, tescil, uçak tipi ya da havalimanını sadece ekranda değil dünyanın her yerinde bul.',
+    'n.alerts':'Sevdiklerin için uyarılar','n.alertsp':'A380 gibi nadir bir tip, helikopter, askeri uçak ya da en sevdiğin havayolu görününce bildirim al.',
+    'n.units':'Senin birimlerin','n.unitsp':'Kilometre, mil ya da deniz mili; fit ya da metre; knot, km/s ya da mph; °C ya da °F; 12 ya da 24 saat.',
+    'n.upd':'Kendini günceller','n.updp':'Yeni sürümler arka planda iner ve yeniden başlatınca kurulur. Bu sayfaya tekrar gelmene gerek yok.',
+    'n.tray':'Tepside çalışır','n.trayp':'Pencereyi kapat; SkyTrack listeni izlemeye devam eder, bildirimlerin gelir.',
+    'n.tour':'Başlaması kolay','n.tourp':'İlk açılışta kısa bir tur her şeyin ne işe yaradığını gösterir. İstediğin zaman tekrar izleyebilirsin.',
+    'q9':'SkyTrack\'i nasıl güncellerim?','q9a':'0.7.0 sürümünden itibaren Windows ve Linux uygulamaları kendini günceller: yeni sürüm hazır olunca menünün altında bir çubuk çıkar. macOS\'ta çubuk indirme sayfasına bağlanır. Eski sürümlerin önce 0.7.0\'a bir kez elle güncellenmesi gerekir.',
     'top.dl':'indirme yapıldı','dl.alt':'Ayrıca şunlar için:','top.new':'Yenilikleri gör','new.eyebrow':'Yenilikler','new.h2':'Son sürümde neler var','new.fb':'Sürüm notları yükleniyor…',
     'nav.features':'Özellikler','nav.download':'İndir','nav.faq':'SSS','nav.data':'Veri',
     'hero.badge':'Ücretsiz ve açık kaynak · v0.7.0','hero.h1a':'Gökyüzünü','hero.h1b':'canlı izle.',
     'hero.lead':'SkyTrack, Flightradar24 benzeri ücretsiz bir masaüstü uçuş takip uygulaması. Haritada tüm uçuşları, önlerindeki türbülansı, rüzgarı, hava durumunu ve daha fazlasını gör. Hesap ya da API anahtarı gerekmez.',
     'hero.dl':'Windows için indir','hero.console':'Konsoldan kur','hero.trust':'macOS ve Linux için de var',
     'hero.mobile':'SkyTrack bir masaüstü uygulamasıdır. İndirmek için bu sayfayı bilgisayarında aç.','hero.copylink':'Sayfa bağlantısını kopyala',
-    'hero.cap':'Demo modu: sanal uçuşlar, gerçek rüzgar ve türbülans verisi.',
-    'st.freeb':'Ücretsiz','st.free':'Açık kaynak, MIT lisansı','st.nokey':'Anahtarsız','st.nokeyd':'Hesap yok, API anahtarı yok','st.planes':'uçak yaklaşık 8 ms\'de çizilir','st.lang':'Türkçe ve İngilizce arayüz',
+    'hero.cap':'Gerçek uçuşlar ve canlı veri, doğrudan uygulamadan.',
+    'st.freeb':'Ücretsiz','st.free':'Açık kaynak, MIT lisansı','st.nokey':'Anahtarsız','st.nokeyd':'Hesap yok, API anahtarı yok','st.planes':'uçak yaklaşık 8 ms\'de çizilir',
     'f.eyebrow':'Özellikler','f.h2':'Bir uçuşu takip etmek için gereken her şey','f.sub':'Evinizin üstünden kimin uçtuğuna hızlıca bakmaktan türbülansa göre plan yapmaya kadar, sakin ve hızlı tek bir pencerede.',
     'g.track':'Her uçuşu takip et','g.safe':'Hava ve güvenlik','g.explore':'Keşfet ve gözle',
     'a.tag':'Uçuş kartı','a.h':'Bir uçuşun her şeyi tek kartta','a.p':'Herhangi bir uçağa tıkla. Kart kimin uçurduğunu, nereye gittiğini ve şu an nasıl gittiğini gösterir.',
@@ -478,12 +538,12 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
     'c.tag':'Rüzgar ve yakıt','c.h':'Uçuşunun içinde uçtuğu rüzgarı gör','c.p':'İstediğin uçuş seviyesinde rüzgar oklarını aç ve jet akımlarını izle. Kartta karşı/arka rüzgarı ve kaba bir yakıt ile CO₂ tahminini gösterir.',
     'c.l1':'Hıza göre renklenen rüzgar okları; FL050\'den FL390\'a altı uçuş seviyesi','c.l2':'Uçuşun kalan kısmı için tahmini yakıt ve CO₂; kalan yakıt için bir çubukla','c.l3':'Anlık yer hızına göre tahmini varış saati',
     'd.tag':'Havalimanı paneli','d.h':'Bir havalimanına tıkla, tüm tabloyu gör','d.p':'Anlık hava durumu, VFR/IFR kategorisiyle ham METAR ve TAF, canlı geliş ve kalkışlar. Listedeki bir uçuşa tıklayınca açılır.',
-    'd.l1':'Sıcaklık, rüzgar, hamle, görüş ve basınç','d.l2':'Mesafe ve süreyle gelen ve kalkan uçuşlar','d.l3':'Şehir ve ülke; haritada yağış radarı katmanı',
+    'd.l1':'Sıcaklık, rüzgar, hamle, görüş ve basınç','d.l3':'Şehir ve ülke; haritada yağış radarı katmanı',
     'e.tag':'Harita katmanları','e.h':'Her ruh haline bir katman','e.p':'Katmanları tek tıkla aç: türbülans, rüzgar, yağış radarı ve gezegenin canlı gece-gündüz gölgesi.',
     'e.l1':'Dakikada bir güncellenen gece ve gündüz','e.l2':'Standart, açık ve koyu harita stilleri','e.l3':'Menünün herhangi bir bölümünü, uçak listesi dahil, katla. SkyTrack neyi kapattığını hatırlar.',
     'm.spot':'Uçak gözlemci modu','m.spotp':'Günlük, “yeni uçak” ve “yeni tip” rozetleri, ek bilgiler ve CSV dışa aktarma. Varsayılan olarak kapalı.',
     'm.demo':'Demo modu','m.demop':'İnternet gerektirmeyen 45 sanal uçuş. Zaman 30 kat hızlı akar.',
-    'm.lang':'Türkçe ve İngilizce','m.langp':'Tüm arayüzü tek düğmeyle Türkçe ile İngilizce arasında değiştir.',
+    'm.lang':'Beş dil','m.langp':'Tüm arayüzü İngilizce, Türkçe, İspanyolca, Almanca ve Fransızca arasında değiştir.',
     'm.fast':'Çok uçakta da hızlı','m.fastp':'Tüm uçaklar tek bir tuvalde çizilir. Avrupa üzerindeki yaklaşık 3.700 uçak yaklaşık 8 ms\'de çizilir.',
     'dl.eyebrow':'İndir','dl.h2':'SkyTrack\'i bir dakikada edin','dl.sub':'Sana uygun yolu seç. İkisi de ücretsiz, hesap gerekmez.',
     'dl.win':'Tek tık, sonra kurulumu çalıştır','dl.winp':'Kurulum dosyasını indir ve çalıştır. SkyTrack hemen açılır.','dl.btn':'Windows için indir (.exe)',
@@ -492,7 +552,7 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
     'q.eyebrow':'SSS','q.h2':'Sorular ve yanıtlar',
     'q1':'SkyTrack gerçekten ücretsiz mi?','q1a':'Evet. MIT lisansıyla ücretsiz ve açık kaynak. Reklam, hesap ve API anahtarı yok.',
     'q2':'Kurulum dosyasını çalıştırınca Windows neden uyarı veriyor?','q2a':'Kurulum dosyası henüz kod imzalı değil ve Windows imzasız her uygulama için uyarır. “Daha fazla bilgi”, sonra “Yine de çalıştır”ı seç. İstersen kontrol etmen ya da kendin derlemen için tüm kaynak kod GitHub\'da.',
-    'q3':'macOS ve Linux\'ta çalışır mı?','q3a':'Evet, kaynaktan: projeyi klonla, npm install ve npm start çalıştır. Hazır kurulum dosyası şimdilik yalnızca Windows için üretiliyor.',
+    'q3':'macOS ve Linux\'ta çalışır mı?','q3a':'Evet. Windows, macOS (.dmg) ve Linux (.AppImage) kurulum dosyaları her sürümle birlikte üretilir ve indirme düğmesi bilgisayarına uygun olanı seçer. macOS, uygulama henüz imzalı olmadığı için uyarabilir: uygulamaya sağ tıkla ve Aç\'ı seç.',
     'q4':'Veriler nereden geliyor?','q4a':'Açık topluluk verilerinden: canlı konumlar için adsb.lol ve adsb.fi, yedek olarak OpenSky, rota ve fotoğraflar için adsbdb.com, hava durumu, rüzgar ve türbülans için Open-Meteo ile aviationweather.gov. Aşağıdaki listeye bak.',
     'q5':'Neden yalnızca birkaç uçak görüyorum?','q5a':'Ücretsiz kaynakların istek sınırları sıkı ve geniş görünümün yalnızca bir kısmını kapsıyor. Yakınlaştırınca daha çok uçak çıkar. Okyanuslar ve bazı ülkelerde kapsama daha zayıf.',
     'q6':'Yeşil türbülans çizgisi ne demek?','q6a':'O irtifada, önündeki yolda türbülans bildirilmediği ya da tahmin edilmediği anlamına gelir. Garanti değildir: açık hava türbülansı çoğu zaman önceden bilinemez.',
@@ -509,13 +569,23 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   const meta = { title: document.title, desc: $('meta[name=description]').content };
   const TRM = { title: 'SkyTrack — Ücretsiz Canlı Uçuş Takip Uygulaması', desc: 'SkyTrack, açık ADS-B verisiyle çalışan ücretsiz bir masaüstü uçuş takip uygulamasıdır. Canlı uçuşlar, önündeki türbülans, rüzgar ve gece-gündüz katmanları, havalimanı hava durumu. Hesap ya da API anahtarı gerekmez.' };
   let lang = 'en';
+  const LANGS = [['en', 'English', 'en-US'], ['tr', 'Türkçe', 'tr-TR'], ['es', 'Español', 'es-ES'], ['de', 'Deutsch', 'de-DE'], ['fr', 'Français', 'fr-FR']];
+  const I18 = window.SKY_I18N || { dicts: {}, meta: {}, words: {} };
+  const DICT = { tr: TR, ...I18.dicts }, METAS = { tr: TRM, ...I18.meta };
+  const W = k => (I18.words[lang] || I18.words.en || {})[k] || '';
+  const LOCALE = () => LANGS.find(x => x[0] === lang)[2];
   function setLang(l, save) {
-    lang = l; document.documentElement.lang = l;
-    $$('[data-i18n]').forEach(e => { e.innerHTML = l === 'tr' && TR[e.dataset.i18n] != null ? TR[e.dataset.i18n] : e._en; });
-    document.title = l === 'tr' ? TRM.title : meta.title; $('meta[name=description]').content = l === 'tr' ? TRM.desc : meta.desc;
-    $('#langBtn').textContent = l === 'tr' ? 'EN' : 'TR'; if (save) ls.set('st.lang', l); applyRelease();
+    lang = l; document.documentElement.lang = l; const D = DICT[l];
+    $$('[data-i18n]').forEach(e => { e.innerHTML = D && D[e.dataset.i18n] != null ? D[e.dataset.i18n] : e._en; });
+    const M = METAS[l]; document.title = M ? M.title : meta.title; $('meta[name=description]').content = M ? M.desc : meta.desc;
+    $('#langBtn .lc').textContent = l.toUpperCase(); $$('#lmenu button').forEach(b => b.classList.toggle('on', b.dataset.l === l));
+    if (save) ls.set('st.lang', l); applyRelease();
   }
-  $('#langBtn').onclick = () => setLang(lang === 'tr' ? 'en' : 'tr', true);
+  const lmenu = $('#lmenu'); lmenu.innerHTML = LANGS.map(x => `<button data-l="${x[0]}"><i>${x[0].toUpperCase()}</i>${x[1]}</button>`).join('');
+  const lmToggle = o => { lmenu.hidden = !o; $('#langBtn').setAttribute('aria-expanded', o); };
+  $('#langBtn').onclick = e => { e.stopPropagation(); lmToggle(lmenu.hidden); };
+  lmenu.onclick = e => { const b = e.target.closest('button'); if (b) { setLang(b.dataset.l, true); lmToggle(false); } };
+  document.addEventListener('click', e => { if (!e.target.closest('.langw')) lmToggle(false); });
   // theme
   const root = document.documentElement, th = ls.get('st.theme'); if (th) root.dataset.theme = th;
   $('#themeBtn').onclick = () => { const dark = root.dataset.theme ? root.dataset.theme === 'dark' : !matchMedia('(prefers-color-scheme: light)').matches; root.dataset.theme = dark ? 'light' : 'dark'; ls.set('st.theme', root.dataset.theme); };
@@ -525,17 +595,17 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   const UA = navigator.userAgent, PL = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
   const OS = /Android|iPhone|iPad|iPod/i.test(UA) ? 'win' : /Mac/i.test(PL + UA) ? 'macA' : /Linux|X11|CrOS/i.test(PL + UA) ? 'linux' : 'win';
   const BASE = 'https://github.com/SametDuhan/airock/releases/latest/download/';
-  const DL = { win: { ico: '🪟', file: 'SkyTrack-Setup.exe', re: /SkyTrack-Setup\.exe$/, ext: '.exe', n: { en: 'Windows', tr: 'Windows' }, d: { en: 'Installer (.exe)', tr: 'Kurulum dosyası (.exe)' } },
-    macA: { ico: '🍎', file: 'SkyTrack-mac-arm64.dmg', re: /mac.*arm64\.dmg$/i, ext: '.dmg', n: { en: 'macOS', tr: 'macOS' }, d: { en: 'Apple silicon (M1 and newer)', tr: 'Apple silikon (M1 ve sonrası)' } },
-    macI: { ico: '🍎', file: 'SkyTrack-mac-x64.dmg', re: /mac.*x64\.dmg$/i, ext: '.dmg', n: { en: 'macOS', tr: 'macOS' }, d: { en: 'Intel Macs', tr: 'Intel Mac' } },
-    linux: { ico: '🐧', file: 'SkyTrack-linux-x86_64.AppImage', re: /\.AppImage$/i, ext: '.AppImage', n: { en: 'Linux', tr: 'Linux' }, d: { en: 'AppImage (64-bit)', tr: 'AppImage (64 bit)' } } };
+  const DL = { win: { ico: '🪟', file: 'SkyTrack-Setup.exe', re: /SkyTrack-Setup\.exe$/, ext: '.exe', n: 'Windows', d: 'dWin' },
+    macA: { ico: '🍎', file: 'SkyTrack-mac-arm64.dmg', re: /mac.*arm64\.dmg$/i, ext: '.dmg', n: 'macOS', d: 'dMacA' },
+    macI: { ico: '🍎', file: 'SkyTrack-mac-x64.dmg', re: /mac.*x64\.dmg$/i, ext: '.dmg', n: 'macOS', d: 'dMacI' },
+    linux: { ico: '🐧', file: 'SkyTrack-linux-x86_64.AppImage', re: /\.AppImage$/i, ext: '.AppImage', n: 'Linux', d: 'dLin' } };
   let assets = [];
   const dlOf = k => { const a = assets.find(x => DL[k].re.test(x.name)); return { href: a ? a.browser_download_url : BASE + DL[k].file, size: a ? a.size : 0 }; };
-  function setDl() { const L = lang === 'tr' ? 'tr' : 'en', d = DL[OS], u = dlOf(OS), nm = d.n[L];
-    $('#dlLabel').textContent = L === 'tr' ? nm + ' için indir' : 'Download for ' + nm; $('#dlLabel2').textContent = (L === 'tr' ? nm + ' için indir' : 'Download for ' + nm) + ' (' + d.ext + ')';
+  function setDl() { const d = DL[OS], u = dlOf(OS), lbl = W('dl').replace('{0}', d.n);
+    $('#dlLabel').textContent = lbl; $('#dlLabel2').textContent = lbl + ' (' + d.ext + ')';
     $('#dlMain').href = u.href; $('#dlMain2').href = u.href;
     $('#dlMenu').innerHTML = ['win', 'macA', 'macI', 'linux'].map(k => { const x = DL[k], v = dlOf(k), mb = v.size ? ' · ' + Math.round(v.size / 1048576) + ' MB' : '';
-      return `<a href="${v.href}" class="${k === OS ? 'cur' : ''}"><span class="ico">${x.ico}</span><span>${x.n[L]}<small>${x.d[L]}${mb}</small></span><span class="go">↓</span></a>`; }).join('') + `<hr><a href="https://github.com/SametDuhan/airock/releases"><span class="ico">📦</span><span>${L === 'tr' ? 'Tüm sürümler' : 'All releases'}</span></a>`; }
+      return `<a href="${v.href}" class="${k === OS ? 'cur' : ''}"><span class="ico">${x.ico}</span><span>${x.n}<small>${W(x.d)}${mb}</small></span><span class="go">↓</span></a>`; }).join('') + `<hr><a href="https://github.com/SametDuhan/airock/releases"><span class="ico">📦</span><span>${W('all')}</span></a>`; }
   $('#dlArrow').onclick = e => { e.stopPropagation(); const m = $('#dlMenu'); m.hidden = !m.hidden; $('#dlArrow').setAttribute('aria-expanded', !m.hidden); };
   document.addEventListener('click', e => { if (!e.target.closest('.dlsplit')) { $('#dlMenu').hidden = true; $('#dlArrow').setAttribute('aria-expanded', 'false'); } });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('#dlMenu').hidden = true; $('#dlArrow').setAttribute('aria-expanded', 'false'); } });
@@ -545,9 +615,9 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
     const flush = () => { if (ul.length) { out.push('<ul>' + ul.map(x => '<li>' + NL(x) + '</li>').join('') + '</ul>'); ul = []; } };
     txt.split(/\n+/).forEach(l => { l = l.trim(); if (!l || /^(Windows installer|Windows kurulum)/i.test(l)) return; const m = /^[-*]\s+(.*)/.exec(l); if (m) ul.push(m[1]); else { flush(); out.push('<p>' + NL(l) + '</p>'); } }); flush();
     $('#nwBody').innerHTML = out.join('') || '<p>—</p>'; $('#nwVer').textContent = notes.tag; $('#topVer').textContent = notes.tag;
-    $('#nwDate').textContent = notes.date ? new Date(notes.date).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''; }
-  function applyRelease() { renderNotes(); setDl(); if (!rel) return; const cur = dlOf(OS), mb = Math.round((cur.size || rel.size) / 1048576), nm = DL[OS].n.en;
-    $('#trustVer').textContent = `${nm} · ${mb} MB · ${rel.tag}`; $('#badgeTxt').textContent = (lang === 'tr' ? 'Ücretsiz ve açık kaynak · ' : 'Free & open source · ') + rel.tag; }
+    $('#nwDate').textContent = notes.date ? new Date(notes.date).toLocaleDateString(LOCALE(), { day: 'numeric', month: 'long', year: 'numeric' }) : ''; }
+  function applyRelease() { renderNotes(); setDl(); if (!rel) return; const cur = dlOf(OS), mb = Math.round((cur.size || rel.size) / 1048576), nm = DL[OS].n;
+    $('#trustVer').textContent = `${nm} · ${mb} MB · ${rel.tag}`; $('#badgeTxt').textContent = W('badge') + rel.tag; }
   fetch('https://api.github.com/repos/SametDuhan/airock/releases/latest').then(r => r.ok ? r.json() : null).then(j => {
     if (!j) return; notes = { tag: j.tag_name, body: j.body || '', date: j.published_at };
     const a = (j.assets || []).find(x => /SkyTrack-Setup\.exe$/.test(x.name)); if (a) rel = { tag: j.tag_name, size: a.size }; applyRelease();
@@ -555,9 +625,9 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   // total downloads of the installer across all releases
   fetch('https://api.github.com/repos/SametDuhan/airock/releases?per_page=100').then(r => r.ok ? r.json() : null).then(list => {
     if (!list) return; const n = list.reduce((t, r) => t + (r.assets || []).filter(x => /\.(exe|dmg|AppImage)$/i.test(x.name)).reduce((u, x) => u + (x.download_count || 0), 0), 0);
-    $('#dlCount').textContent = n.toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US'); $('#dlc').hidden = false; }).catch(() => {});
+    $('#dlCount').textContent = n.toLocaleString(LOCALE()); $('#dlc').hidden = false; }).catch(() => {});
   // copy buttons
-  const copy = (txt, btn) => { const done = () => { const o = btn.textContent; btn.textContent = lang === 'tr' ? 'Kopyalandı ✓' : 'Copied ✓'; setTimeout(() => { btn.textContent = o; }, 1600); };
+  const copy = (txt, btn) => { const done = () => { const o = btn.textContent; btn.textContent = W('copied'); setTimeout(() => { btn.textContent = o; }, 1600); };
     (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(done).catch(() => { const t = document.createElement('textarea'); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch {} t.remove(); }); };
   $('#copyCmd').onclick = e => copy($('#cmd').textContent, e.currentTarget);
   $('#copyLink').onclick = e => copy(location.href.split('#')[0], e.currentTarget);
@@ -568,7 +638,7 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) { const v = $('#heroVid'); v.removeAttribute('autoplay'); v.pause(); v.controls = true; }
 
   // start language: saved choice, else the browser language
-  setLang(ls.get('st.lang') || (/^tr/i.test(navigator.language || '') ? 'tr' : 'en'));
+  { const sv = ls.get('st.lang'), b = (navigator.language || '').slice(0, 2).toLowerCase(); setLang(LANGS.some(x => x[0] === sv) ? sv : LANGS.some(x => x[0] === b) ? b : 'en'); }
 })();
 </script>
 </body>

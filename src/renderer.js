@@ -402,7 +402,7 @@ function pumpAp() {
   const near = [...flights.values()].filter(f => !f.gone && canLoad(f, 'rs') && km(f.lat, f.lon, s.lat, s.lon) < 300).sort((a, b) => km(a.lat, a.lon, s.lat, s.lon) - km(b.lat, b.lon, s.lat, s.lon));
   for (const f of near) { if (apJobs >= 3) return; apJobs++; loadRoute(f).finally(() => { apJobs--; pumpAp(); }); }
 }
-setInterval(() => { if (apSel) { pumpAp(); if ($('apr')) $('apr').innerHTML = apRows(apSel); } }, 2000);
+setInterval(() => { if (apSel) { pumpAp(); if ($('apr')) { $('apr').innerHTML = apRows(apSel); const em = document.querySelectorAll('#apc .tabs em'); if (em.length === 2) { em[0].textContent = apFlights(apSel, 'dst').length; em[1].textContent = apFlights(apSel, 'org').length; } } } }, 2000);
 
 /* ---------- alert zone ---------- */
 function drawZone() { zoneLayer && zoneLayer.remove(); zoneLayer = null; $('bZ').classList.toggle('on', !!zone);
