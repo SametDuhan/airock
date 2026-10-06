@@ -7,7 +7,7 @@ const TR = {
   'Standard': 'Standart', 'Light': 'Açık', 'Dark': 'Koyu', 'Filters': 'Filtreler', 'Altitude': 'İrtifa', 'Min speed': 'En düşük hız', 'Airport': 'Havalimanı',
   'Departure': 'Kalkış', 'Arrival': 'Varış', 'Departure ↔ arrival': 'Kalkış ↔ varış', 'Airline': 'Havayolu', 'e.g. THY, Pegasus, Lufthansa': 'ör. THY, Pegasus, Lufthansa',
   'Aircraft type': 'Uçak tipi', 'e.g. B738, A320, boeing 777': 'ör. B738, A320, boeing 777', 'Show aircraft on the ground': 'Yerdeki uçakları göster',
-  'Favorites only ★': 'Sadece favoriler ★', 'Military only': 'Sadece askeri', 'Search callsign or registration…': 'Çağrı kodu ya da tescil ara…',
+  'Favorites only ★': 'Sadece favoriler ★', 'Search callsign or registration…': 'Çağrı kodu ya da tescil ara…',
   '● Live': '● Canlı', 'history': 'geçmiş', 'min': 'en az', 'max': 'en çok', ' min': ' dk', ' h ': ' sa ',
   // status, list, card
   'on ground': 'yerde', 'landed': 'indi', 'Close': 'Kapat', 'Open photo': 'Fotoğrafı aç', 'Previous photo': 'Önceki fotoğraf', 'Next photo': 'Sonraki fotoğraf', 'Photo': 'Fotoğraf',
@@ -27,7 +27,7 @@ const TR = {
   'Freezing rain': 'Donan yağmur', 'Light snow': 'Hafif kar', 'Snow': 'Kar', 'Heavy snow': 'Yoğun kar', 'Snow grains': 'Kar taneleri', 'Rain showers': 'Sağanak', 'Violent showers': 'Şiddetli sağanak',
   'Snow showers': 'Kar sağanağı', 'Thunderstorm': 'Gök gürültülü fırtına', 'Thunderstorm, hail': 'Dolu ve fırtına',
   // emergencies, watchlist, today's flights, radar
-  'Hijacking': 'Kaçırma', 'Radio failure': 'Telsiz arızası', 'General emergency': 'Genel acil durum', 'Emergency': 'Acil durum', 'MILITARY': 'ASKERİ',
+  'Hijacking': 'Kaçırma', 'Radio failure': 'Telsiz arızası', 'General emergency': 'Genel acil durum', 'Emergency': 'Acil durum',
   '{0} landed': '{0} indi', '{0} took off': '{0} kalktı', 'Watching {0}: you will be notified when it takes off or lands': '{0} takipte: kalkış ve inişte bildirim alacaksın',
   'Watchlist': 'Takip listesi', 'last seen {0} min ago': '{0} dk önce görüldü', 'not seen yet': 'henüz görülmedi', 'Remove': 'Kaldır', 'Not on the map right now': 'Şu an haritada yok',
   '🔔 Watching': '🔔 Takipte', '🔔 Watch': '🔔 Takip et', "Today's flights": 'Bugünkü uçuşlar', "Couldn't load today's flights": 'Bugünkü uçuşlar yüklenemedi',

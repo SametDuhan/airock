@@ -82,7 +82,7 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 .leaflet-dragging .leaflet-grab,.leaflet-dragging .leaflet-container{cursor:var(--cur)}
 .bb{display:flex;gap:6px}
 .bd{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}.chip{font:700 10px ui-monospace,monospace;letter-spacing:.06em;padding:3px 7px;border-radius:3px;background:#ffffff14;color:var(--fg)}
-.chip.emg{background:#ff3b30;color:#fff}.chip.mil{background:#8bc34a;color:#111}.chip.new{background:var(--ac);color:#111}
+.chip.emg{background:#ff3b30;color:#fff}.chip.new{background:var(--ac);color:#111}
 #card .bt{display:flex;gap:8px;margin-top:12px}#card .bt button,#card button.sm{margin-top:0;width:auto;flex:1;font-size:12px}#card button.sm{width:100%;margin-top:12px}
 .lg{display:block;padding:7px 4px;border-bottom:1px solid var(--line);cursor:pointer}.lg:hover{background:#ffffff0a}.lg b{font:600 12px ui-monospace,monospace;display:block}.lg span{font-size:11px;color:var(--mut)}
 #wls .wr{display:flex;align-items:center;gap:6px;padding:6px 0;cursor:pointer}#wls .wr:hover b{color:var(--ac)}#wls .wr b{font:600 12px ui-monospace,monospace;flex:1}#wls .wr span{font-size:11px;color:var(--mut)}#wls .wx2{background:transparent;border:0;color:var(--mut);cursor:pointer;padding:2px 4px}#wls .wx2:hover{color:#ff6b5e}
@@ -116,8 +116,7 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 <div class="apr"><input id="fTp" list="tpList" placeholder="e.g. B738, A320, boeing 777" autocomplete="off"></div><datalist id="tpList"></datalist>
 <div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
 <label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
-<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label>
-<label class="ck"><input id="fMil" type="checkbox"> Military only</label></div>
+<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div>
 <div class="sec" id="wls" style="display:none"></div>
 <input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></aside>
 <main><div id="map"></div>

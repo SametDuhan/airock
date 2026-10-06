@@ -32,7 +32,7 @@
   const fromAdsb = a => { const g = a.alt_baro === 'ground', ft = g ? 0 : typeof a.alt_baro === 'number' ? a.alt_baro : a.alt_geom || 0;
     return { id: a.hex, cs: (a.flight || '').trim() || a.r || a.hex.toUpperCase(), reg: a.r || '', type: a.t || '', country: '', lat: a.lat, lon: a.lon,
       ground: g, alt: ft / 3.281, spd: (a.gs || 0) / 1.944, hdg: a.track ?? a.true_heading ?? 0, vr: (a.baro_rate ?? a.geom_rate ?? 0) / 196.85,
-      sq: a.squawk || '', emg: a.emergency && a.emergency !== 'none' ? a.emergency : '', mil: !!(a.dbFlags & 1), cat: a.category || '' }; };
+      sq: a.squawk || '', emg: a.emergency && a.emergency !== 'none' ? a.emergency : '', cat: a.category || '' }; };
   // Two free community feeds with the same data format. Circles are spread over both, so each one stays well under its own rate limit
   // and a wide view covers twice as much. If a feed fails (e.g. 429), its circle is retried on the other one.
   const FEEDS = [
@@ -77,7 +77,7 @@
     if (r.status === 429) { openSkyPause = Date.now() + 600000; throw new Error('daily credits used up (429)'); }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return ((await r.json()).states || []).filter(s => s[5] != null && s[6] != null).map(s => ({ id: s[0], cs: (s[1] || '').trim() || s[0].toUpperCase(), reg: '', type: '', country: s[2],
-      lon: s[5], lat: s[6], ground: !!s[8], alt: s[8] ? 0 : s[7] ?? s[13] ?? 0, spd: s[9] || 0, hdg: s[10] || 0, vr: s[11] || 0, sq: s[14] || '', emg: '', mil: false, cat: '' }));
+      lon: s[5], lat: s[6], ground: !!s[8], alt: s[8] ? 0 : s[7] ?? s[13] ?? 0, spd: s[9] || 0, hdg: s[10] || 0, vr: s[11] || 0, sq: s[14] || '', emg: '', cat: '' }));
   }
 
   // Close view: adsb.lol (fallback OpenSky). Wide view: OpenSky, which covers everywhere in one request (fallback: adsb.lol for the center).

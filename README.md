@@ -28,7 +28,7 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
   - a minimum speed
   - departure and/or arrival airport, by code (IST, LTFM) or city name
   - aircraft on the ground on or off, and a favorites-only option
-- **Emergencies and military**: an aircraft squawking 7500, 7600 or 7700 gets a blinking red ring and a notification, and the list shows ⚠. Military aircraft get a dashed green ring, and the **Military only** filter hides everything else.
+- **Emergencies**: an aircraft squawking 7500, 7600 or 7700 gets a blinking red ring and a notification, and the list shows ⚠.
 - **Watchlist**: press **🔔 Watch** on a flight card. SkyTrack asks for your watched aircraft anywhere in the world every 45 seconds and notifies you when one takes off or lands.
 - **Today's flights**: on a live flight card, **Today's flights** lists every flight the aircraft made today (times, distance, top altitude). Click one to draw it on the map.
 - **Rain radar**: the **Radar** button adds a live precipitation layer. The airport panel also shows the airport's METAR and TAF, with its VFR/IFR flight category.

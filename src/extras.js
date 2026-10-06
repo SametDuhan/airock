@@ -135,7 +135,6 @@ $('lb').onclick = e => {
 X.top = f => {
   const c = [];
   if (isEmg(f)) c.push(`<span class="chip emg">⚠ ${esc(t(EMG[f.sq] || 'Emergency'))} · ${esc(f.sq || f.emg)}</span>`);
-  if (f.mil) c.push(`<span class="chip mil">${t('MILITARY')}</span>`);
   if (spot) { if (!seenReg(f) && (f.ac?.reg || f.reg)) c.push(`<span class="chip new">${t('NEW AIRCRAFT')}</span>`); if (!seenType(f)) c.push(`<span class="chip new">${t('NEW TYPE')}</span>`); }
   return c.length ? `<div class="bd">${c.join('')}</div>` : '';
 };

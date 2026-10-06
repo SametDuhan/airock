@@ -26,7 +26,7 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
   - en düşük hız
   - kalkış ve/veya varış havalimanı; kodla (IST, LTFM) ya da şehir adıyla
   - yerdeki uçakları gösterme/gizleme ve sadece favoriler
-- **Acil durum ve askeri uçaklar**: 7500, 7600 ya da 7700 squawk kodu veren uçağın etrafında yanıp sönen kırmızı halka çıkar ve bildirim gelir; listede ⚠ görünür. Askeri uçaklar kesikli yeşil halka alır, **Sadece askeri** filtresi gerisini gizler.
+- **Acil durum**: 7500, 7600 ya da 7700 squawk kodu veren uçağın etrafında yanıp sönen kırmızı halka çıkar ve bildirim gelir; listede ⚠ görünür.
 - **Takip listesi**: uçuş kartında **🔔 Takip et**'e bas. SkyTrack takip ettiğin uçakları dünyanın neresinde olursa olsun 45 saniyede bir sorar; biri kalkınca ya da inince bildirim gelir.
 - **Bugünkü uçuşlar**: canlı bir uçuş kartında **Bugünkü uçuşlar**, uçağın bugün yaptığı bütün uçuşları (saat, mesafe, en yüksek irtifa) listeler. Birine tıklayınca haritada çizilir.
 - **Yağış radarı**: **Radar** düğmesi canlı yağış katmanı ekler. Havalimanı paneli ayrıca havalimanının METAR ve TAF raporunu, VFR/IFR uçuş kategorisiyle birlikte gösterir.
