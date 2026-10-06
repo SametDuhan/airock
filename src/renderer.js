@@ -225,8 +225,11 @@ const windRow = f => { if (f.ground || f.spd * 1.944 < 60) return null;
   if (hw == null || !Number.isFinite(hw)) return null;
   const a = Math.round(Math.abs(hw)), main = a < 5 ? t('No significant head/tailwind') : hw > 0 ? t('Headwind {0} kt', a) : t('Tailwind {0} kt', a);
   return ['Wind', main + (f.ws != null && f.wd != null ? ` (${Math.round(f.wd)}°/${Math.round(f.ws)} kt)` : '')]; };
-const fuelRow = f => { const dst = f.route?.dst; if (f.ground || !dst) return null;
-  const r = SkyFuel.toGo(f.ac?.icaoType || f.type, km(f.lat, f.lon, dst.lat, dst.lon), f.spd * 1.944); return r ? ['Fuel to go (est.)', `≈ ${fmtMass(r.kg)} · CO₂ ${fmtMass(r.co2)}`] : null; };
+// The bar assumes the tank held the whole trip's fuel plus a 45 min reserve (the real fuel load isn't public)
+const fuelRow = f => { const dst = f.route?.dst; if (f.ground || !dst) return null; const gs = f.spd * 1.944, icao = f.ac?.icaoType || f.type;
+  const left = km(f.lat, f.lon, dst.lat, dst.lon), flown = f.route.org ? km(f.route.org.lat, f.route.org.lon, f.lat, f.lon) : 0, r = SkyFuel.toGo(icao, left, gs); if (!r) return null;
+  const rate = SkyFuel.rate(icao), reserve = rate * .75, trip = r.kg * (left + flown) / left, pct = Math.max(0, Math.min(100, (r.kg + reserve) / (trip + reserve) * 100)), col = pct > 40 ? '#4ade80' : pct > 20 ? '#facc15' : '#f87171';
+  return ['Fuel to go (est.)', `≈ ${fmtMass(r.kg)}`, '', `<div class="fbar"><i style="width:${pct.toFixed(0)}%;background:${col}"></i></div><div class="fcap">CO₂ ${fmtMass(r.co2)} · ${t('~{0}% of tank left (est., incl. reserve)', Math.round(pct))}</div>`]; };
 const turbRow = f => { if (f.ground) return null;
   if (f.tbs === 'ok') { const r = f.tb, k = r.km;
     return [t('Turbulence'), r.level >= 3 ? t('High turbulence risk ahead (~{0} km)', k) : r.level === 2 ? t('Moderate turbulence possible ahead (~{0} km)', k) : t('No turbulence reported or forecast on the route ahead'), 'tb' + r.level]; }
@@ -429,7 +432,7 @@ function renderCard(full) {
   X.rows(f, rows);
   { const fr = fuelRow(f); if (fr) rows.push(fr); }
   { const tr = live && turbRow(f); if (tr) rows.push(tr); } // last row, below Position
-  $('kvs').innerHTML = rows.map(r => r[2] ? `<div class="kv tbr ${r[2]}"><b>${esc(r[1])}</b></div>` : `<div class="kv"><span>${t(r[0])}</span><b>${esc(r[1])}</b></div>`).join('');
+  $('kvs').innerHTML = rows.map(r => r[2] ? `<div class="kv tbr ${r[2]}"><b>${esc(r[1])}</b></div>` : `<div class="kv${r[3] ? ' xr' : ''}"><span>${t(r[0])}</span><b>${esc(r[1])}</b>${r[3] || ''}</div>`).join('');
   $('fv').textContent = fav.has(f.id) ? t('★ Favorited') : t('☆ Favorite'); X.sync(f);
 }
 const eta = h => h < 1 ? Math.round(h * 60) + t(' min') : Math.floor(h) + t(' h ') + Math.round(h % 1 * 60) + t(' min');
