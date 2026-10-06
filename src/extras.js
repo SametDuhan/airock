@@ -132,9 +132,48 @@ $('lb').onclick = e => {
 };
 
 /* ---------- card parts ---------- */
+/* ---------- emergency code explainer ---------- */
+const EMG_INFO = {
+  7700: { en: ['General emergency', 'Squawk 7700 is the international code for a general emergency. The crew sets it when the aircraft or the people on board are in serious trouble and need priority from air traffic control.',
+      'Engine failure, fire or smoke, a medical emergency, loss of cabin pressure, very low fuel, structural or weather damage.',
+      'Controllers clear the airspace, give the aircraft priority to land and have fire and rescue crews wait at the runway. Most of these flights end with a normal landing.',
+      'It does not always mean a disaster. Crews often declare early to be safe, and the code is sometimes set by mistake.'],
+    tr: ['Genel acil durum', '7700, uluslararası genel acil durum kodudur. Mürettebat, uçak ya da yolcular ciddi bir tehlikedeyse ve hava trafik kontrolünden öncelik istiyorsa bunu girer.',
+      'Motor arızası, yangın veya duman, yolcuda sağlık sorunu, kabin basıncı kaybı, çok düşük yakıt, yapısal veya hava koşullarından kaynaklanan hasar.',
+      'Kontrolörler hava sahasını boşaltır, uçağa iniş önceliği verir ve itfaiye ile kurtarma ekipleri pistte bekler. Bu uçuşların çoğu normal inişle biter.',
+      'Her zaman felaket anlamına gelmez. Mürettebat çoğu zaman önlem olarak erkenden ilan eder, kod bazen yanlışlıkla da girilir.'] },
+  7600: { en: ['Radio failure', 'Squawk 7600 means the aircraft has lost radio contact with air traffic control.',
+      'The radio or headset breaks, the crew is on the wrong frequency, or the radio is out of range.',
+      'The crew follows set lost-communication procedures: they keep flying the filed route, ATC clears other traffic away and the aircraft lands as planned, usually watching for light signals from the tower.',
+      'It is usually harmless and often fixed within minutes, after which the code is changed back.'],
+    tr: ['Telsiz arızası', '7600, uçağın hava trafik kontrolüyle telsiz bağlantısını kaybettiği anlamına gelir.',
+      'Telsiz ya da kulaklık bozulduğunda, yanlış frekansa geçildiğinde veya telsiz menzil dışında kaldığında.',
+      'Mürettebat önceden belirlenmiş haberleşme kaybı prosedürünü uygular: planlanan rotada uçmaya devam eder, kontrol diğer trafiği uzaklaştırır ve uçak planlandığı gibi iner. Genelde kule ışık sinyalleri izlenir.',
+      'Genellikle zararsızdır ve çoğu zaman dakikalar içinde düzelir, ardından kod eski haline getirilir.'] },
+  7500: { en: ['Hijacking', 'Squawk 7500 is the code for unlawful interference, meaning a hijacking or an attempt to take control of the aircraft.',
+      'The crew can set it silently, without speaking on the radio, so it does not alert the hijacker.',
+      'ATC treats the flight as a security incident, quietly clears the airspace around it and informs the authorities. Controllers avoid asking about it on the radio.',
+      'It is very rare. Accidental entries do happen, so a 7500 on the map is not proof of a real hijacking.'],
+    tr: ['Kaçırma', '7500, hukuka aykırı müdahale kodudur: uçağın kaçırılması veya kontrolünün ele geçirilmeye çalışılması anlamına gelir.',
+      'Mürettebat bunu telsizle konuşmadan, sessizce girebilir; böylece kaçıran kişi fark etmez.',
+      'Kontrol uçuşu güvenlik olayı olarak ele alır, çevresindeki hava sahasını sessizce boşaltır ve yetkilileri bilgilendirir. Kontrolörler telsizden bu konuda soru sormaz.',
+      'Çok nadirdir. Kod yanlışlıkla da girilebildiği için haritada 7500 görmek gerçek bir kaçırma olduğunu kanıtlamaz.'] }
+};
+const emgCode = f => EMG[f.sq] ? f.sq : ({ unlawful: 7500, nordo: 7600 }[f.emg] || 7700);
+function showEmg(code) {
+  const i = EMG_INFO[code]; if (!i) return; const [ti, what, when, next, note] = i[LANG === 'tr' ? 'tr' : 'en'];
+  const L = LANG === 'tr' ? ['Ne anlama gelir?', 'Ne zaman verilir?', 'Sonrasında ne olur?', 'Bilmekte fayda var', 'Kapat'] : ['What does it mean?', 'When is it used?', 'What happens next?', 'Good to know', 'Close'];
+  let m = document.getElementById('emgm'); if (m) m.remove();
+  m = document.createElement('div'); m.id = 'emgm';
+  m.innerHTML = `<div class="bx"><div class="hd"><span class="cd">${code}</span><h2>${esc(ti)}</h2><button class="ib" data-x aria-label="${L[4]}" title="${L[4]}"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l8 8M11 3l-8 8"/></svg></button></div>`
+    + [[L[0], what], [L[1], when], [L[2], next]].map(([h, b]) => `<h3>${h}</h3><p>${esc(b)}</p>`).join('') + `<div class="nt"><b>${L[3]}</b> ${esc(note)}</div></div>`;
+  m.onclick = e => { if (e.target === m || e.target.closest('[data-x]')) m.remove(); };
+  document.body.appendChild(m);
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('emgm')?.remove(); });
 X.top = f => {
   const c = [];
-  if (isEmg(f)) c.push(`<span class="chip emg">⚠ ${esc(t(EMG[f.sq] || 'Emergency'))} · ${esc(f.sq || f.emg)}</span>`);
+  if (isEmg(f)) c.push(`<button class="chip emg" data-emg="${emgCode(f)}" title="${esc(t('What does this code mean?'))}">⚠ ${esc(t(EMG[f.sq] || 'Emergency'))} · ${esc(f.sq || f.emg)} <i>?</i></button>`);
   if (spot) { if (!seenReg(f) && (f.ac?.reg || f.reg)) c.push(`<span class="chip new">${t('NEW AIRCRAFT')}</span>`); if (!seenType(f)) c.push(`<span class="chip new">${t('NEW TYPE')}</span>`); }
   return c.length ? `<div class="bd">${c.join('')}</div>` : '';
 };
@@ -149,6 +188,7 @@ X.bottom2 = f => spot ? `<button id="slog" class="sm"></button>` : '';
 X.sync = f => { $('wt').textContent = watch.has(f.id) ? t('🔔 Watching') : t('🔔 Watch'); if ($('slog')) $('slog').textContent = loggedNow(f) ? t('✓ Logged') : t('📓 Log sighting'); };
 X.click = e => {
   const f = flights.get(selected); if (!f) return false;
+  const eb = e.target.closest('[data-emg]'); if (eb) { showEmg(+eb.dataset.emg); return true; }
   if (e.target.id === 'wt') { toggleWatch(f); return true; }
   if (e.target.id === 'slog') { logSighting(f); return true; }
   if (e.target.id === 'lgb') { loadLegs(f); return true; }

@@ -34,7 +34,7 @@ const TR = {
   'Freezing rain': 'Donan yağmur', 'Light snow': 'Hafif kar', 'Snow': 'Kar', 'Heavy snow': 'Yoğun kar', 'Snow grains': 'Kar taneleri', 'Rain showers': 'Sağanak', 'Violent showers': 'Şiddetli sağanak',
   'Snow showers': 'Kar sağanağı', 'Thunderstorm': 'Gök gürültülü fırtına', 'Thunderstorm, hail': 'Dolu ve fırtına',
   // emergencies, watchlist, today's flights, radar
-  'Hijacking': 'Kaçırma', 'Radio failure': 'Telsiz arızası', 'General emergency': 'Genel acil durum', 'Emergency': 'Acil durum',
+  'Hijacking': 'Kaçırma', 'Radio failure': 'Telsiz arızası', 'General emergency': 'Genel acil durum', 'Emergency': 'Acil durum', 'What does this code mean?': 'Bu kod ne anlama geliyor?',
   '{0} landed': '{0} indi', '{0} took off': '{0} kalktı', 'Watching {0}: you will be notified when it takes off or lands': '{0} takipte: kalkış ve inişte bildirim alacaksın',
   'Watchlist': 'Takip listesi', 'last seen {0} min ago': '{0} dk önce görüldü', 'not seen yet': 'henüz görülmedi', 'Remove': 'Kaldır', 'Not on the map right now': 'Şu an haritada yok',
   '🔔 Watching': '🔔 Takipte', '🔔 Watch': '🔔 Takip et', "Today's flights": 'Bugünkü uçuşlar', "Couldn't load today's flights": 'Bugünkü uçuşlar yüklenemedi',
