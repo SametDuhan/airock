@@ -48,7 +48,7 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
 - **Stats:** **📊 Stats** shows what SkyTrack currently sees: aircraft in the air and on the ground, the highest and fastest one, top airlines and aircraft types, and the busiest airports.
 - **Longer replay:** in Settings you can rewind 1, 3 or 6 hours instead of one.
 - **More reliable data:** SkyTrack starts in live mode with the last known positions already on the map, shows a friendly message when the free data sources are busy, and can use your own free OpenSky API client for a higher daily limit.
-- **Install your way:** besides the installers, there are manifests for winget, Scoop and Arch (AUR) in [`packaging/`](packaging/), see [docs/PACKAGING.md](docs/PACKAGING.md).
+- **Install your way:** besides the installers, there are manifests for winget and Arch (AUR) in [`packaging/`](packaging/), see [docs/PACKAGING.md](docs/PACKAGING.md).
 - **Favorites**: star a flight (☆) to find it again later.
 - **Alert zone** (*Alert zone*): click the map to set a circle (100 km by default; change the radius in the menu, 10–500 km). You get a notification when an aircraft enters it, including one that first appears inside it.
 - **Replay**: rewind the last hour with the slider at the bottom, then press *● Live* to return to live.

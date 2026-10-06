@@ -1,4 +1,4 @@
-# Package manager manifests
+# Package manager manifests (winget and AUR)
 
 The files in `packaging/` let people install SkyTrack from a package manager. They need to be updated for every release (the version and the file hashes change). The hashes of the files in a release are shown by `gh release view vX.Y.Z --json assets` (the `digest` field).
 
@@ -12,13 +12,9 @@ The files in `packaging/` let people install SkyTrack from a package manager. Th
 
 Users then run: `winget install SametDuhan.SkyTrack`.
 
-## Scoop (Windows)
-
-`packaging/scoop/skytrack.json` is a Scoop manifest. Put it in a bucket repository (for example `SametDuhan/scoop-bucket`, folder `bucket/`). Users run: `scoop bucket add skytrack https://github.com/SametDuhan/scoop-bucket` and `scoop install skytrack`. `autoupdate` is set, so `scoop`'s checkver can keep it current.
-
 ## Arch Linux (AUR)
 
-`packaging/aur/PKGBUILD` installs the AppImage. Submit it to https://aur.archlinux.org as `skytrack-bin` (needs an AUR account and an SSH key), then update `pkgver` and `sha256sums` for each release.
+`packaging/aur/PKGBUILD` installs the AppImage. It follows the usual AUR pattern for AppImage packages but has not been built on an Arch system yet, so test it with `makepkg -si` first. Submit it to https://aur.archlinux.org as `skytrack-bin` (needs an AUR account and an SSH key), then update `pkgver` and `sha256sums` for each release.
 
 ## macOS
 

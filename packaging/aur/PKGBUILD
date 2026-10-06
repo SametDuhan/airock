@@ -1,0 +1,24 @@
+# Maintainer: Samet Duhan Şahin <16sametduhan16@gmail.com>
+pkgname=skytrack-bin
+_pkgname=SkyTrack
+pkgver=0.7.1
+pkgrel=1
+pkgdesc="Free live flight tracker for the desktop, built on open ADS-B data"
+arch=('x86_64')
+url="https://sametduhan.github.io/airock/"
+license=('MIT')
+depends=('fuse2' 'zlib' 'gtk3' 'nss')
+options=('!strip')
+source=("$_pkgname-$pkgver.AppImage::https://github.com/SametDuhan/airock/releases/download/v$pkgver/SkyTrack-linux-x86_64.AppImage"
+        "LICENSE::https://raw.githubusercontent.com/SametDuhan/airock/v$pkgver/LICENSE")
+sha256sums=('e4e0385f7f9274df7a939ef08a1759c47b33c5d63bbc9ad0e22aae35aee0d587'
+            'SKIP')
+noextract=("$_pkgname-$pkgver.AppImage")
+
+package() {
+  install -Dm755 "$srcdir/$_pkgname-$pkgver.AppImage" "$pkgdir/opt/$_pkgname/$_pkgname.AppImage"
+  install -d "$pkgdir/usr/bin"
+  printf '#!/bin/sh\nexec /opt/%s/%s.AppImage "$@"\n' "$_pkgname" "$_pkgname" > "$pkgdir/usr/bin/skytrack"
+  chmod 755 "$pkgdir/usr/bin/skytrack"
+  install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
