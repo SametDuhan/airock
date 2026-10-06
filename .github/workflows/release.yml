@@ -61,10 +61,17 @@ jobs:
         run: |
           shopt -s nullglob
           files=(dist/*.exe dist/*.dmg dist/*.AppImage dist/latest*.yml dist/*.blockmap)
-          gh release upload "$TAG" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+          # the three jobs upload at the same time and GitHub sometimes answers "already exists" for a race: retry, the upload is idempotent (--clobber)
+          for i in 1 2 3 4; do gh release upload "$TAG" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY" && break; echo "upload attempt $i failed, retrying"; sleep $((i * 20)); done
   publish:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Check that every file is there
+        run: |
+          names=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].name')
+          for f in SkyTrack-Setup.exe latest.yml SkyTrack-mac-arm64.dmg SkyTrack-mac-x64.dmg latest-mac.yml SkyTrack-linux-x86_64.AppImage latest-linux.yml; do
+            echo "$names" | grep -qx "$f" || { echo "missing $f"; exit 1; }
+          done
       - name: Publish the release (only now do the apps see it)
         run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
