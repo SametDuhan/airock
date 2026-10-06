@@ -35,3 +35,20 @@ test('legOf: a long gap or a "new leg" flag also starts a new flight', () => {
   const flag = [[0, 1, 1, 30000, 0, 0, 0], [60, 2, 2, 30000, 0, 0, 2], [120, 3, 3, 30000, 0, 0, 0]];
   assert.deepEqual(D.legOf(flag), [[2, 2], [3, 3]]);
 });
+
+test('splitLegs: one leg per airborne stretch, from the last ground point to the next one', () => {
+  const tr = [[0, 40, 28, 'ground'], [60, 40.1, 28.1, 5000], [900, 41, 30, 30000], [1800, 41.5, 31.5, 8000], [1900, 41.6, 31.6, 'ground'],
+    [5000, 41.6, 31.6, 'ground'], [5100, 41.7, 31.7, 4000], [6000, 42.5, 33, 30000], [7000, 43, 35, 30000]];
+  const l = D.splitLegs(tr, 1000);
+  assert.equal(l.length, 2); assert.equal(l[0].open, false); assert.equal(l[1].open, true);
+  assert.deepEqual(l[0].from, [40, 28]); assert.equal(l[0].t0, 1000); assert.equal(l[0].maxAlt, 30000);
+  assert.deepEqual(l[1].from, [41.6, 31.6]); assert.deepEqual(l[1].to, [43, 35]);
+});
+test('splitLegs: ignores tiny hops and a long gap splits a leg', () => {
+  assert.deepEqual(D.splitLegs([[0, 1, 1, 'ground'], [10, 1.001, 1.001, 500], [20, 1.002, 1.002, 500], [30, 1.003, 1.003, 'ground']]), []);
+  const gap = [[0, 40, 28, 20000], [60, 41, 29, 20000], [120, 42, 30, 20000], [5000, 50, 40, 20000], [5060, 51, 41, 20000], [5120, 52, 42, 20000]];
+  assert.equal(D.splitLegs(gap).length, 2);
+});
+test('watch: invalid lists are rejected before any network call', async () => {
+  assert.equal((await D.watch([])).ok, false); assert.equal((await D.watch(['zz'])).ok, false);
+});

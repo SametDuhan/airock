@@ -28,6 +28,12 @@ ipcMain.handle('trace', (_, hex) => data.trace(hex));
 // Airport panel: weather, city/country, photo
 ipcMain.handle('airport', (_, lat, lon) => data.airport(lat, lon));
 
+// Watchlist, today's flights of an aircraft, METAR/TAF, rain radar
+ipcMain.handle('watch', (_, hexes) => data.watch(hexes));
+ipcMain.handle('legs', (_, hex) => data.legs(hex));
+ipcMain.handle('metar', (_, lat, lon) => data.metar(lat, lon));
+ipcMain.handle('radar', () => data.radar());
+
 app.whenReady().then(() => {
   // OpenStreetMap's usage policy requires a Referer; file:// pages don't send one, so add it to tile requests
   session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['https://tile.openstreetmap.org/*'] }, (d, cb) => {
