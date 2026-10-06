@@ -88,14 +88,39 @@ const airIs = (f, a) => { const c = airCode(f), n = (f.route?.airline || AIRLINE
   return c === a || (f.route?.airlineIata || '').toUpperCase() === a || (a.length > 2 && n.includes(a)); };
 const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (flt.maxSpd >= 600 || f.spd * 1.944 <= flt.maxSpd) && (!flt.fav || fav.has(f.id))
   && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)) && (!flt.type || typeIs(f, flt.type)) && (!flt.air || airIs(f, flt.air)); };
-function toast(msg) {
-  const d = document.createElement('div'); d.className = 'tm'; d.textContent = msg; $('toast').appendChild(d); setTimeout(() => d.remove(), 4000);
+function toast(msg, id) {
+  const emg = msg.startsWith('⚠'), d = document.createElement('div'); d.className = 'tm' + (emg ? ' emg' : '') + (id ? ' go' : ''); d.style.setProperty('--d', emg ? '8s' : '4s');
+  d.innerHTML = `<i class="ti">${emg ? '⚠' : '✓'}</i><span></span><button class="tx" aria-label="Close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"/></svg></button>`;
+  d.querySelector('span').textContent = emg ? msg.slice(1).trim() : msg; $('toast').appendChild(d);
+  d.onclick = e => { if (!e.target.closest('.tx') && id && flights.has(id)) select(id); d.remove(); };
+  setTimeout(() => d.remove(), emg ? 8000 : 4000);
   try { new Notification('SkyTrack', { body: msg }); } catch {}
 }
 
 /* ---------- aircraft: single canvas layer ---------- */
 // Instead of a separate HTML element per aircraft, all are drawn on one canvas: stays smooth with thousands of aircraft
-const PLANE = new Path2D('M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z');
+// Icon shapes (24x24, nose up): b = body, e = engines (outlined separately so each one is visible), r = rotor (helicopters, stroke only)
+const SHAPES = {
+  gen: { b: 'M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z', s: 1 },
+  air2: { b: 'M12 1.5c1 0 1.6 1.6 1.6 3.5v4l8.9 6v2l-8.9-2.8v5.3l2.4 2v1.3L12 21.8l-4 1v-1.3l2.4-2v-5.3L1.5 17v-2l8.9-6V5c0-1.9.6-3.5 1.6-3.5z',
+    e: 'M6.2 11a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM15.8 11a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0z', s: 1 },
+  air4: { b: 'M12 1.5c1 0 1.6 1.6 1.6 3.5v4l8.9 6v2l-8.9-2.8v5.3l2.4 2v1.3L12 21.8l-4 1v-1.3l2.4-2v-5.3L1.5 17v-2l8.9-6V5c0-1.9.6-3.5 1.6-3.5z',
+    e: 'M6.5 10.6a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM15.5 10.6a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM2.8 12.8a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM19.2 12.8a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0z', s: 1.3 },
+  jet: { b: 'M12 1c.9 0 1.4 2 1.4 4v5l6.6 5v1.8l-6.6-2v4.2l1.6 1.5v1.3L12 21l-3 .8v-1.3l1.6-1.5v-4.2l-6.6 2V15l6.6-5V5c0-2 .5-4 1.4-4z',
+    e: 'M8.6 14.5a.9.9 0 0 1 1.8 0v4a.9.9 0 0 1-1.8 0zM13.6 14.5a.9.9 0 0 1 1.8 0v4a.9.9 0 0 1-1.8 0z', s: .9 },
+  heli: { b: 'M12 5.6c2.6 0 4.2 2.1 4.2 5s-1.6 4.6-4.2 4.6-4.2-1.7-4.2-4.6 1.6-5 4.2-5zM11 14.6h2V21h-2zM9.4 19.6h5.2v2H9.4z',
+    r: 'M21.5 10.4a9.5 9.5 0 1 1-19 0a9.5 9.5 0 1 1 19 0zM5.3 3.7l13.4 13.4M18.7 3.7L5.3 17.1', s: 1.4 }
+};
+for (const k in SHAPES) { const o = SHAPES[k]; o.B = new Path2D(o.b); if (o.e) o.E = new Path2D(o.e); if (o.r) o.R = new Path2D(o.r); }
+// Which icon an aircraft gets: helicopter / four-engine airliner / twin airliner / small jet / everything else
+const HELI_RE = /^(EC\d\d|AS\d\d|AW\d\d|B06|B407|B412|B427|B429|B505|R22|R44|R66|S76|S92|S61|S64|A109|A119|A139|A149|A169|A189|MD52|MD60|MI\d|KA\d\d|NH90|H47|H53|H60|H64|H500|UH\d\d|CH\d\d|MH\d\d|BK17|EN28|EN48|SCOU|GAZL|LYNX|PUMA|TIGR)/;
+const FOUR_ENG = new Set('A342 A343 A345 A346 A388 A124 A225 B741 B742 B743 B744 B74D B74R B74S B748 B703 B701 B720 B52 B1 C17 C5M C5 C135 K35R KC10 IL96 IL76 IL62 IL86 IL18 AN12 AN22 AN70 A400 C130 C30J L100 E3CF E6 DC8 DC85 DC86 DC87 B461 B462 B463 RJ70 RJ85 RJ1H VC10 TU95 TU16'.split(' '));
+const JET_RE = /^(C25\w|C5[0-9]\w|C56X|C68A|C680|C700|C750|C510|C525|C550|E5[05]P|E545|E550|LJ\d\d|GLF\d|GL\d\d|GALX|FA\d\w|F2TH|F900|CL3\d|CL60|H25\w|HDJT|PC24|BE40|PRM1|ASTR|G150|G280|SF50|EA50|ECLP|F\d\d[A-Z]?$|EUFI|RFAL|TORN|GRIF|HAWK|T38|L39|A10|SU\d\d|MG\d\d)/;
+const TWIN_RE = /^(A2\d\d|A3[0-9]\d|A\d\dN|B7[1-9]\d|B3[7-9]M|B3XM|E1\d\d|E2\d\d|E7\d\w|CRJ|CR\d|AT\d\d|DH8|SF34|B190|F100|F70|MD[89]\d|BCS|SU95|C919|ARJ|J328)/;
+const kindOf = f => { const c = acCode(f), cat = f.cat || '';
+  if (f._kk === c + cat) return f._k;
+  const k = cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : TWIN_RE.test(c) || /^A[345]$/.test(cat) ? 'air2' : 'gen';
+  f._kk = c + cat; return f._k = k; };
 map.createPane('planes').style.zIndex = 450;
 const PlaneLayer = L.Layer.extend({
   onAdd(m) {
@@ -117,9 +142,9 @@ const PlaneLayer = L.Layer.extend({
       const [lat, lon, hdg] = f.rp || [f.lat, f.lon, f.hdg], p = map.latLngToContainerPoint([lat, nearLon(lon, cLon)]); // nearest world copy at the date line
       if (p.x < -20 || p.y < -20 || p.x > s.x + 20 || p.y > s.y + 20) return;
       f._p = p; f._h = hdg; if (f.id === selected) { sel = f; return; }
-      icon(ctx, p, hdg, (f.ground ? 16 : 24) * k, f.ground ? '#9aa0a6' : color(f.alt)); rings(ctx, f, p, (f.ground ? 16 : 24) * k);
+      icon(ctx, p, hdg, (f.ground ? 16 : 24) * k, f.ground ? '#9aa0a6' : color(f.alt), kindOf(f)); rings(ctx, f, p, (f.ground ? 16 : 24) * k);
     });
-    if (sel) { ctx.shadowColor = '#f2c230'; ctx.shadowBlur = 12; icon(ctx, sel._p, sel._h, 30, '#fff'); ctx.shadowBlur = 0; rings(ctx, sel, sel._p, 30); }
+    if (sel) { ctx.shadowColor = '#f2c230'; ctx.shadowBlur = 12; icon(ctx, sel._p, sel._h, 30, '#fff', kindOf(sel)); ctx.shadowBlur = 0; rings(ctx, sel, sel._p, 30); }
   }
 });
 // Emergency (squawk 7500/7600/7700): blinking red ring
@@ -127,9 +152,13 @@ function rings(ctx, f, p, size) {
   if (!isEmg(f)) return; ctx.save(); ctx.strokeStyle = '#ff3b30'; ctx.lineWidth = 2.5; ctx.globalAlpha = (Date.now() / 700 | 0) % 2 ? .35 : 1;
   ctx.beginPath(); ctx.arc(p.x, p.y, size * .85, 0, 7); ctx.stroke(); ctx.restore();
 }
-function icon(ctx, p, hdg, size, fill) {
-  ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(hdg * R); ctx.scale(size / 24, size / 24); ctx.translate(-12, -12);
-  ctx.fillStyle = fill; ctx.fill(PLANE); ctx.stroke(PLANE); ctx.restore();
+function icon(ctx, p, hdg, size, fill, kind = 'gen') {
+  const sh = SHAPES[kind] || SHAPES.gen;
+  ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(hdg * R); const sc = size * sh.s / 24; ctx.scale(sc, sc); ctx.translate(-12, -12); ctx.lineWidth = .7 * Math.min(1, size / 24) / sc;
+  if (sh.R) { ctx.save(); ctx.strokeStyle = fill; ctx.globalAlpha = .9; ctx.lineWidth = 1.7; ctx.stroke(sh.R); ctx.restore(); }
+  ctx.fillStyle = fill; ctx.fill(sh.B); ctx.stroke(sh.B);
+  if (sh.E) { ctx.fill(sh.E); ctx.stroke(sh.E); }
+  ctx.restore();
 }
 const planes = new PlaneLayer().addTo(map), redraw = () => planes.redraw();
 // Click/hover: the nearest aircraft from the last drawn screen positions (within 14 px)
@@ -438,7 +467,11 @@ function renderCard(full) {
   X.rows(f, rows);
   { const fr = fuelRow(f); if (fr) rows.push(fr); }
   { const tr = live && turbRow(f); if (tr) rows.push(tr); } // last row, below Position
-  $('kvs').innerHTML = rows.map(r => r[2] ? `<div class="kv tbr ${r[2]}"><b>${esc(r[1])}</b></div>` : `<div class="kv${r[3] ? ' xr' : ''}"><span>${t(r[0])}</span><b>${esc(r[1])}</b>${r[3] || ''}</div>`).join('');
+  const sg = f.ground ? '' : (f.vr * 196.85 > 100 ? '↑ ' : f.vr * 196.85 < -100 ? '↓ ' : ''), tiles = [
+    [t('Altitude'), f.ground ? '0' : Math.round(f.alt * 3.281).toLocaleString(LOC()), 'ft'], [t('Speed'), Math.round(f.spd * 1.944), 'kt'], [t('Vertical speed'), sg + Math.abs(Math.round(f.vr * 196.85)).toLocaleString(LOC()), 'ft/min']];
+  const tl = `<div class="st3">${tiles.map(x => `<div><span>${esc(x[0])}</span><b>${esc(x[1])}</b><small>${x[2]}</small></div>`).join('')}</div>`;
+  for (const n of ['Altitude', 'Speed', 'Vertical speed']) { const k = rows.findIndex(r => r[0] === n); if (k >= 0) rows.splice(k, 1); }
+  $('kvs').innerHTML = tl + rows.map(r => r[2] ? `<div class="kv tbr ${r[2]}"><b>${esc(r[1])}</b></div>` : `<div class="kv${r[3] ? ' xr' : ''}"><span>${t(r[0])}</span><b>${esc(r[1])}</b>${r[3] || ''}</div>`).join('');
   $('fv').textContent = fav.has(f.id) ? t('★ Favorited') : t('☆ Favorite'); X.sync(f);
 }
 const eta = h => h < 1 ? Math.round(h * 60) + t(' min') : Math.floor(h) + t(' h ') + Math.round(h % 1 * 60) + t(' min');
@@ -467,8 +500,10 @@ function renderList() {
   if (live && (flt.dep || flt.arr)) { const v = map.getBounds(), inV = [...flights.values()].filter(f => !f.ground && v.contains([f.lat, f.lon]));
     const done = inV.filter(f => f.rs && f.rs !== 'loading').length; if (done < inV.length) st = t('loading route info · {0} / {1} aircraft', done, inV.length); }
   $('apSt').textContent = st;
-  $('list').innerHTML = arr.map(f => `<div class="row ${f.id === selected ? 'on' : ''}" data-id="${esc(f.id)}"><b>${isEmg(f) ? '⚠ ' : ''}${fav.has(f.id) ? '★ ' : ''}${esc(f.cs)}</b>`
-    + `<span>${f.route ? esc(f.route.org.code + '→' + f.route.dst.code) + ' · ' : ''}${f.ground ? t('on ground') : Math.round(f.alt * 3.281 / 100) * 100 + ' ft'}</span></div>`).join('');
+  $('list').innerHTML = arr.map(f => { const k = kindOf(f), sh = SHAPES[k] || SHAPES.gen, col = f.ground ? '#9aa0a6' : color(f.alt), rot = k === 'heli' ? '' : '';
+    return `<div class="row ${f.id === selected ? 'on' : ''}" data-id="${esc(f.id)}"><svg class="ri" viewBox="0 0 24 24" fill="${col}" stroke="#000" stroke-width=".6"><path d="${sh.b}"/>${sh.e ? `<path d="${sh.e}"/>` : ''}${sh.r ? `<path d="${sh.r}" fill="none" stroke="${col}" stroke-width="1.2" opacity=".6"/>` : ''}</svg>`
+    + `<div class="rm"><b>${isEmg(f) ? '<em>⚠</em>' : ''}${fav.has(f.id) ? '<u>★</u>' : ''}${esc(f.cs)}</b><small>${f.route ? esc(f.route.org.code + ' → ' + f.route.dst.code) : esc(acCode(f) || f.reg || '')}</small></div>`
+    + `<span>${f.ground ? t('on ground') : Math.round(f.alt * 3.281 / 100) * 100 + ' ft'}</span></div>`; }).join('');
 }
 $('list').onpointerdown = e => { const r = e.target.closest('.row'); if (r) select(r.dataset.id); };
 $('q').oninput = renderList; setInterval(renderList, 2000);
@@ -526,7 +561,11 @@ const setMenu = open => { $('side').classList.toggle('hide', !open); document.bo
 $('open').onclick = () => setMenu(document.body.classList.contains('closed'));
 $('side').addEventListener('transitionend', () => { map.invalidateSize(); redraw(); });
 setMenu(LS('sky.menu', true)); map.invalidateSize();
-const clock = () => $('clock').textContent = new Date().toLocaleTimeString(LOC()); clock(); setInterval(clock, 1000);
+const clock = () => { const d = new Date(), o = { hour: '2-digit', minute: '2-digit', hour12: false };
+  $('clock').innerHTML = d.toLocaleTimeString(LOC(), o) + '<i>:' + String(d.getSeconds()).padStart(2, '0') + '</i>';
+  $('cdate').textContent = d.toLocaleDateString(LOC(), { weekday: 'short', day: 'numeric', month: 'short' }); }; clock(); setInterval(clock, 1000);
+// version in the sidebar footer
+{ const v = $('ver'); try { window.api?.version?.().then(x => { v.textContent = 'SkyTrack v' + x; }); } catch {} }
 map.on('click', e => {
   if (placing) { placing = false; zone = { lat: e.latlng.lat, lon: e.latlng.lng, r: zoneRDef }; save('sky.zone', zone); initIn(); drawZone(); toast(t('Alert zone set ({0} km)', zoneR())); return; }
   const f = hit(e.containerPoint); select(f ? f.id : null);

@@ -7,7 +7,7 @@ const HEX6 = /^[0-9a-f]{6}$/i;
 /* ---------- emergencies + watchlist events (called after every position update) ---------- */
 const emgSeen = new Set(), wlState = new Map(); // wlState: id → { ground, t } (survives the aircraft leaving the map)
 X.event = f => {
-  if (live && isEmg(f) && !emgSeen.has(f.id + f.sq + f.emg)) { emgSeen.add(f.id + f.sq + f.emg); toast(`⚠ ${f.cs}: ${t(EMG[f.sq] || 'Emergency')} (${f.sq || f.emg})`); }
+  if (live && isEmg(f) && !emgSeen.has(f.id + f.sq + f.emg)) { emgSeen.add(f.id + f.sq + f.emg); toast(`⚠ ${f.cs}: ${t(EMG[f.sq] || 'Emergency')} (${f.sq || f.emg})`, f.id); }
   if (watch.has(f.id)) {
     const st = wlState.get(f.id);
     if (st && st.ground !== f.ground) toast(t(f.ground ? '{0} landed' : '{0} took off', f.cs));
@@ -207,3 +207,6 @@ $('lang').onclick = () => setLang(LANG === 'tr' ? 'en' : 'tr');
 $('lang').dataset.l = LANG;
 
 setSpot(spot); renderWatch(); renderSpt(); if (LANG === 'tr') setLang('tr');
+
+/* ---------- history slider fill ---------- */
+{ const sl = $('rpS'), fill = () => sl.style.setProperty('--p', (+sl.max ? sl.value / sl.max * 100 : 100) + '%'); sl.addEventListener('input', fill); setInterval(fill, 400); fill(); }

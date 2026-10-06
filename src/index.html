@@ -33,7 +33,7 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 .bar{position:absolute;top:12px;right:12px;z-index:1000;display:flex;gap:8px;align-items:center;background:var(--pn);border:1px solid var(--line);border-radius:4px;padding:6px 10px}
 #clock{font:600 15px ui-monospace,monospace;letter-spacing:.06em}
 #st{font:11px ui-monospace,monospace;color:var(--mut);margin-top:7px}
-#card,#apc{position:absolute;right:12px;top:64px;width:270px;max-height:calc(100% - 140px);overflow-y:auto;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px;transform:translateX(300px);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
+#card,#apc{position:absolute;right:12px;top:78px;width:270px;max-height:calc(100% - 140px);overflow-y:auto;z-index:1000;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px;transform:translateX(300px);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
 #card.show,#apc.show{transform:none}#card h2,#apc h2{margin:0 0 2px;font:400 26px Cambria,"Palatino Linotype",Georgia,serif;font-variant-numeric:lining-nums;word-break:break-all}#card h2{font-family:Cambria,"Palatino Linotype",Georgia,serif;font-variant-numeric:lining-nums;word-break:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#card small,#apc small{color:var(--mut)}
 .ch{display:flex;gap:10px;align-items:flex-start}.ch .cn{flex:1;min-width:0}.flag{width:24px;height:auto;max-height:28px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.2);flex:none;margin-top:4px}.logo{width:38px;height:38px;border-radius:4px;background:#fff;object-fit:contain;padding:2px;flex:none}
 #card .ib,#apc .ib{width:28px;height:28px;margin:0;padding:0;color:var(--mut);border-color:var(--line);flex:none}#card .ib:hover,#apc .ib:hover{background:transparent;color:var(--ac);border-color:var(--ac)}
@@ -118,6 +118,38 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 .flt .cks{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}.flt .cks .ck{margin:4px 0}
 #side .lbl,#side .fold>.lbl{font:700 13px/1.2 'Segoe UI Variable Display','Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.12em;margin:8px 0 10px}#side .fold>.lbl{align-items:center}
 #side .flt .ff,#side .flt .fr{font-family:'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif}#side .flt .ff{font-size:11px;letter-spacing:.1em}#side .flt .fr{font-size:13px}
+
+/* ---- clock ---- */
+.bar{gap:10px;padding:7px 14px 7px 12px;border-radius:12px;background:rgba(28,28,28,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 4px 18px #0006}
+.bar .cdot{width:8px;height:8px;border-radius:50%;background:var(--ac);box-shadow:0 0 0 0 rgba(242,194,48,.6);animation:cpulse 2s infinite}@keyframes cpulse{70%{box-shadow:0 0 0 7px rgba(242,194,48,0)}100%{box-shadow:0 0 0 0 rgba(242,194,48,0)}}
+.bar .ct{display:flex;flex-direction:column;line-height:1.1}#clock{font:700 20px/1.1 'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;letter-spacing:.02em;font-variant-numeric:tabular-nums;color:var(--fg)}#clock i{font-style:normal;font-weight:500;font-size:14px;color:var(--ac);margin-left:1px}
+#cdate{font:600 10px 'Segoe UI',system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-top:2px}
+/* ---- sidebar list + footer ---- */
+.row{align-items:center;gap:10px;padding:8px 14px;border-left-width:3px}.row .ri{width:20px;height:20px;flex:none}.row .rm{flex:1;min-width:0;display:flex;flex-direction:column}
+.row .rm b{font:700 13px 'Segoe UI Variable','Segoe UI',system-ui,sans-serif;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.row .rm small{font:11px ui-monospace,monospace;color:var(--mut);margin-top:1px}
+.row .rm em{font-style:normal;color:#ff3b30;margin-right:4px}.row .rm u{text-decoration:none;color:var(--ac);margin-right:4px}.row>span{font:600 11px ui-monospace,monospace;color:var(--mut);flex:none}
+#srch{flex:1 0 300px;min-height:300px}#srch.collapsed{flex:none;min-height:0}#ver{flex:none;position:sticky;bottom:0;z-index:3;background:var(--pn);padding:9px 16px;border-top:1px solid var(--line);font:600 10px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);text-align:center}
+/* ---- aircraft card ---- */
+#card{border-radius:12px;padding:16px 16px 14px;box-shadow:0 10px 36px #000a}
+#card h2{font:700 24px/1.15 'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;letter-spacing:.01em}#card .cn small{display:block;margin-top:2px;font-size:12px}
+.logo{border-radius:8px}.flag{border-radius:3px}.ph{border-radius:8px}
+.st3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 6px}.st3 div{background:#ffffff0a;border:1px solid var(--line);border-radius:9px;padding:8px 6px 7px;text-align:center;min-width:0}
+.st3 span{display:block;font:700 9px 'Segoe UI',system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st3 b{display:block;margin-top:3px;font:700 18px/1.1 'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--fg)}.st3 small{display:block;font:600 10px ui-monospace,monospace;color:var(--ac);margin-top:1px}
+#card .kv{padding:8px 0;font-size:13px}#card .kv span{font-size:12px}#card .kv b{font-weight:600}
+.rt b{font:800 22px 'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;letter-spacing:.04em}.pg{height:5px;border-radius:3px}
+#card .bt button{border-radius:8px;padding:9px 6px;font-weight:600;background:#ffffff08;transition:background .15s,border-color .15s,color .15s}#card .bt button:hover{background:var(--ac);color:#111}
+#card .ib{border-radius:50%}
+/* ---- toasts ---- */
+#toast{top:16px;gap:10px}.tm{display:flex;align-items:center;gap:10px;min-width:260px;max-width:440px;background:rgba(28,28,28,.94);backdrop-filter:blur(10px);color:var(--fg);padding:11px 10px 11px 14px;border-radius:10px;border:1px solid var(--line);border-left:4px solid var(--ac);box-shadow:0 8px 28px #000a;font-weight:600;font-size:13px;pointer-events:auto;cursor:default;animation:tin .4s cubic-bezier(.2,.7,.2,1),tout .4s calc(var(--d,4s) - .4s) forwards}
+.tm.go{cursor:pointer}.tm .ti{font-style:normal;width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:var(--ac);color:#111;font-size:12px;font-weight:800}.tm span{flex:1}
+.tm.emg{border-left-color:#ff3b30}.tm.emg .ti{background:#ff3b30;color:#fff}.tm .tx{background:transparent;border:0;color:var(--mut);cursor:pointer;padding:6px;border-radius:50%;line-height:0}.tm .tx:hover{color:var(--fg);background:#ffffff14}
+/* ---- history bar ---- */
+#rp{border-radius:14px;background:rgba(28,28,28,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 22px #0007;padding:9px 14px}
+#rp button{border-radius:999px;padding:6px 14px;font-weight:700;font-size:12px;background:#ffffff0a}#rp button.on{box-shadow:0 0 14px rgba(242,194,48,.35)}
+#rp input[type=range]{-webkit-appearance:none;appearance:none;height:22px;background:transparent;margin:0;--p:100%}
+#rp input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(to right,var(--ac) var(--p),#ffffff1f var(--p))}
+#rp input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-5px;border-radius:50%;background:#fff3c4;border:3px solid var(--ac);box-shadow:0 0 0 3px #00000055;cursor:grab}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button id="lang" class="lsw" data-l="en" title="Language / Dil" aria-label="Language / Dil"><i>EN</i><i>TR</i></button></span></div>
@@ -141,9 +173,9 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 <div class="cks"><label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
 <label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div></div>
 <div class="sec" id="wls" style="display:none"></div>
-<div class="sec" id="srch"><div class="lbl">Aircraft</div><input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></div></aside>
+<div class="sec" id="srch"><div class="lbl">Aircraft</div><input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></div><div id="ver">SkyTrack</div></aside>
 <main><div id="map"></div>
-<button id="open" class="ib" title="Close menu" aria-label="Menu"><b></b><b></b><b></b></button><div class="bar"><span id="clock"></span></div>
+<button id="open" class="ib" title="Close menu" aria-label="Menu"><b></b><b></b><b></b></button><div class="bar"><span class="cdot"></span><div class="ct"><span id="clock"></span><small id="cdate"></small></div></div>
 <div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
 <div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span><div id="rpTip"></div></div></main></div>
 <script src="loader.js"></script></body></html>

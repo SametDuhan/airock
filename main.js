@@ -26,6 +26,7 @@ ipcMain.handle('photos', (_, hex) => data.photos(hex));
 ipcMain.handle('trace', (_, hex) => data.trace(hex));
 
 // Airport panel: weather, city/country, photo
+ipcMain.handle('version', () => app.getVersion());
 ipcMain.handle('airport', (_, lat, lon) => data.airport(lat, lon));
 
 // Watchlist, today's flights of an aircraft, METAR/TAF, rain radar

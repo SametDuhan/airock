@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
+  version: () => ipcRenderer.invoke('version'),
   flights: bounds => ipcRenderer.invoke('flights', bounds),
   route: cs => ipcRenderer.invoke('route', cs),
   aircraft: hex => ipcRenderer.invoke('aircraft', hex),
