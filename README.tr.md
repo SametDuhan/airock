@@ -16,7 +16,11 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
   - havayolu ve logosu, uçak tipi, tescil ve (varsa) fotoğraf
   - rota (kalkış → varış), ilerleme çubuğu, kalan mesafe ve tahmini kalan süre
   - irtifa, hız ve dikey hız
-- **Rota ve iz**: rota büyük daire yayı olarak, yani dünya üzerindeki gerçek en kısa yol olarak çizilir. İz, uçağın son ~30 dakikada nereden geçtiğini gösterir.
+- **Rota ve iz**: rota büyük daire yayı olarak, yani dünya üzerindeki gerçek en kısa yol olarak çizilir. İz, uçağın son ~30 dakikada nereden geçtiğini gösterir. Canlı modda uçulan kısım uçağın gerçek izini izler ve kalkış havalimanından başlar; aynı uçağın daha önceki bir uçuşu çizgiye karışmaz.
+- **Havalimanı paneli**: bir havalimanına (sarı nokta) tıklayınca sağda bir panel açılır:
+  - havalimanının fotoğrafı, bulunduğu şehir ve ülke
+  - anlık hava durumu: sıcaklık, rüzgâr, hamle, nem, basınç ve görüş
+  - görebildiğin uçakların **Varışlar** ve **Kalkışlar** listesi; birine tıklayınca haritada tıklamış gibi uçuş kartı açılır
 - **Filtreler**:
   - tek çubukta irtifa aralığı (sol tutamaç en az, sağ tutamaç en çok)
   - en düşük hız
@@ -25,7 +29,7 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 - **Favoriler**: bir uçuşu ☆ ile işaretleyip sonra kolayca bulabilirsin.
 - **Uyarı bölgesi**: haritaya tıklayarak bir daire belirlersin (varsayılan 100 km; yarıçapı menüden 10–500 km arasında değiştirebilirsin). Bir uçak daireye girince, ya da ilk kez daire içinde görününce bildirim gelir.
 - **Geçmişi oynatma**: alttaki çubukla son bir saati geri sarabilirsin. *● Canlı* düğmesi canlı görünüme döndürür.
-- **Harita stili**: Standart, Açık veya Koyu.
+- **Harita stili**: Standart, Açık veya Koyu. Fare imleci ve filtre kutucukları SkyTrack'in sarı-siyah görünümünü kullanır.
 - **Çok uçakta da hızlı**: bütün uçaklar tek bir tuvale (canvas) çizilir. Avrupa genelinde yaklaşık 3.700 uçak yaklaşık 8 ms'de çizilir.
 
 ## İndir
@@ -56,6 +60,7 @@ Kurulum dosyası `dist/` klasöründe oluşur.
 | Ne yapmak istiyorum? | Nasıl? |
 |---|---|
 | Gerçek uçuşları görmek | Sol menüde **Canlı**'ya tıkla. **Demo** sanal uçuşlara geri döner. |
+| Bir havalimanının hava durumunu, varış ve kalkışlarını görmek | Haritada havalimanının sarı noktasına tıkla. **Varışlar** ve **Kalkışlar** arasında geçiş yap, bir uçuşa tıklayıp aç. Paneli **✕** ile kapat. |
 | Bir uçağın bilgilerini görmek | Uçağa haritada ya da listede tıkla. Kartı **✕** ile kapat. |
 | Bir uçuşu bulmak | Arama kutusuna çağrı kodu (ör. `THY1`) ya da tescil (ör. `TC-JPN`) yaz. |
 | Sadece İstanbul'dan Frankfurt'a gidenleri görmek | *Filtreler* bölümünde **Kalkış**'a `IST`, **Varış**'a `FRA` yaz. Tek kutuyu doldurursan o havalimanından kalkan ya da oraya giden bütün uçuşları görürsün. |
@@ -70,9 +75,14 @@ Kurulum dosyası `dist/` klasöründe oluşur.
 | Uçak konumları (geniş görünüm / yedek) | [OpenSky Network](https://opensky-network.org) | Geniş bir alanı tek istekte getirir. Giriş yapmadan kullanımda günlük sınır düşük. |
 | Rota, uçak tipi, tescil, fotoğraf | [adsbdb.com](https://www.adsbdb.com) | Ücretsiz, anahtarsız. Bazı uçuşlarda eksik ya da eski olabilir. |
 | Havayolu logoları | images.kiwi.com | |
+| Havalimanı hava durumu | [Open-Meteo](https://open-meteo.com) | Ücretsiz, anahtarsız. |
+| Havalimanının şehri ve ülkesi | [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org) | Ücretsiz, anahtarsız. |
+| Havalimanı fotoğrafı | [Wikipedia](https://en.wikipedia.org) | Havalimanının resimli bir Wikipedia sayfası varsa gösterilir. |
 | Haritalar | OpenStreetMap, Esri | |
 
 Bütün ağ istekleri [`src/data.js`](src/data.js) dosyasında.
+
+> Havalimanı panelindeki varış ve kalkışlar uçuş tarifesinden değil, SkyTrack'in zaten gördüğü uçaklardan (havalimanına 600 km içinde, rotası o havalimanına giden ya da oradan çıkan) gelir; bu yüzden henüz kalkmamış uçuşlar görünmez.
 
 > Flightradar24'ün kendi verisi ücretli, ticari bir API. SkyTrack sadece açık, gönüllülerin topladığı ADS-B verisini kullanır; bu yüzden bazı bölgelerde kapsama daha zayıf olabilir.
 

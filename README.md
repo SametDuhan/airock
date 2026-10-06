@@ -18,7 +18,11 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
   - its airline and logo, aircraft type, registration and a photo (when one is available)
   - its route (departure → arrival), progress bar, distance left and estimated time left
   - its altitude, speed and vertical speed
-- **Route and trail**: the route is drawn as a great-circle arc, the actual shortest path over the globe. The trail shows where the plane has flown over the last ~30 minutes.
+- **Route and trail**: the route is drawn as a great-circle arc, the actual shortest path over the globe. The trail shows where the plane has flown over the last ~30 minutes. In live mode the flown part follows the plane's real track, and it starts at the departure airport, so an earlier flight of the same aircraft never leaks into the line.
+- **Airport panel**: click an airport (yellow dot) to open a panel on the right with:
+  - a photo of the airport, and the city and country it is in
+  - the current weather: temperature, wind, gusts, humidity, pressure and visibility
+  - **Arrivals** and **Departures** lists of the aircraft you can see; click one to open its flight card, just like clicking it on the map
 - **Filters**:
   - an altitude range on one slider (left handle = minimum, right handle = maximum)
   - a minimum speed
@@ -27,7 +31,7 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
 - **Favorites**: star a flight (☆) to find it again later.
 - **Alert zone** (*Alert zone*): click the map to set a circle (100 km by default; change the radius in the menu, 10–500 km). You get a notification when an aircraft enters it, including one that first appears inside it.
 - **Replay**: rewind the last hour with the slider at the bottom, then press *● Live* to return to live.
-- **Map styles**: Standard, Light or Dark.
+- **Map styles**: Standard, Light or Dark. The mouse cursor and the filter checkboxes use SkyTrack's yellow and black look.
 - **Fast with many planes**: all aircraft are drawn on a single canvas. Around 3,700 aircraft over Europe draw in about 8 ms.
 
 ## Download
@@ -60,6 +64,7 @@ The repository is named `airock`; the app itself is SkyTrack. Your filters and a
 | I want to… | Do this |
 |---|---|
 | See real flights | In the left menu, click **Live**. **Demo** switches back to simulated flights. |
+| See an airport's weather, arrivals and departures | Click the airport's yellow dot on the map. Switch between **Arrivals** and **Departures**, click a flight to open it. Close the panel with **✕**. |
 | Get details about a plane | Click the plane on the map or in the list. Close the card with **✕**. |
 | Find a flight | Type a callsign (e.g. `THY1`) or registration (e.g. `TC-JPN`) into the search box. |
 | Show only flights from Istanbul to Frankfurt | Under *Filters*, type `IST` into **Departure** and `FRA` into **Arrival**. Fill in only one box to see all departures or all arrivals for that airport. |
@@ -74,9 +79,14 @@ The repository is named `airock`; the app itself is SkyTrack. Your filters and a
 | Aircraft positions, wide view or backup | [OpenSky Network](https://opensky-network.org) | Covers a large area in one request. Has a low daily limit for anonymous users. |
 | Route, aircraft type, registration, photo | [adsbdb.com](https://www.adsbdb.com) | Free, no key. Some flights may be missing or out of date. |
 | Airline logos | images.kiwi.com | |
+| Airport weather | [Open-Meteo](https://open-meteo.com) | Free, no key. |
+| Airport city and country | [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org) | Free, no key. |
+| Airport photo | [Wikipedia](https://en.wikipedia.org) | Shown when the airport has a Wikipedia page with a picture. |
 | Maps | OpenStreetMap, Esri | |
 
 All network requests are in [`src/data.js`](src/data.js).
+
+> Arrivals and departures in the airport panel come from the aircraft SkyTrack already sees (route within 600 km of the airport), not from a flight schedule, so flights that haven't taken off yet don't appear.
 
 > Flightradar24's own data is a paid commercial API. SkyTrack uses only open, community-collected ADS-B data, so coverage can be thinner in some regions.
 
