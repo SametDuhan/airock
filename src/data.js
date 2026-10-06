@@ -142,7 +142,11 @@
   // A long silence only means a new flight if the aircraft was low on either side of it (landed/took off unseen). High on both sides it is
   // just a coverage hole (e.g. an ocean crossing) and the flight continues.
   const lowAlt = p => p[3] === 'ground' || (typeof p[3] === 'number' && p[3] < 15000);
-  const gapBreak = (a, b) => b[0] - a[0] > LEG_GAP_S && (lowAlt(a) || lowAlt(b));
+  // ...unless the aircraft could not have flown on through the gap: if the two ends are much closer than a cruising aircraft would have covered
+  // in that time, it landed (and turned around) without being seen, even when both ends are at altitude (e.g. coverage starts only after climb-out)
+  const flewThrough = (a, b) => { const gs = typeof a[4] === 'number' && a[4] > 100 ? Math.min(a[4], 520) : 400, dt = (b[0] - a[0]) / 3600;
+    const d = 12742 * Math.asin(Math.sqrt(Math.sin((b[1] - a[1]) * Math.PI / 360) ** 2 + Math.cos(a[1] * Math.PI / 180) * Math.cos(b[1] * Math.PI / 180) * Math.sin((b[2] - a[2]) * Math.PI / 360) ** 2)); return d > .4 * gs * 1.852 * dt; };
+  const gapBreak = (a, b) => b[0] - a[0] > LEG_GAP_S && (lowAlt(a) || lowAlt(b) || !flewThrough(a, b));
   const MAX_PTS = 500;
   function legOf(trace) {
     let i = trace.length - 1;

@@ -183,14 +183,10 @@ async function loadRoute(f) {
 function showRoute(f) { if (f.id !== selected) return; if (!replay) drawRoute(f); renderCard(true); }
 // Departure → aircraft → arrival, as great-circle arcs
 // Flown: the real trace from adsb.lol when available (otherwise a great-circle arc from the departure airport); rest: great circle to the destination
-// The day's trace can still contain the previous leg (e.g. the aircraft landed here earlier and turned around quickly without ground reports):
-// start the drawn path at the last point near the departure airport, so it never reaches back into an earlier flight
-// If the departure was never seen (no coverage there, so the previous landing wasn't seen either), the earlier leg flew towards the departure
-// airport, i.e. away from the destination: the current leg starts at the trace point farthest from the destination.
-const flownLeg = f => { const t = f.flown, o = f.route.org, d = f.route.dst; if (!(t?.length > 1)) return null;
+// The day's trace (already cut to the current flight by data.js legOf) may still start a bit before the departure airport: start the drawn path at the last point near it
+const flownLeg = f => { const t = f.flown, o = f.route.org; if (!(t?.length > 1)) return null;
   for (let k = t.length - 1; k > 0; k--) if (km(t[k][0], t[k][1], o.lat, o.lon) < 40) return t.slice(k);
-  let m = 0, far = -1; t.forEach((q, k) => { const x = km(q[0], q[1], d.lat, d.lon); if (x >= far) { far = x; m = k; } });
-  return t.slice(m); };
+  return t; }; // the trace is already cut to the current flight (data.js legOf); a route origin that is nowhere near it is just a wrong/stale route, so don't cut anything
 const routePts = f => { const { org, dst } = f.route, p = [f.lat, f.lon], fl = flownLeg(f);
   const done = fl?.length > 1 ? [...fl, p] : gc([org.lat, org.lon], p);
   return { done: unwrap(done), rest: unwrap(gc(p, [dst.lat, dst.lon])) }; };
