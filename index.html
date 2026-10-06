@@ -204,6 +204,12 @@ header{position:sticky;top:0;z-index:20}
 .mini{list-style:none;margin:18px 0 0;padding:16px 0 0;border-top:1px solid var(--line);display:grid;gap:8px;font-size:14px;color:var(--muted)}
 .mini+.note{margin-top:18px}
 .mini li::before{content:'✓';color:var(--accent);font-weight:800;margin-right:10px}
+
+.topbar{background:var(--bar);border-bottom:1px solid var(--line);font-size:13px}.topbar .wrap{display:flex;justify-content:center;align-items:center;gap:22px;min-height:38px;flex-wrap:wrap;padding-top:6px;padding-bottom:6px}
+.topbar .dlc{display:inline-flex;align-items:center;gap:8px;color:var(--muted)}.topbar .dlc[hidden]{display:none}.topbar .dlc svg{width:15px;height:15px;color:var(--accent)}.topbar .dlc b{color:var(--accent);font:800 15px Cambria,Georgia,serif;letter-spacing:.04em}
+.topbar a{color:var(--text);text-decoration:none;display:inline-flex;gap:8px;align-items:center}.topbar a:hover{color:var(--accent)}.topbar .vt{font:700 11px ui-monospace,Consolas,monospace;background:var(--accent);color:var(--accent-ink);padding:2px 8px;border-radius:999px}
+#new{padding-bottom:20px}.nw{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px 28px;max-width:760px}.nw .hd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}.nw .hd .vt{font:800 14px ui-monospace,Consolas,monospace;background:var(--accent);color:var(--accent-ink);padding:4px 12px;border-radius:999px}.nw .hd span{color:var(--muted);font-size:13px}
+.nw ul{margin:0;padding:0;list-style:none;display:grid;gap:10px}.nw li{position:relative;padding-left:26px;line-height:1.5}.nw li::before{content:'';position:absolute;left:0;top:.45em;width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--glow)}.nw p{margin:0 0 10px;line-height:1.55}.nw a{color:var(--accent)}
 </style>
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
 </head>
@@ -231,6 +237,7 @@ header{position:sticky;top:0;z-index:20}
   </svg></div>
 </div>
 
+<div class="topbar"><div class="wrap"><span class="dlc" id="dlc" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 20h16"/></svg><b id="dlCount">0</b> <span data-i18n="top.dl">downloads so far</span></span><a href="#new"><span class="vt" id="topVer">v0.5.3</span><span data-i18n="top.new">See what's new</span> →</a></div></div>
 <header><div class="wrap">
   <a class="logo" href="#top" aria-label="SkyTrack"><img src="favicon.svg" alt="" width="30" height="30">SKYTRACK</a>
   <nav>
@@ -245,7 +252,7 @@ header{position:sticky;top:0;z-index:20}
 
 <main id="top">
 <div class="wrap hero">
-  <span class="badge"><i></i><span id="badgeTxt" data-i18n="hero.badge">Free &amp; open source · v0.5.2</span></span>
+  <span class="badge"><i></i><span id="badgeTxt" data-i18n="hero.badge">Free &amp; open source · v0.5.3</span></span>
   <h1><span class="p" data-i18n="hero.h1a">Watch the sky</span> <span class="g" data-i18n="hero.h1b">live.</span></h1>
   <p class="lead" data-i18n="hero.lead">SkyTrack is a free desktop flight tracker, similar to Flightradar24. See every flight on the map, with turbulence ahead, wind, weather and more. No account or API key needed.</p>
   <div class="btns">
@@ -253,7 +260,7 @@ header{position:sticky;top:0;z-index:20}
     <a class="btn ghost" href="#download" data-i18n="hero.console">Install from console</a>
     <a class="btn ghost" href="https://github.com/SametDuhan/airock">GitHub</a>
   </div>
-  <p class="trust"><b id="trustVer">Windows · 78 MB · v0.5.2</b> · <span data-i18n="hero.trust">macOS &amp; Linux: install from source</span></p>
+  <p class="trust"><b id="trustVer">Windows · 78 MB · v0.5.3</b> · <span data-i18n="hero.trust">macOS &amp; Linux: install from source</span></p>
   <div class="mobile-note"><span data-i18n="hero.mobile">SkyTrack is a desktop app. Open this page on your computer to download it.</span><br><button class="btn ghost" id="copyLink" style="padding:8px 16px;font-size:14px" data-i18n="hero.copylink">Copy page link</button></div>
 
   <div class="frame reveal">
@@ -371,6 +378,13 @@ header{position:sticky;top:0;z-index:20}
   </div>
 </div></section>
 
+<section id="new"><div class="wrap">
+  <p class="eyebrow reveal" data-i18n="new.eyebrow">What's new</p>
+  <h2 class="reveal" data-i18n="new.h2">In the latest version</h2>
+  <div class="nw reveal"><div class="hd"><span class="vt" id="nwVer">v0.5.3</span><span id="nwDate"></span></div><div id="nwBody"><p data-i18n="new.fb">Loading the release notes…</p></div>
+    <p style="margin:14px 0 0"><a href="https://github.com/SametDuhan/airock/releases" data-i18n="dl.all">All releases</a></p></div>
+</div></section>
+
 <section id="download"><div class="wrap">
   <p class="eyebrow reveal" data-i18n="dl.eyebrow">Download</p>
   <h2 class="reveal" data-i18n="dl.h2">Get SkyTrack in a minute</h2>
@@ -436,8 +450,9 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
 <script>
 (() => {
   const TR = {
+    'top.dl':'indirme yapıldı','top.new':'Yenilikleri gör','new.eyebrow':'Yenilikler','new.h2':'Son sürümde neler var','new.fb':'Sürüm notları yükleniyor…',
     'nav.features':'Özellikler','nav.download':'İndir','nav.faq':'SSS','nav.data':'Veri',
-    'hero.badge':'Ücretsiz ve açık kaynak · v0.5.2','hero.h1a':'Gökyüzünü','hero.h1b':'canlı izle.',
+    'hero.badge':'Ücretsiz ve açık kaynak · v0.5.3','hero.h1a':'Gökyüzünü','hero.h1b':'canlı izle.',
     'hero.lead':'SkyTrack, Flightradar24 benzeri ücretsiz bir masaüstü uçuş takip uygulaması. Haritada tüm uçuşları, önlerindeki türbülansı, rüzgarı, hava durumunu ve daha fazlasını gör. Hesap ya da API anahtarı gerekmez.',
     'hero.dl':'Windows için indir','hero.console':'Konsoldan kur','hero.trust':'macOS ve Linux: kaynaktan kur',
     'hero.mobile':'SkyTrack bir masaüstü uygulamasıdır. İndirmek için bu sayfayı bilgisayarında aç.','hero.copylink':'Sayfa bağlantısını kopyala',
@@ -502,10 +517,22 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   $('#themeBtn').onclick = () => { const dark = root.dataset.theme ? root.dataset.theme === 'dark' : !matchMedia('(prefers-color-scheme: light)').matches; root.dataset.theme = dark ? 'light' : 'dark'; ls.set('st.theme', root.dataset.theme); };
   // latest release: version and size for the trust line and the badge (static fallback is in the HTML)
   let rel = null;
-  function applyRelease() { if (!rel) return; const mb = Math.round(rel.size / 1048576);
+  let notes = null;
+  const NL = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  function renderNotes() { if (!notes) return; const parts = notes.body.replace(/\r/g, '').split(/\n-{3,}\n/), txt = (lang === 'tr' && parts[1] ? parts[1] : parts[0]).trim(), out = []; let ul = [];
+    const flush = () => { if (ul.length) { out.push('<ul>' + ul.map(x => '<li>' + NL(x) + '</li>').join('') + '</ul>'); ul = []; } };
+    txt.split(/\n+/).forEach(l => { l = l.trim(); if (!l || /^(Windows installer|Windows kurulum)/i.test(l)) return; const m = /^[-*]\s+(.*)/.exec(l); if (m) ul.push(m[1]); else { flush(); out.push('<p>' + NL(l) + '</p>'); } }); flush();
+    $('#nwBody').innerHTML = out.join('') || '<p>—</p>'; $('#nwVer').textContent = notes.tag; $('#topVer').textContent = notes.tag;
+    $('#nwDate').textContent = notes.date ? new Date(notes.date).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''; }
+  function applyRelease() { renderNotes(); if (!rel) return; const mb = Math.round(rel.size / 1048576);
     $('#trustVer').textContent = `Windows · ${mb} MB · ${rel.tag}`; $('#badgeTxt').textContent = (lang === 'tr' ? 'Ücretsiz ve açık kaynak · ' : 'Free & open source · ') + rel.tag; }
   fetch('https://api.github.com/repos/SametDuhan/airock/releases/latest').then(r => r.ok ? r.json() : null).then(j => {
-    const a = j && (j.assets || []).find(x => /SkyTrack-Setup\.exe$/.test(x.name)); if (a) { rel = { tag: j.tag_name, size: a.size }; applyRelease(); } }).catch(() => {});
+    if (!j) return; notes = { tag: j.tag_name, body: j.body || '', date: j.published_at };
+    const a = (j.assets || []).find(x => /SkyTrack-Setup\.exe$/.test(x.name)); if (a) rel = { tag: j.tag_name, size: a.size }; applyRelease(); }).catch(() => {});
+  // total downloads of the installer across all releases
+  fetch('https://api.github.com/repos/SametDuhan/airock/releases?per_page=100').then(r => r.ok ? r.json() : null).then(list => {
+    if (!list) return; const n = list.reduce((t, r) => t + (r.assets || []).filter(x => /\.(exe|dmg|AppImage)$/i.test(x.name)).reduce((u, x) => u + (x.download_count || 0), 0), 0);
+    $('#dlCount').textContent = n.toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US'); $('#dlc').hidden = false; }).catch(() => {});
   // copy buttons
   const copy = (txt, btn) => { const done = () => { const o = btn.textContent; btn.textContent = lang === 'tr' ? 'Kopyalandı ✓' : 'Copied ✓'; setTimeout(() => { btn.textContent = o; }, 1600); };
     (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(done).catch(() => { const t = document.createElement('textarea'); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch {} t.remove(); }); };
