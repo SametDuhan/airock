@@ -528,7 +528,7 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
       for (let i = 2; i < pts.length; i++) { const a = pts[i - 2], b = pts[i - 1], c = pts[i], age = Math.max(0, Math.min(1, (now - c.t) / LIFE)), k = i / pts.length, fade = (1 - age) * (1 - age);
         cx.strokeStyle = `rgba(${col},${(.75 * fade * (.3 + .7 * k)).toFixed(3)})`; cx.lineWidth = 0.8 + 2.8 * k * (1 - age);
         cx.beginPath(); cx.moveTo((a.x + b.x) / 2, (a.y + b.y) / 2); cx.quadraticCurveTo(b.x, b.y, (b.x + c.x) / 2, (b.y + c.y) / 2); cx.stroke(); }
-      if (pts.length > 2) requestAnimationFrame(draw); else { run = false; cx.clearRect(0, 0, W, H); pts = []; } };
+      if (pts.length) requestAnimationFrame(draw); else { run = false; cx.clearRect(0, 0, W, H); } }; // keep going until every point has faded (a browser delivers about one mouse event per frame)
     size(); rgb(); addEventListener('resize', size); new MutationObserver(rgb).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
     addEventListener('mousemove', e => { const last = pts[pts.length - 1];
       if (last && Math.hypot(e.clientX - last.x, e.clientY - last.y) < 2) return; pts.push({ x: e.clientX, y: e.clientY, t: performance.now() }); if (pts.length > 80) pts.shift();
