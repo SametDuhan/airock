@@ -71,7 +71,11 @@ watch = new Map(LS('sky.watch', [])), flt = { alt: 0, maxAlt: 45000, spd: 0, max
 // Hooks filled in by extras.js (watchlist, today's flights, spotter logbook): they keep this file focused on the map itself
 const X = { top: () => '', bottom: () => '', bottom2: () => '', rows: () => {}, sync: () => {}, click: () => false, event: () => {}, arrive: () => {}, sel: () => {} };
 const EMG = { 7500: 'Hijacking', 7600: 'Radio failure', 7700: 'General emergency' }; // squawk codes
-const isEmg = f => !!f.emg || f.sq in EMG;
+// A real emergency: squawk 7500 / 7600 / 7700, or the ADS-B emergency status that means the same (unlawful / nordo / general). Other status values
+// ("lifeguard", "minfuel", "downed", "reserved") and ordinary squawks such as 1000 (a normal IFR code in Europe) are NOT shown as emergencies.
+const EMG_STATUS = { unlawful: 7500, nordo: 7600, general: 7700 };
+const emgCode = f => EMG[f.sq] ? +f.sq : EMG_STATUS[f.emg] || 0;
+const isEmg = f => !!emgCode(f);
 let HSTEP = LS('sky.hstep', 5), TRAIL = LS('sky.trail', 0); // history: seconds per frame (720 frames: 1 h / 3 h / 6 h); trails: 0 off, 1 short, 2 long
 let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
 

@@ -7,7 +7,7 @@ const HEX6 = /^[0-9a-f]{6}$/i;
 /* ---------- emergencies + watchlist events (called after every position update) ---------- */
 const emgSeen = new Set(), wlState = new Map(); // wlState: id → { ground, t } (survives the aircraft leaving the map)
 X.event = f => {
-  if (live && isEmg(f) && !emgSeen.has(f.id + f.sq + f.emg)) { emgSeen.add(f.id + f.sq + f.emg); toast(`⚠ ${f.cs}: ${t(EMG[f.sq] || 'Emergency')} (${f.sq || f.emg})`, f.id); }
+  if (live && isEmg(f) && !emgSeen.has(f.id + emgCode(f))) { emgSeen.add(f.id + emgCode(f)); toast(`⚠ ${f.cs}: ${t(EMG[emgCode(f)])} (${emgCode(f)})`, f.id); }
   if (watch.has(f.id)) {
     const st = wlState.get(f.id);
     if (st && st.ground !== f.ground) toast(t(f.ground ? '{0} landed' : '{0} took off', f.cs));
@@ -215,7 +215,6 @@ Object.assign(EMG_INFO[7500], {
     'C\'est très rare. Des saisies accidentelles existent, donc un 7500 sur la carte ne prouve pas un vrai détournement.'] });
 const EMG_L = { en: ['What does it mean?', 'When is it used?', 'What happens next?', 'Good to know', 'Close'], tr: ['Ne anlama gelir?', 'Ne zaman verilir?', 'Sonrasında ne olur?', 'Bilmekte fayda var', 'Kapat'],
   es: ['¿Qué significa?', '¿Cuándo se usa?', '¿Qué ocurre después?', 'Conviene saber', 'Cerrar'], de: ['Was bedeutet das?', 'Wann wird er gesetzt?', 'Was passiert dann?', 'Gut zu wissen', 'Schließen'], fr: ['Que signifie-t-il ?', 'Quand est-il utilisé ?', 'Que se passe-t-il ensuite ?', 'À savoir', 'Fermer'] };
-const emgCode = f => EMG[f.sq] ? f.sq : ({ unlawful: 7500, nordo: 7600 }[f.emg] || 7700);
 function showEmg(code) {
   const i = EMG_INFO[code]; if (!i) return; const [ti, what, when, next, note] = i[LANG] || i.en;
   const L = EMG_L[LANG] || EMG_L.en;
@@ -229,7 +228,7 @@ function showEmg(code) {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('emgm')?.remove(); });
 X.top = f => {
   const c = [];
-  if (isEmg(f)) c.push(`<button class="chip emg" data-emg="${emgCode(f)}" title="${esc(t('What does this code mean?'))}">⚠ ${esc(t(EMG[f.sq] || 'Emergency'))} · ${esc(f.sq || f.emg)} <i>?</i></button>`);
+  if (isEmg(f)) c.push(`<button class="chip emg" data-emg="${emgCode(f)}" title="${esc(t('What does this code mean?'))}">⚠ ${esc(t(EMG[emgCode(f)]))} · ${emgCode(f)} <i>?</i></button>`);
   if (spot) { if (!seenReg(f) && (f.ac?.reg || f.reg)) c.push(`<span class="chip new">${t('NEW AIRCRAFT')}</span>`); if (!seenType(f)) c.push(`<span class="chip new">${t('NEW TYPE')}</span>`); }
   return c.length ? `<div class="bd">${c.join('')}</div>` : '';
 };
