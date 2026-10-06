@@ -28,7 +28,7 @@ stm.onclick = e => {
   const b = e.target.closest('[data-u]'); if (b) { U[b.dataset.u] = b.dataset.v === 'true' ? true : b.dataset.v === 'false' ? false : b.dataset.v; save('sky.units', U); renderSettings(); refreshAll(); return; }
   const hb = e.target.closest('[data-h]'); if (hb) { HSTEP = +hb.dataset.h; save('sky.hstep', HSTEP); renderSettings(); return; }
   if (e.target.id === 'osSave') { const id = $('osId').value.trim(), sec = $('osSec').value.trim(); window.api.openskySet(id, sec).then(r => { toast(r.ok ? t(r.set ? 'OpenSky account saved' : 'OpenSky account removed') : t('Could not store the credentials')); renderSettings(); }); return; }
-  if (e.target.id === 'updCheck') { const st = $('updSt'); st.textContent = t('Checking…'); window.api.checkUpdate().then(r => { st.textContent = r.state === 'none' ? t('You are up to date.') : r.state === 'available' ? t('Version {0} found, downloading…', r.version) : t('Could not check for updates: {0}', r.error || ''); }); return; }
+  if (e.target.id === 'updCheck') { const st = $('updSt'); st.textContent = t('Checking…'); window.api.checkUpdate().then(r => { st.textContent = r.state === 'none' ? t('You are up to date.') : r.state === 'available' ? t(r.manual ? 'Version {0} is available: use the bar at the bottom of the menu.' : 'Version {0} found, downloading…', r.version) : t('Could not check for updates: {0}', r.error || ''); }); return; }
   if (e.target.id === 'tourAgain') { modal(stm, false); startTour(); }
 };
 $('bSet').onclick = () => { renderSettings(); modal(stm, true); };

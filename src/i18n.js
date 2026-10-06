@@ -143,7 +143,8 @@ const TR = {
   'Checking…': 'Denetleniyor…',
   'You are up to date.': 'Güncelsin.',
   'Version {0} found, downloading…': '{0} sürümü bulundu, indiriliyor…',
-  'Could not check for updates: {0}': 'Güncellemeler denetlenemedi: {0}'
+  'Could not check for updates: {0}': 'Güncellemeler denetlenemedi: {0}',
+  'Version {0} is available: use the bar at the bottom of the menu.': '{0} sürümü mevcut: menünün altındaki çubuğu kullan.'
 };
 // Languages: English (default texts), Turkish (TR below), Spanish / German / French (DICT in langs.js)
 const LANGS = [{ c: 'en', n: 'English', loc: 'en-US' }, { c: 'tr', n: 'Türkçe', loc: 'tr-TR' }, { c: 'es', n: 'Español', loc: 'es-ES' }, { c: 'de', n: 'Deutsch', loc: 'de-DE' }, { c: 'fr', n: 'Français', loc: 'fr-FR' }];
