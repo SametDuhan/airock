@@ -108,7 +108,7 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 .zr{margin-top:10px;padding:7px 10px;background:#ffffff06;border:1px solid var(--line);border-radius:7px}.zr input{margin-left:auto;text-align:right;border-radius:5px}
 #st{margin-top:8px;font:11px ui-monospace,monospace;color:var(--mut)}
 .flt .fr{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 4px;color:#a8a296;font-weight:600}
-.flt .fl{font:700 10px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:#a8a296;margin:20px 0 0}
+.flt .ff{font:700 10px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:#a8a296;margin:20px 0 0}
 .apr{margin:6px 0 0}.apr input{border-radius:6px;padding:8px 9px}.apr .ib{border-radius:6px}
 .flt .cks{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}.flt .cks .ck{margin:4px 0}
 </style></head>
@@ -124,11 +124,11 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 <div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">min</span><span class="rmax">max</span></div>
 <div class="fr"><span>Speed</span><span><b id="vS">0</b> – <b id="vSM">600+</b> kt</span></div>
 <div class="dr" id="dr2"><input id="fS" type="range" min="0" max="600" step="25" value="0"><input id="fSM" type="range" min="0" max="600" step="25" value="600"><span class="rmin">min</span><span class="rmax">max</span></div>
-<div class="fl">Airport</div>
+<div class="ff">Airport</div>
 <div class="apr"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button id="fSw" class="ib" title="Departure ↔ arrival">⇄</button><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"></div>
-<div class="fl">Airline</div>
+<div class="ff">Airline</div>
 <div class="apr"><input id="fAl" list="alList" placeholder="e.g. THY, Pegasus, Lufthansa" autocomplete="off"></div><datalist id="alList"></datalist>
-<div class="fl">Aircraft type</div>
+<div class="ff">Aircraft type</div>
 <div class="apr"><input id="fTp" list="tpList" placeholder="e.g. B738, A320, boeing 777" autocomplete="off"></div><datalist id="tpList"></datalist>
 <div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
 <div class="cks"><label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
