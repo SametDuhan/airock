@@ -28,7 +28,17 @@
   const regCountry = reg => { const r = String(reg || '').toUpperCase().replace(/\s/g, ''); if (!r) return '';
     if (/^B-\d{5}$/.test(r)) return 'TW'; if (/^N\d/.test(r)) return 'US'; if (/^JA\d/.test(r)) return 'JP'; if (/^HL\d/.test(r)) return 'KR';
     for (let n = Math.min(5, r.length); n > 0; n--) { const c = REG[r.slice(0, n)]; if (c) return c; } return ''; };
-  const api = { R, brg, km, gc, unwrap, nearLon, regCountry };
+  // Points ahead of an aircraft (up to maxKm): along the great circle to its destination, or straight along its heading when the route is unknown
+  function ahead(lat, lon, hdg, dest, maxKm = 1500, stepKm = 40) {
+    const out = [[lat, lon]];
+    if (dest) { const d = km(lat, lon, dest[0], dest[1]); if (d < 1) return out; const g = gc([lat, lon], dest, Math.max(1, Math.ceil(d / stepKm)));
+      let acc = 0; for (let i = 1; i < g.length; i++) { acc += km(g[i - 1][0], g[i - 1][1], g[i][0], g[i][1]); if (acc > maxKm) break; out.push(g[i]); } return out; }
+    const φ = lat * R, λ = lon * R, θ = hdg * R;
+    for (let d = stepKm; d <= maxKm; d += stepKm) { const δ = d / 6371, φ2 = Math.asin(Math.sin(φ) * Math.cos(δ) + Math.cos(φ) * Math.sin(δ) * Math.cos(θ));
+      out.push([φ2 / R, (λ + Math.atan2(Math.sin(θ) * Math.sin(δ) * Math.cos(φ), Math.cos(δ) - Math.sin(φ) * Math.sin(φ2))) / R]); }
+    return out;
+  }
+  const api = { R, brg, km, gc, unwrap, nearLon, regCountry, ahead };
   root.SkyGeo = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -208,6 +208,22 @@ function drawRoute(f) {
     .bindTooltip(esc(a.code), { permanent: true, direction: 'top', offset: [0, -8], className: 'apl' }).addTo(routeEnds));
 }
 
+/* ---------- turbulence ahead (SIGMET / G-AIRMET advisories + pilot reports along the route ahead) ---------- */
+const tbCache = new Map();
+async function loadTurb(f) {
+  if (f.ground || f.tbs === 'loading') return;
+  const e = tbCache.get(f.id); if (e && Date.now() - e.t < 300e3) { f.tb = e.v; f.tbs = 'ok'; return; }
+  if (f.tbs === 'err' && Date.now() - f.tbsAt < 60e3) return;
+  f.tbs = 'loading'; const dest = f.route?.dst ? [f.route.dst.lat, f.route.dst.lon] : null;
+  const res = await DATA.turb(SkyGeo.ahead(f.lat, f.lon, f.hdg, dest), f.alt * 3.281);
+  if (!res.ok) { f.tbs = 'err'; f.tbsAt = Date.now(); } else { f.tb = res; f.tbs = 'ok'; tbCache.set(f.id, { v: res, t: Date.now() }); }
+  if (f.id === selected) renderCard();
+}
+const turbRow = f => { if (f.ground) return null;
+  if (f.tbs === 'ok') { const r = f.tb, k = r.km;
+    return [t('Turbulence'), r.level >= 3 ? t('High turbulence risk ahead (~{0} km)', k) : r.level === 2 ? t('Moderate turbulence possible ahead (~{0} km)', k) : t('No turbulence reported or forecast on the route ahead'), 'tb' + r.level]; }
+  return [t('Turbulence'), f.tbs === 'err' ? t('Turbulence info unavailable') : t('Checking route ahead…'), 'tbx']; };
+
 /* ---------- aircraft info (type, registration, photo) ---------- */
 async function loadAircraft(f) {
   if (!canLoad(f, 'as')) return;
@@ -374,7 +390,7 @@ $('rpLive').onclick = exitReplay;
 /* ---------- selection, favorites, panel, list ---------- */
 function select(id) {
   closeAp(); X.sel(); selected = id; const f = flights.get(id);
-  if (f) { map.panTo(f.rp ? [f.rp[0], f.rp[1]] : [f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); loadTrace(f); } }
+  if (f) { map.panTo(f.rp ? [f.rp[0], f.rp[1]] : [f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); loadTrace(f); loadTurb(f); } }
   if (replay) { drawRoute(null); trail.setLatLngs([]); } else { drawRoute(f); drawTrail(f); } redraw(); // don't mix a trail/route drawn for the live position into replay
   $('card').classList.toggle('show', !!f); if (f) renderCard(true); renderList();
 }
@@ -400,9 +416,10 @@ function renderCard(full) {
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
     ['Altitude', f.ground ? t('on ground') : ft(f.alt)], ['Speed', Math.round(f.spd * 1.944) + ' kt'], ['Heading', Math.round(f.hdg) + '°'],
     ['Vertical speed', Math.round(f.vr * 196.85) + ' ft/min'], ['Nearest airport', nearest(f)], ['Position', f.lat.toFixed(2) + ', ' + f.lon.toFixed(2)]];
+  { const tr = live && turbRow(f); if (tr) rows.splice(rows.findIndex(r => r[0] === 'Vertical speed') + 1, 0, tr); }
   if (ac.owner && ac.owner !== f.route?.airline) rows.splice(2, 0, ['Owner', ac.owner]);
   X.rows(f, rows);
-  $('kvs').innerHTML = rows.map(r => `<div class="kv"><span>${t(r[0])}</span><b>${esc(r[1])}</b></div>`).join('');
+  $('kvs').innerHTML = rows.map(r => r[2] ? `<div class="kv tbr ${r[2]}"><b>${esc(r[1])}</b></div>` : `<div class="kv"><span>${t(r[0])}</span><b>${esc(r[1])}</b></div>`).join('');
   $('fv').textContent = fav.has(f.id) ? t('★ Favorited') : t('☆ Favorite'); X.sync(f);
 }
 const eta = h => h < 1 ? Math.round(h * 60) + t(' min') : Math.floor(h) + t(' h ') + Math.round(h % 1 * 60) + t(' min');

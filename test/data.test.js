@@ -55,3 +55,19 @@ test('splitLegs: ignores tiny hops and a long gap splits a leg', () => {
 test('watch: invalid lists are rejected before any network call', async () => {
   assert.equal((await D.watch([])).ok, false); assert.equal((await D.watch(['zz'])).ok, false);
 });
+
+test('turbAssess: advisory polygon / pilot report ahead -> level', () => {
+  const pts = [[0, 0], [0, 1], [0, 2], [0, 3]], box = (a, b) => [[-1, a], [1, a], [1, b], [-1, b]];
+  assert.equal(D.turbAssess(pts, 35000, [], []).level, 0);
+  const mod = D.turbAssess(pts, 35000, [{ sev: 2, base: 20000, top: 45000, poly: box(1.5, 2.5) }], []);
+  assert.equal(mod.level, 2); assert.ok(mod.km > 100 && mod.km < 240, mod.km);
+  assert.equal(D.turbAssess(pts, 35000, [{ sev: 3, base: 0, top: 45000, poly: box(1.5, 2.5) }], []).level, 3);
+  assert.equal(D.turbAssess(pts, 10000, [{ sev: 3, base: 20000, top: 45000, poly: box(1.5, 2.5) }], []).level, 0, 'other altitude');
+  assert.equal(D.turbAssess(pts, 35000, [], [{ lat: 0.2, lon: 2, ft: 36000, sev: 2 }]).level, 2);
+  assert.equal(D.turbAssess(pts, 35000, [], [{ lat: 0.2, lon: 2, ft: 36000, sev: 1 }]).level, 0, 'light is ignored');
+});
+test('ahead: heading projection and route', () => {
+  const G = require('../src/geo.js'), p = G.ahead(0, 0, 90, null, 400, 100);
+  assert.equal(p.length, 5); assert.ok(Math.abs(p[4][0]) < 0.01 && Math.abs(p[4][1] - 3.6) < 0.05, p[4]);
+  const r = G.ahead(41, 29, 0, [50, 8.5], 500); assert.ok(r.length > 5 && G.km(41, 29, r.at(-1)[0], r.at(-1)[1]) <= 520);
+});

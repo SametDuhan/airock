@@ -227,7 +227,43 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  const api = { flights, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, legOf, cover, bounds };
+  /* ---------- turbulence ahead: SIGMET / G-AIRMET advisories + recent pilot reports (aviationweather.gov) ---------- */
+  // severity: 0 none/smooth, 1 light, 2 moderate, 3 severe or worse
+  const sevOf = x => { x = String(x || '').toUpperCase(); return /SEV|EXTRM/.test(x) ? 3 : /MOD/.test(x) ? 2 : /LGT/.test(x) ? 1 : 0; };
+  const inPoly = (lat, lon, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [yi, xi] = poly[i], [yj, xj] = poly[j];
+    if ((xi > lon) !== (xj > lon) && lat < (yj - yi) * (lon - xi) / (xj - xi) + yi) c = !c; } return c; };
+  // pts: [[lat, lon]...] ahead of the aircraft; adv: [{sev, base, top (ft), poly}]; peps: [{lat, lon, ft, sev}]
+  function turbAssess(pts, altFt, adv, peps) {
+    let level = 0, at = null, src = '', n = 0; const hit = (sev, i, s) => { n++; if (sev > level || (sev === level && i < at)) { level = sev; at = i; src = s; } };
+    for (const a of adv) { if (a.sev < 2 || !(altFt >= (a.base ?? 0) - 2000 && altFt <= (a.top ?? 99999) + 2000)) continue;
+      const i = pts.findIndex(p => inPoly(p[0], p[1], a.poly)); if (i >= 0) hit(a.sev, i, 'advisory'); }
+    for (const r of peps) { if (r.sev < 2 || Math.abs(r.ft - altFt) > 4000) continue;
+      let best = -1; for (let i = 0; i < pts.length; i++) if (km(pts[i][0], pts[i][1], r.lat, r.lon) < 75) { best = i; break; } if (best >= 0) hit(r.sev, best, 'pirep'); }
+    let dist = null; if (at !== null) { dist = 0; for (let i = 1; i <= at; i++) dist += km(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]); }
+    return { level, km: dist === null ? null : Math.round(dist), n, src };
+  }
+  async function turb(pts, altFt) {
+    if (!Array.isArray(pts) || pts.length < 1 || pts.length > 80 || !pts.every(p => Array.isArray(p) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 540) || !Number.isFinite(+altFt)) return { ok: false, error: 'invalid input' };
+    const lats = pts.map(p => p[0]), lons = pts.map(p => p[1]), pad = 1.5, bb = [Math.min(...lats) - pad, Math.min(...lons) - pad, Math.max(...lats) + pad, Math.max(...lons) + pad].map(v => +v.toFixed(2));
+    const wrap = l => ((l + 540) % 360) - 180, now = Date.now() / 1000;
+    const text = async url => { const r = await get(url, 12000); if (!r.ok && r.status !== 204) throw new Error('HTTP ' + r.status); const t = await r.text(); return t.trim() ? JSON.parse(t) : []; };
+    const [is, ga, pi] = await Promise.allSettled([text('https://aviationweather.gov/api/data/isigmet?format=json'), text('https://aviationweather.gov/api/data/gairmet?type=tango&format=json'),
+      text(`https://aviationweather.gov/api/data/pirep?format=json&age=2&bbox=${bb[0]},${bb[1]},${bb[2]},${bb[3]}`)]);
+    if (is.status !== 'fulfilled' && ga.status !== 'fulfilled' && pi.status !== 'fulfilled') return { ok: false, error: 'no data' };
+    const adv = [], peps = [], P = c => c.map(q => [+q.lat, +q.lon]);
+    if (is.status === 'fulfilled') for (const x of is.value) if (x.hazard === 'TURB' && Array.isArray(x.coords) && x.coords.length > 2 && now >= x.validTimeFrom - 1800 && now <= x.validTimeTo)
+      adv.push({ sev: Math.max(2, sevOf(x.qualifier)), base: x.base ?? 0, top: x.top ?? 99999, poly: P(x.coords) });
+    if (ga.status === 'fulfilled') for (const x of ga.value) if (/^TURB/.test(x.hazard) && Array.isArray(x.coords) && x.coords.length > 2 && now <= x.expireTime)
+      adv.push({ sev: Math.max(2, sevOf(x.severity)), base: x.base ? +x.base * 100 : 0, top: x.top ? +x.top * 100 : 99999, poly: P(x.coords) });
+    if (pi.status === 'fulfilled') for (const x of pi.value) { const sev = Math.max(sevOf(x.tbInt1), sevOf(x.tbInt2)), ft = (x.fltLvl ?? ((x.tbBas1 + x.tbTop1) / 2)) * 100;
+      if (typeof x.lat === 'number' && typeof x.lon === 'number' && Number.isFinite(ft)) peps.push({ lat: x.lat, lon: x.lon, ft, sev: /MOD-SEV/.test(x.tbInt1 + x.tbInt2) ? 3 : sev }); }
+    // advisories in the western hemisphere may come with longitudes on the other side of the date line: compare on the same copy as the path
+    const near = lon0 => poly => poly.map(([la, lo]) => [la, lo + 360 * Math.round((lon0 - lo) / 360)]);
+    adv.forEach(a => { a.poly = near(pts[0][1])(a.poly); }); peps.forEach(r => { r.lon = r.lon + 360 * Math.round((pts[0][1] - r.lon) / 360); });
+    const res = turbAssess(pts, +altFt, adv, peps); return { ok: true, ...res, adv: adv.length, pireps: peps.length };
+  }
+
+  const api = { flights, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, turb, turbAssess, legOf, cover, bounds };
   root.SkyData = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

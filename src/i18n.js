@@ -4,6 +4,8 @@ const TR = {
   // menu
   'Close menu': 'Menüyü kapat', 'Open menu': 'Menüyü aç', 'Mode': 'Mod', 'Normal': 'Normal', 'Plane spotter': 'Uçak gözlemci', 'Data': 'Veri', 'Demo': 'Demo', 'Live': 'Canlı',
   'Map': 'Harita', 'Airports': 'Havalimanları', 'Alert zone': 'Uyarı bölgesi', 'Radar': 'Radar', 'Rain radar': 'Yağış radarı', 'Zone radius': 'Bölge yarıçapı',
+  'Turbulence': 'Türbülans', 'High turbulence risk ahead (~{0} km)': 'Önünde yüksek türbülans ihtimali var (~{0} km)', 'Moderate turbulence possible ahead (~{0} km)': 'Önünde orta düzey türbülans ihtimali var (~{0} km)',
+  'No turbulence reported or forecast on the route ahead': 'Önündeki yolda türbülans bildirimi veya tahmini yok', 'Turbulence info unavailable': 'Türbülans bilgisi alınamadı', 'Checking route ahead…': 'Önündeki yol kontrol ediliyor…',
   'Standard': 'Standart', 'Light': 'Açık', 'Dark': 'Koyu', 'Filters': 'Filtreler', 'Altitude': 'İrtifa', 'Min speed': 'En düşük hız', 'Airport': 'Havalimanı',
   'Departure': 'Kalkış', 'Arrival': 'Varış', 'Departure ↔ arrival': 'Kalkış ↔ varış', 'Airline': 'Havayolu', 'e.g. THY, Pegasus, Lufthansa': 'ör. THY, Pegasus, Lufthansa',
   'Aircraft type': 'Uçak tipi', 'e.g. B738, A320, boeing 777': 'ör. B738, A320, boeing 777', 'Show aircraft on the ground': 'Yerdeki uçakları göster',
