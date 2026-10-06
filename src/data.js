@@ -40,6 +40,9 @@
     { name: 'adsb.fi', point: (la, lo, r) => `https://opendata.adsb.fi/api/v2/lat/${la}/lon/${lo}/dist/${r}`, hex: h => `https://opendata.adsb.fi/api/v2/hex/${h}`, by: (k, v) => `https://opendata.adsb.fi/api/v2/${k}/${v}` },
     // airplanes.live: free for projects, but access has to be requested (contact@airplanes.live), otherwise it answers 403. Set on: true once you have it.
     { name: 'airplanes.live', on: false, point: (la, lo, r) => `https://api.airplanes.live/v2/point/${la}/${lo}/${r}`, hex: h => `https://api.airplanes.live/v2/hex/${h}`, by: (k, v) => `https://api.airplanes.live/v2/${k}/${v}` }];
+  // Own cache proxy (proxy/worker.js on Cloudflare Workers). Empty = off. Tried first: it is shared by all users, so it is faster and avoids rate limits.
+  const PROXY_URL = '';
+  if (PROXY_URL) ALL_FEEDS.unshift({ name: 'proxy', point: (la, lo, r) => `${PROXY_URL}/v2/point/${la}/${lo}/${r}`, hex: h => `${PROXY_URL}/v2/hex/${h}`, by: (k, v) => `${PROXY_URL}/v2/${k}/${v}` });
   const FEEDS = ALL_FEEDS.filter(f => f.on !== false);
   const feedPause = {}; // feed name → time until which we skip it (after a 429 or an error)
   // Hedged request: the preferred feed gets HEDGE_MS to answer; if it is slow, the next feed is asked as well and the first good answer wins.
