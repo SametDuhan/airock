@@ -196,14 +196,8 @@ header,main,footer{position:relative;z-index:1}
 
 header{position:sticky;top:0;z-index:20}
 
-/* background life: scroll parallax, dotted contrails, planes that react to the mouse */
-.fly{translate:0 calc(var(--sy,0) * var(--px,0) * 1px)}
-.fly.a{--px:-.06}.fly.b{--px:-.02}.fly.c{--px:-.1}.fly.d{--px:-.035}
-.tower{translate:0 calc(var(--sy,0) * -.04px)}.engine{translate:0 calc(var(--sy,0) * -.07px)}
-.fly svg{rotate:var(--rot,0deg);transition:rotate .35s ease-out}
-.fly{transition:opacity .35s ease-out}
+/* dotted contrails behind the background planes */
 .fly::after{content:"";order:-2;width:var(--t,160px);height:8px;margin-right:calc(var(--t,160px) * -1);background:radial-gradient(circle,currentColor 1.5px,transparent 2px) 0 50%/12px 8px repeat-x;-webkit-mask-image:linear-gradient(90deg,transparent,#000);mask-image:linear-gradient(90deg,transparent,#000);opacity:.7}
-@media (prefers-reduced-motion:reduce){.fly,.tower,.engine{translate:none}.fly svg{rotate:none}}
 @media (max-width:560px){.feat li{font-size:14.5px}}
 .feat li.nochk::before{display:none}.feat li.nochk{padding-left:0}
 .grid.c3{grid-template-columns:repeat(3,1fr)}@media (max-width:900px){.grid.c3{grid-template-columns:repeat(2,1fr)}}@media (max-width:560px){.grid.c3{grid-template-columns:1fr}}
@@ -523,17 +517,6 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   // video: respect reduced motion
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) { const v = $('#heroVid'); v.removeAttribute('autoplay'); v.pause(); v.controls = true; }
 
-  // background life (skipped for reduced motion): scroll parallax and planes that turn toward the mouse
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const setSy = () => root.style.setProperty('--sy', Math.min(scrollY, 4000)); // scroll events already fire once per frame
-    addEventListener('scroll', setSy, { passive: true }); setSy();
-    const planes = $$('.fly').map(el => ({ el, svg: $('svg', el), base: +getComputedStyle(el).opacity || .12 })); let idle = 0;
-    const relax = () => planes.forEach(p => { p.svg.style.setProperty('--rot', '0deg'); p.el.style.opacity = ''; });
-    addEventListener('pointermove', e => { if (e.pointerType && e.pointerType !== 'mouse') return; clearTimeout(idle); idle = setTimeout(relax, 1800);
-      planes.forEach(p => { const r = p.svg.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2), d = Math.hypot(dx, dy), k = Math.max(0, 1 - d / 320);
-        const ang = Math.max(-28, Math.min(28, Math.atan2(dy, Math.abs(dx) < 1 ? 1 : dx) * 180 / Math.PI));
-        p.svg.style.setProperty('--rot', (dx >= 0 ? ang : -ang * .4) * k + 'deg'); p.el.style.opacity = k > 0 ? Math.min(.55, p.base + k * .4) : ''; }); }, { passive: true });
-  }
   // start language: saved choice, else the browser language
   setLang(ls.get('st.lang') || (/^tr/i.test(navigator.language || '') ? 'tr' : 'en'));
 })();
