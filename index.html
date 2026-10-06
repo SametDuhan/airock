@@ -521,16 +521,16 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
 
   // soft yellow line that follows the mouse pointer and fades out after a short while (asked for explicitly, so it does not depend on the reduced-motion setting)
   try {
-    const cv = $('#trail'), cx = cv.getContext('2d'), LIFE = 650; let pts = [], run = false, W = 0, H = 0, dpr = 1, col = '245,196,49';
+    const cv = $('#trail'), cx = cv.getContext('2d'), LIFE = 800; let pts = [], run = false, W = 0, H = 0, dpr = 1, col = '245,196,49';
     const size = () => { dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); };
     const rgb = () => { const m = /#([0-9a-f]{6})/i.exec(getComputedStyle(root).getPropertyValue('--accent').trim()); if (m) col = [0, 2, 4].map(i => parseInt(m[1].substr(i, 2), 16)).join(','); };
     const draw = now => { cx.clearRect(0, 0, W, H); pts = pts.filter(p => now - p.t < LIFE); cx.lineCap = 'round'; cx.lineJoin = 'round';
       for (let i = 2; i < pts.length; i++) { const a = pts[i - 2], b = pts[i - 1], c = pts[i], age = Math.max(0, Math.min(1, (now - c.t) / LIFE)), k = i / pts.length, fade = (1 - age) * (1 - age);
-        cx.strokeStyle = `rgba(${col},${(.4 * fade * (.3 + .7 * k)).toFixed(3)})`; cx.lineWidth = 0.6 + 2 * k * (1 - age);
+        cx.strokeStyle = `rgba(${col},${(.75 * fade * (.3 + .7 * k)).toFixed(3)})`; cx.lineWidth = 0.8 + 2.8 * k * (1 - age);
         cx.beginPath(); cx.moveTo((a.x + b.x) / 2, (a.y + b.y) / 2); cx.quadraticCurveTo(b.x, b.y, (b.x + c.x) / 2, (b.y + c.y) / 2); cx.stroke(); }
       if (pts.length > 2) requestAnimationFrame(draw); else { run = false; cx.clearRect(0, 0, W, H); pts = []; } };
     size(); rgb(); addEventListener('resize', size); new MutationObserver(rgb).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
-    addEventListener('pointermove', e => { if (e.pointerType && e.pointerType !== 'mouse') return; const last = pts[pts.length - 1];
+    addEventListener('mousemove', e => { const last = pts[pts.length - 1];
       if (last && Math.hypot(e.clientX - last.x, e.clientY - last.y) < 2) return; pts.push({ x: e.clientX, y: e.clientY, t: performance.now() }); if (pts.length > 80) pts.shift();
       if (!run) { run = true; requestAnimationFrame(draw); } }, { passive: true });
   } catch (err) { console.warn('trail', err); }
