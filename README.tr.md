@@ -26,6 +26,12 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
   - en düşük hız
   - kalkış ve/veya varış havalimanı; kodla (IST, LTFM) ya da şehir adıyla
   - yerdeki uçakları gösterme/gizleme ve sadece favoriler
+- **Acil durum ve askeri uçaklar**: 7500, 7600 ya da 7700 squawk kodu veren uçağın etrafında yanıp sönen kırmızı halka çıkar ve bildirim gelir; listede ⚠ görünür. Askeri uçaklar kesikli yeşil halka alır, **Sadece askeri** filtresi gerisini gizler.
+- **Takip listesi**: uçuş kartında **🔔 Takip et**'e bas. SkyTrack takip ettiğin uçakları dünyanın neresinde olursa olsun 45 saniyede bir sorar; biri kalkınca ya da inince bildirim gelir.
+- **Bugünkü uçuşlar**: canlı bir uçuş kartında **Bugünkü uçuşlar**, uçağın bugün yaptığı bütün uçuşları (saat, mesafe, en yüksek irtifa) listeler. Birine tıklayınca haritada çizilir.
+- **Yağış radarı**: **Radar** düğmesi canlı yağış katmanı ekler. Havalimanı paneli ayrıca havalimanının METAR ve TAF raporunu, VFR/IFR uçuş kategorisiyle birlikte gösterir.
+- **Uçak gözlemci modu**: **Mod** bölümünden açılır. Defter (uçuş kartında **📓 Gözlemi kaydet**, CSV dışa aktarma), *yeni uçak* / *yeni tip* rozetleri ve ek bilgiler (ICAO24, squawk, kategori) ekler. Normal modda bunların hiçbiri görünmez.
+- **Türkçe ve İngilizce**: menünün üstündeki **TR / EN** düğmesi bütün arayüzü değiştirir. Sistem dilinle başlar.
 - **Favoriler**: bir uçuşu ☆ ile işaretleyip sonra kolayca bulabilirsin.
 - **Uyarı bölgesi**: haritaya tıklayarak bir daire belirlersin (varsayılan 100 km; yarıçapı menüden 10–500 km arasında değiştirebilirsin). Bir uçak daireye girince, ya da ilk kez daire içinde görününce bildirim gelir.
 - **Geçmişi oynatma**: alttaki çubukla son bir saati geri sarabilirsin. *● Canlı* düğmesi canlı görünüme döndürür.
@@ -61,6 +67,8 @@ Kurulum dosyası `dist/` klasöründe oluşur.
 |---|---|
 | Gerçek uçuşları görmek | Sol menüde **Canlı**'ya tıkla. **Demo** sanal uçuşlara geri döner. |
 | Bir havalimanının hava durumunu, varış ve kalkışlarını görmek | Haritada havalimanının sarı noktasına tıkla. **Varışlar** ve **Kalkışlar** arasında geçiş yap, bir uçuşa tıklayıp aç. Paneli **✕** ile kapat. |
+| Bir uçak kalkınca ya da inince haber almak | Uçağı aç ve **🔔 Takip et**'e bas. Takipteki uçaklar menüde *Takip listesi* altında görünür. |
+| Gözlem defteri tutmak | **Mod** bölümünden **Uçak gözlemci**'yi seç, bir uçuş aç ve **📓 Gözlemi kaydet**'e bas. **Defteri aç** hepsini gösterir, **CSV dışa aktar** kaydeder. |
 | Bir uçağın bilgilerini görmek | Uçağa haritada ya da listede tıkla. Kartı **✕** ile kapat. |
 | Bir uçuşu bulmak | Arama kutusuna çağrı kodu (ör. `THY1`) ya da tescil (ör. `TC-JPN`) yaz. |
 | Sadece İstanbul'dan Frankfurt'a gidenleri görmek | *Filtreler* bölümünde **Kalkış**'a `IST`, **Varış**'a `FRA` yaz. Tek kutuyu doldurursan o havalimanından kalkan ya da oraya giden bütün uçuşları görürsün. |
@@ -71,11 +79,14 @@ Kurulum dosyası `dist/` klasöründe oluşur.
 
 | Veri | Kaynak | Not |
 |---|---|---|
-| Uçak konumları (yakın görünüm) | [adsb.lol](https://adsb.lol) | Ücretsiz, anahtarsız. İstek sınırı sıkı (~10 istek/dk). |
+| Uçak konumları (yakın görünüm) | [adsb.lol](https://adsb.lol) ve [adsb.fi](https://adsb.fi) | Ücretsiz, anahtarsız. İkisinin de istek sınırı sıkı; bu yüzden SkyTrack istekleri ikisine dağıtır, biri hata verirse diğerine geçer. Geniş görünümde tek kaynağa göre yaklaşık iki kat alan kapsanır. |
 | Uçak konumları (geniş görünüm / yedek) | [OpenSky Network](https://opensky-network.org) | Geniş bir alanı tek istekte getirir. Giriş yapmadan kullanımda günlük sınır düşük. |
 | Rota, uçak tipi, tescil, fotoğraf | [adsbdb.com](https://www.adsbdb.com) | Ücretsiz, anahtarsız. Bazı uçuşlarda eksik ya da eski olabilir. |
 | Havayolu logoları | images.kiwi.com | |
 | Havalimanı hava durumu | [Open-Meteo](https://open-meteo.com) | Ücretsiz, anahtarsız. |
+| METAR ve TAF | [aviationweather.gov](https://aviationweather.gov) | Ücretsiz, anahtarsız. |
+| Yağış radarı | [RainViewer](https://www.rainviewer.com) | Ücretsiz, anahtarsız. |
+| Bir uçağın bugünkü uçuşları | [adsb.lol](https://adsb.lol) günlük izleri | Ücretsiz, anahtarsız. |
 | Havalimanının şehri ve ülkesi | [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org) | Ücretsiz, anahtarsız. |
 | Havalimanı fotoğrafı | [Wikipedia](https://en.wikipedia.org) | Havalimanının resimli bir Wikipedia sayfası varsa gösterilir. |
 | Haritalar | OpenStreetMap, Esri | |
@@ -105,6 +116,8 @@ src/loader.js     Leaflet'i yükler (önce yerel kopya, olmazsa CDN), sonra uygu
 src/geo.js        Mesafe, yön ve büyük daire yardımcıları (testli)
 src/data.js       Bütün veri kaynakları: uçuşlar, rotalar, uçak bilgisi
 src/renderer.js   Harita, uçak katmanı, uçuş kartı, liste, filtreler, geçmiş oynatma
+src/extras.js     Acil durumlar, takip listesi, bugünkü uçuşlar, radar, gözlem defteri, dil değiştirme
+src/i18n.js       İngilizce / Türkçe metinler
 docs/             README'deki ekran görüntüleri
 ```
 

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://api.open-meteo.com https://nominatim.openstreetmap.org https://en.wikipedia.org https://api.planespotters.net https://adsb.lol https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://opendata.adsb.fi https://aviationweather.gov https://api.rainviewer.com https://api.open-meteo.com https://nominatim.openstreetmap.org https://en.wikipedia.org https://api.planespotters.net https://adsb.lol https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
 <title>SkyTrack</title>
 <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
 <style>
@@ -80,11 +80,28 @@ html,body,#side,#card,#apc,.leaflet-container,.leaflet-container .leaflet-intera
 a,button,label,select,input[type=checkbox],input[type=range],.row,.leaflet-container a,.leaflet-interactive,.leaflet-control-zoom a{cursor:var(--ptr)!important}
 input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:text}
 .leaflet-dragging .leaflet-grab,.leaflet-dragging .leaflet-container{cursor:var(--cur)}
+.bb{display:flex;gap:6px}
+.bd{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}.chip{font:700 10px ui-monospace,monospace;letter-spacing:.06em;padding:3px 7px;border-radius:3px;background:#ffffff14;color:var(--fg)}
+.chip.emg{background:#ff3b30;color:#fff}.chip.mil{background:#8bc34a;color:#111}.chip.new{background:var(--ac);color:#111}
+#card .bt{display:flex;gap:8px;margin-top:12px}#card .bt button,#card button.sm{margin-top:0;width:auto;flex:1;font-size:12px}#card button.sm{width:100%;margin-top:12px}
+.lg{display:block;padding:7px 4px;border-bottom:1px solid var(--line);cursor:pointer}.lg:hover{background:#ffffff0a}.lg b{font:600 12px ui-monospace,monospace;display:block}.lg span{font-size:11px;color:var(--mut)}
+#wls .wr{display:flex;align-items:center;gap:6px;padding:6px 0;cursor:pointer}#wls .wr:hover b{color:var(--ac)}#wls .wr b{font:600 12px ui-monospace,monospace;flex:1}#wls .wr span{font-size:11px;color:var(--mut)}#wls .wx2{background:transparent;border:0;color:var(--mut);cursor:pointer;padding:2px 4px}#wls .wx2:hover{color:#ff6b5e}
+#spt .sg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:4px 0 8px;text-align:center}#spt .sg div{background:#ffffff0a;border-radius:3px;padding:6px 2px}#spt .sg b{display:block;font:700 16px ui-monospace,monospace;color:var(--ac)}#spt .sg span{font-size:10px;color:var(--mut)}
+#lb{position:absolute;inset:0;z-index:1200;background:#000a;display:none;align-items:center;justify-content:center}#lb.show{display:flex}
+#lb .bx{width:min(760px,92%);max-height:86%;display:flex;flex-direction:column;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:4px;padding:16px}
+#lb .hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}#lb h2{margin:0;font:400 24px Georgia,serif;flex:1}#lb .bx input{background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);padding:7px 8px;outline:0;margin-bottom:8px}#lb .bx input:focus{border-color:var(--ac)}
+#lb .ls{overflow:auto;flex:1}#lb .le{display:grid;grid-template-columns:90px 1fr 1fr 24px;gap:8px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line);font-size:12px}#lb .le b{font:600 12px ui-monospace,monospace}#lb .le span{color:var(--mut)}
+#lb .bt2{background:transparent;color:var(--ac);border:1px solid var(--ac);border-radius:3px;padding:6px 10px;cursor:pointer;font-size:12px}#lb .bt2:hover{background:var(--ac);color:#111}
+.mt{margin:12px 0 4px;font-size:11px;color:var(--mut)}.mt code,#apc details code{display:block;margin-top:5px;padding:7px;background:#111;border-radius:3px;font:11px/1.45 ui-monospace,monospace;color:var(--fg);white-space:normal;word-break:break-word}
+.fc{display:inline-block;font:700 10px ui-monospace,monospace;padding:2px 6px;border-radius:3px;margin-right:6px;color:#fff}.fc.VFR{background:#2e9e4f}.fc.MVFR{background:#2f8cff}.fc.IFR{background:#e0453a}.fc.LIFR{background:#b03fd0}
+#apc summary{cursor:pointer;font-size:11px;color:var(--mut);margin-top:6px}
 </style></head>
 <body><div id="app">
-<aside id="side"><div class="brand">SKYTRACK<button id="close" class="ib" title="Close menu">✕</button></div>
+<aside id="side"><div class="brand">SKYTRACK<span class="bb"><button id="lang" class="ib" title="Language / Dil">TR</button><button id="close" class="ib" title="Close menu">✕</button></span></div>
 <div class="sec"><div class="lbl">Data</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Live</button></div><div id="st"></div></div>
-<div class="sec"><div class="lbl">Map</div><div class="btns"><button id="bAp" class="on">Airports</button><button id="bZ">Alert zone</button></div>
+<div class="sec"><div class="lbl">Mode</div><div class="btns"><button id="mNorm" class="on">Normal</button><button id="mSpot">Plane spotter</button></div></div>
+<div class="sec" id="spt" style="display:none"></div>
+<div class="sec"><div class="lbl">Map</div><div class="btns"><button id="bAp" class="on">Airports</button><button id="bZ">Alert zone</button><button id="bRd" title="Rain radar">Radar</button></div>
 <label class="zr">Zone radius <input id="zR" type="number" min="3" max="500" step="1" value="100"> km</label>
 <div class="btns" id="tiles" style="margin-top:6px"><button data-t="osm">Standard</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div></div>
 <div class="flt"><div class="lbl">Filters</div><div>Altitude <b id="vA">0</b> – <b id="vM">45.000+</b> ft</div>
@@ -99,10 +116,12 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 <div class="apr"><input id="fTp" list="tpList" placeholder="e.g. B738, A320, boeing 777" autocomplete="off"></div><datalist id="tpList"></datalist>
 <div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
 <label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
-<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div>
+<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label>
+<label class="ck"><input id="fMil" type="checkbox"> Military only</label></div>
+<div class="sec" id="wls" style="display:none"></div>
 <input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></aside>
 <main><div id="map"></div>
 <button id="open" class="ib" title="Open menu">☰</button><div class="bar"><span id="clock"></span></div>
-<div id="hov"></div><div id="card"></div><div id="apc"></div><div id="toast"></div>
+<div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
 <div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span></div></main></div>
 <script src="loader.js"></script></body></html>

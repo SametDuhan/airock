@@ -136,10 +136,14 @@
   // the ground, at a point flagged "new leg" (flags & 2), or after a long gap (a landing may never be seen, e.g. no coverage at the destination).
   // Point format: [seconds, lat, lon, altitude ft | "ground", groundspeed, track, flags, ...]. Downsampled to MAX_PTS points.
   const LEG_GAP_S = 1200;
+  // A long silence only means a new flight if the aircraft was low on either side of it (landed/took off unseen). High on both sides it is
+  // just a coverage hole (e.g. an ocean crossing) and the flight continues.
+  const lowAlt = p => p[3] === 'ground' || (typeof p[3] === 'number' && p[3] < 15000);
+  const gapBreak = (a, b) => b[0] - a[0] > LEG_GAP_S && (lowAlt(a) || lowAlt(b));
   const MAX_PTS = 500;
   function legOf(trace) {
     let i = trace.length - 1;
-    while (i > 0 && trace[i][3] !== 'ground' && !(trace[i][6] & 2) && trace[i][0] - trace[i - 1][0] <= LEG_GAP_S) i--;
+    while (i > 0 && trace[i][3] !== 'ground' && !(trace[i][6] & 2) && !gapBreak(trace[i - 1], trace[i])) i--;
     const pts = trace.slice(i).filter(p => typeof p[1] === 'number' && typeof p[2] === 'number').map(p => [p[1], p[2]]);
     const step = Math.max(1, Math.ceil(pts.length / MAX_PTS));
     return pts.filter((_, k) => k % step === 0 || k === pts.length - 1);
@@ -183,7 +187,7 @@
     const close = () => { if (cur) { out.push(cur); cur = null; } };
     for (const p of trace) {
       if (typeof p[1] !== 'number' || typeof p[2] !== 'number') continue;
-      if (prev && cur && (p[0] - prev[0] > LEG_GAP_S || (p[6] & 2))) close();
+      if (prev && cur && (gapBreak(prev, p) || (p[6] & 2))) close();
       const g = p[3] === 'ground', pt = [p[1], p[2], g ? 0 : p[3] || 0, base + p[0]];
       if (g) { if (cur) { cur.pts.push(pt); close(); } ground = pt; }
       else { if (!cur) cur = { pts: ground && p[0] - (ground[3] - base) <= LEG_GAP_S ? [ground] : [] }; cur.pts.push(pt); }

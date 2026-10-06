@@ -1,0 +1,170 @@
+// Extras on top of the map: emergency alerts, watchlist, today's flights, rain radar, plane spotter mode (logbook) and the language switch.
+// Loaded after renderer.js; it plugs into the hooks in the `X` object there.
+const hhmm = s => new Date(s * 1000).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' });
+const nearAp = (lat, lon) => { let b = '', m = 40; knownAps.forEach(a => { const d = km(lat, lon, a.lat, a.lon); if (d < m) { m = d; b = a.code; } }); return b; };
+const HEX6 = /^[0-9a-f]{6}$/i;
+
+/* ---------- emergencies + watchlist events (called after every position update) ---------- */
+const emgSeen = new Set(), wlState = new Map(); // wlState: id → { ground, t } (survives the aircraft leaving the map)
+X.event = f => {
+  if (live && isEmg(f) && !emgSeen.has(f.id + f.sq + f.emg)) { emgSeen.add(f.id + f.sq + f.emg); toast(`⚠ ${f.cs}: ${t(EMG[f.sq] || 'Emergency')} (${f.sq || f.emg})`); }
+  if (watch.has(f.id)) {
+    const st = wlState.get(f.id);
+    if (st && st.ground !== f.ground) toast(t(f.ground ? '{0} landed' : '{0} took off', f.cs));
+    wlState.set(f.id, { ground: f.ground, t: Date.now() });
+  }
+};
+X.arrive = f => { if (watch.has(f.id)) toast(t('{0} landed', f.cs)); }; // demo flights "land" when they reach their destination
+
+/* ---------- watchlist ---------- */
+const saveWatch = () => save('sky.watch', [...watch]);
+function toggleWatch(f) {
+  if (watch.has(f.id)) watch.delete(f.id); else { watch.set(f.id, { cs: f.cs, reg: f.ac?.reg || f.reg || '' }); wlState.set(f.id, { ground: f.ground, t: Date.now() }); toast(t('Watching {0}: you will be notified when it takes off or lands', f.cs)); }
+  saveWatch(); renderWatch(); renderCard(); pollWatch();
+}
+function renderWatch() {
+  const el = $('wls'); el.style.display = watch.size ? '' : 'none'; if (!watch.size) return;
+  el.innerHTML = `<div class="lbl">${t('Watchlist')}</div>` + [...watch].map(([id, w]) => {
+    const f = flights.get(id), st = wlState.get(id);
+    const s = f ? (f.ground ? t('on ground') : ft(f.alt)) : st ? t('last seen {0} min ago', Math.max(1, Math.round((Date.now() - st.t) / 60000))) : t('not seen yet');
+    return `<div class="wr" data-w="${esc(id)}"><b>${esc(w.cs)}${w.reg ? ' · ' + esc(w.reg) : ''}</b><span>${esc(s)}</span><button class="wx2" data-rm="${esc(id)}" title="${t('Remove')}">✕</button></div>`; }).join('');
+}
+$('wls').onclick = e => {
+  const rm = e.target.closest('[data-rm]'); if (rm) { watch.delete(rm.dataset.rm); saveWatch(); renderWatch(); if (selected) renderCard(); return; }
+  const r = e.target.closest('.wr'); if (!r) return;
+  if (flights.has(r.dataset.w)) select(r.dataset.w); else { toast(t('Not on the map right now')); pollWatch(); }
+};
+// Live: ask for the watched aircraft anywhere in the world (one request), not only those inside the visible area
+async function pollWatch() {
+  if (!live || !watch.size) return; const ids = [...watch.keys()].filter(id => HEX6.test(id)); if (!ids.length) return;
+  const r = await DATA.watch(ids); if (!r.ok || !live) return;
+  r.flights.forEach(upsert); redraw(); renderWatch();
+}
+setInterval(pollWatch, 45000); setInterval(renderWatch, 2000);
+
+/* ---------- today's flights of one aircraft ---------- */
+const legLayer = L.layerGroup().addTo(map);
+X.sel = () => legLayer.clearLayers();
+async function loadLegs(f) {
+  f.legs = 'loading'; if (f.id === selected) renderCard(true);
+  const r = await DATA.legs(f.id); f.legs = r.ok ? r.legs : 'err'; if (f.id === selected) renderCard(true);
+}
+function legsHtml(f) {
+  if (!live || !HEX6.test(f.id)) return '';
+  if (!f.legs) return `<button id="lgb" class="sm">${t("Today's flights")}</button>`;
+  if (f.legs === 'loading') return `<div class="rtx" style="margin-top:12px">${t('Loading…')}</div>`;
+  if (f.legs === 'err') return `<div class="rtx" style="margin-top:12px">${t("Couldn't load today's flights")}</div>`;
+  if (!f.legs.length) return `<div class="rtx" style="margin-top:12px">${t('No flights recorded today')}</div>`;
+  return `<div class="lbl" style="margin-top:14px">${t("Today's flights")}</div>` + f.legs.map((l, i) => ({ l, i })).reverse().map(({ l, i }) =>
+    `<div class="lg" data-i="${i}"><b>${esc(nearAp(...l.from) || '?')} → ${l.open ? t('in flight') : esc(nearAp(...l.to) || '?')}</b>`
+    + `<span>${hhmm(l.t0)}–${l.open ? t('now') : hhmm(l.t1)} · ${l.km.toLocaleString(LOC())} km · ${Math.round(l.maxAlt).toLocaleString(LOC())} ft</span></div>`).join('');
+}
+function drawLeg(f, i) {
+  const l = Array.isArray(f.legs) && f.legs[i]; if (!l) return; legLayer.clearLayers();
+  const line = L.polyline(unwrap(l.pts.map(p => [p[0], p[1]])), { color: '#4cd964', weight: 3.5, opacity: .95, dashArray: '2 8', lineCap: 'round', interactive: false }).addTo(legLayer);
+  map.fitBounds(line.getBounds().pad(.15), { maxZoom: 9 });
+}
+
+/* ---------- rain radar (RainViewer) ---------- */
+let radarLayer = null, radarT = 0;
+async function setRadar(on) {
+  $('bRd').classList.toggle('on', on);
+  if (!on) { radarLayer && radarLayer.remove(); radarLayer = null; clearInterval(radarT); return; }
+  const r = await DATA.radar(); if (!$('bRd').classList.contains('on')) return;
+  if (!r.ok) { toast(t('Radar unavailable')); $('bRd').classList.remove('on'); return; }
+  radarLayer && radarLayer.remove();
+  radarLayer = L.tileLayer(`${r.host}${r.path}/256/{z}/{x}/{y}/2/1_1.png`, { opacity: .6, zIndex: 5, maxNativeZoom: 7, maxZoom: 19, attribution: 'Radar &copy; RainViewer' }).addTo(map);
+  $('bRd').title = t('Rain radar') + ' · ' + new Date(r.time * 1000).toLocaleTimeString(LOC());
+  clearInterval(radarT); radarT = setInterval(() => setRadar(true), 600e3); // radar images update about every 10 minutes
+}
+$('bRd').onclick = () => setRadar(!radarLayer);
+
+/* ---------- plane spotter mode: logbook ---------- */
+let spot = LS('sky.spot', false), logb = LS('sky.log', []);
+const saveLog = () => save('sky.log', logb.slice(-5000));
+const seenReg = f => { const r = f.ac?.reg || f.reg; return logb.some(e => e.id === f.id || (r && e.reg === r)); };
+const seenType = f => { const c = acCode(f); return !c || logb.some(e => e.icao === c); };
+const loggedNow = f => logb.some(e => e.id === f.id && Date.now() - e.t < 3600e3);
+function setSpot(on) {
+  spot = on; save('sky.spot', on); $('mSpot').classList.toggle('on', on); $('mNorm').classList.toggle('on', !on); renderSpt(); if (selected) renderCard(true);
+}
+$('mSpot').onclick = () => setSpot(true); $('mNorm').onclick = () => setSpot(false);
+function logSighting(f) {
+  if (loggedNow(f)) return toast(t('Already logged'));
+  const ac = f.ac || {}, fresh = [!seenReg(f) && t('new aircraft'), !seenType(f) && t('new type')].filter(Boolean);
+  logb.push({ id: f.id, cs: f.cs, reg: ac.reg || f.reg || '', type: ac.type || f.type || '', icao: acCode(f), air: f.route?.airline || ac.owner || '', c: ac.country || '',
+    rt: f.route ? f.route.org.code + '→' + f.route.dst.code : '', alt: f.ground ? 0 : Math.round(f.alt * 3.281), lat: +f.lat.toFixed(3), lon: +f.lon.toFixed(3), t: Date.now() });
+  saveLog(); renderSpt(); renderCard(); toast(t('Logged {0}', f.cs) + (fresh.length ? ' · ' + fresh.join(', ') : ''));
+}
+const stats = () => ({ n: new Set(logb.map(e => e.id)).size, ty: new Set(logb.map(e => e.icao).filter(Boolean)).size, al: new Set(logb.map(e => e.air).filter(Boolean)).size });
+function renderSpt() {
+  const el = $('spt'); el.style.display = spot ? '' : 'none'; if (!spot) return; const s = stats();
+  el.innerHTML = `<div class="lbl">${t('Logbook')}</div><div class="sg"><div><b>${s.n}</b><span>${t('aircraft')}</span></div><div><b>${s.ty}</b><span>${t('types')}</span></div><div><b>${s.al}</b><span>${t('airlines')}</span></div></div>`
+    + `<div class="btns"><button id="lbo">${t('Open logbook')}</button><button id="lbe">${t('Export CSV')}</button></div>`;
+}
+$('spt').onclick = e => { if (e.target.id === 'lbo') openLog(); else if (e.target.id === 'lbe') exportCsv(); };
+function exportCsv() {
+  if (!logb.length) return toast(t('The logbook is empty'));
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"', cols = ['t', 'cs', 'reg', 'id', 'type', 'icao', 'air', 'rt', 'alt', 'lat', 'lon'];
+  const csv = ['time,callsign,registration,icao24,type,type_code,airline,route,altitude_ft,lat,lon', ...logb.map(e => cols.map(c => q(c === 't' ? new Date(e.t).toISOString() : e[c])).join(','))].join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'skytrack-logbook.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+function openLog() {
+  const s = stats();
+  $('lb').innerHTML = `<div class="bx"><div class="hd"><h2>${t('Logbook')}</h2><button class="bt2" data-a="csv">${t('Export CSV')}</button><button class="ib" data-a="x" title="${t('Close')}">✕</button></div>`
+    + `<div class="sg" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;text-align:center"><div><b style="font:700 20px ui-monospace,monospace;color:var(--ac)">${s.n}</b><br><small>${t('aircraft')}</small></div>`
+    + `<div><b style="font:700 20px ui-monospace,monospace;color:var(--ac)">${s.ty}</b><br><small>${t('types')}</small></div><div><b style="font:700 20px ui-monospace,monospace;color:var(--ac)">${s.al}</b><br><small>${t('airlines')}</small></div></div>`
+    + `<input id="lbq" placeholder="${t('Search the logbook…')}" autocomplete="off"><div class="ls" id="lbl"></div></div>`;
+  $('lb').classList.add('show'); renderLogList(); $('lbq').oninput = renderLogList;
+}
+function renderLogList() {
+  const q = ($('lbq')?.value || '').trim().toLowerCase();
+  const rows = logb.filter(e => !q || [e.cs, e.reg, e.type, e.icao, e.air, e.rt].join(' ').toLowerCase().includes(q)).slice(-300).reverse();
+  $('lbl').innerHTML = rows.length ? rows.map(e => `<div class="le"><span>${new Date(e.t).toLocaleString(LOC(), { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>`
+    + `<div><b>${esc(e.cs)}</b> <span>${esc(e.reg)}</span></div><div>${esc(e.type || e.icao || '—')}<br><span>${esc([e.air, e.rt].filter(Boolean).join(' · '))}</span></div>`
+    + `<button class="wx2" data-del="${e.t}" title="${t('Remove')}" style="background:transparent;border:0;color:var(--mut);cursor:pointer">✕</button></div>`).join('')
+    : `<div class="rtx" style="padding:14px 4px">${t(logb.length ? 'Nothing matches' : 'The logbook is empty. Open a flight and press “Log sighting”.')}</div>`;
+}
+$('lb').onclick = e => {
+  if (e.target.id === 'lb' || e.target.dataset.a === 'x') return $('lb').classList.remove('show');
+  if (e.target.dataset.a === 'csv') return exportCsv();
+  const d = e.target.closest('[data-del]'); if (d) { logb = logb.filter(x => String(x.t) !== d.dataset.del); saveLog(); renderLogList(); renderSpt(); }
+};
+
+/* ---------- card parts ---------- */
+X.top = f => {
+  const c = [];
+  if (isEmg(f)) c.push(`<span class="chip emg">⚠ ${esc(t(EMG[f.sq] || 'Emergency'))} · ${esc(f.sq || f.emg)}</span>`);
+  if (f.mil) c.push(`<span class="chip mil">${t('MILITARY')}</span>`);
+  if (spot) { if (!seenReg(f) && (f.ac?.reg || f.reg)) c.push(`<span class="chip new">${t('NEW AIRCRAFT')}</span>`); if (!seenType(f)) c.push(`<span class="chip new">${t('NEW TYPE')}</span>`); }
+  return c.length ? `<div class="bd">${c.join('')}</div>` : '';
+};
+X.rows = (f, rows) => {
+  const at = rows.findIndex(r => r[0] === 'Position'), add = [];
+  if (spot) add.push(['ICAO24', f.id.toUpperCase()], ['Squawk', f.sq || '—'], ['Category', f.cat || '—'], ...(f.ac?.country ? [['Country', f.ac.country]] : []));
+  else if (isEmg(f)) add.push(['Squawk', f.sq || '—']);
+  rows.splice(at < 0 ? rows.length : at, 0, ...add);
+};
+X.bottom = f => legsHtml(f);
+X.bottom2 = f => spot ? `<button id="slog" class="sm"></button>` : '';
+X.sync = f => { $('wt').textContent = watch.has(f.id) ? t('🔔 Watching') : t('🔔 Watch'); if ($('slog')) $('slog').textContent = loggedNow(f) ? t('✓ Logged') : t('📓 Log sighting'); };
+X.click = e => {
+  const f = flights.get(selected); if (!f) return false;
+  if (e.target.id === 'wt') { toggleWatch(f); return true; }
+  if (e.target.id === 'slog') { logSighting(f); return true; }
+  if (e.target.id === 'lgb') { loadLegs(f); return true; }
+  const lg = e.target.closest('.lg'); if (lg) { drawLeg(f, +lg.dataset.i); return true; }
+  return false;
+};
+
+/* ---------- language ---------- */
+function setLang(l) {
+  LANG = l; save('sky.lang', l); applyLang(); $('lang').textContent = l === 'tr' ? 'EN' : 'TR';
+  if (!live) $('st').textContent = t('demo (30x speed)');
+  renderSpt(); renderWatch(); renderList(); applyF(); if (selected) renderCard(true); if (apSel) renderAp();
+  if ($('lb').classList.contains('show')) openLog();
+}
+$('lang').onclick = () => setLang(LANG === 'tr' ? 'en' : 'tr');
+$('lang').textContent = LANG === 'tr' ? 'EN' : 'TR';
+
+setSpot(spot); renderWatch(); renderSpt(); if (LANG === 'tr') setLang('tr');

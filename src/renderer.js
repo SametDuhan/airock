@@ -67,7 +67,11 @@ const zoneR = () => zone?.r || ZONE_R;
 const APO = AP.map(a => ({ code: a[0], name: a[1], lat: a[2], lon: a[3] }));
 const { R, brg, km, gc, unwrap, nearLon } = window.SkyGeo;
 const flights = new Map(), routeCache = new Map(), acCache = new Map(), picCache = new Map(), fav = new Set(LS('sky.fav', [])), hist = [],
-flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false, ground: true, dep: '', arr: '', type: '', air: '' };
+watch = new Map(LS('sky.watch', [])), flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false, ground: true, mil: false, dep: '', arr: '', type: '', air: '' };
+// Hooks filled in by extras.js (watchlist, today's flights, spotter logbook): they keep this file focused on the map itself
+const X = { top: () => '', bottom: () => '', bottom2: () => '', rows: () => {}, sync: () => {}, click: () => false, event: () => {}, arrive: () => {}, sel: () => {} };
+const EMG = { 7500: 'Hijacking', 7600: 'Radio failure', 7700: 'General emergency' }; // squawk codes
+const isEmg = f => !!f.emg || f.sq in EMG;
 let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
 
 /* ---------- appearance: altitude color + filter ---------- */
@@ -82,7 +86,7 @@ const typeIs = (f, t) => { const c = acCode(f); return c === t || c.startsWith(t
 const airCode = f => /^[A-Z]{3}(?=\d)/.exec(f.cs.toUpperCase())?.[0] || '';
 const airIs = (f, a) => { const c = airCode(f), n = (f.route?.airline || AIRLINE[c]?.[0] || '').toUpperCase();
   return c === a || (f.route?.airlineIata || '').toUpperCase() === a || (a.length > 2 && n.includes(a)); };
-const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (!flt.fav || fav.has(f.id))
+const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (!flt.fav || fav.has(f.id)) && (!flt.mil || f.mil)
   && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)) && (!flt.type || typeIs(f, flt.type)) && (!flt.air || airIs(f, flt.air)); };
 function toast(msg) {
   const d = document.createElement('div'); d.className = 'tm'; d.textContent = msg; $('toast').appendChild(d); setTimeout(() => d.remove(), 4000);
@@ -113,11 +117,18 @@ const PlaneLayer = L.Layer.extend({
       const [lat, lon, hdg] = f.rp || [f.lat, f.lon, f.hdg], p = map.latLngToContainerPoint([lat, nearLon(lon, cLon)]); // nearest world copy at the date line
       if (p.x < -20 || p.y < -20 || p.x > s.x + 20 || p.y > s.y + 20) return;
       f._p = p; f._h = hdg; if (f.id === selected) { sel = f; return; }
-      icon(ctx, p, hdg, (f.ground ? 16 : 24) * k, f.ground ? '#9aa0a6' : color(f.alt));
+      icon(ctx, p, hdg, (f.ground ? 16 : 24) * k, f.ground ? '#9aa0a6' : color(f.alt)); rings(ctx, f, p, (f.ground ? 16 : 24) * k);
     });
-    if (sel) { ctx.shadowColor = '#f2c230'; ctx.shadowBlur = 12; icon(ctx, sel._p, sel._h, 30, '#fff'); ctx.shadowBlur = 0; }
+    if (sel) { ctx.shadowColor = '#f2c230'; ctx.shadowBlur = 12; icon(ctx, sel._p, sel._h, 30, '#fff'); ctx.shadowBlur = 0; rings(ctx, sel, sel._p, 30); }
   }
 });
+// Emergency (squawk 7500/7600/7700): blinking red ring. Military: dashed green ring.
+function rings(ctx, f, p, size) {
+  if (!isEmg(f) && !f.mil) return; ctx.save();
+  if (isEmg(f)) { ctx.strokeStyle = '#ff3b30'; ctx.lineWidth = 2.5; ctx.globalAlpha = (Date.now() / 700 | 0) % 2 ? .35 : 1; ctx.beginPath(); ctx.arc(p.x, p.y, size * .85, 0, 7); ctx.stroke(); }
+  else { ctx.strokeStyle = '#8bc34a'; ctx.lineWidth = 1.8; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.arc(p.x, p.y, size * .8, 0, 7); ctx.stroke(); }
+  ctx.restore();
+}
 function icon(ctx, p, hdg, size, fill) {
   ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(hdg * R); ctx.scale(size / 24, size / 24); ctx.translate(-12, -12);
   ctx.fillStyle = fill; ctx.fill(PLANE); ctx.stroke(PLANE); ctx.restore();
@@ -129,7 +140,7 @@ map.on('mousemove', e => { const f = hit(e.containerPoint), h = $('hov');
   map.getContainer().style.cursor = f ? 'var(--ptr)' : '';
   if (!f) { h.style.display = 'none'; return; }
   h.style.display = 'block'; h.style.left = f._p.x + 16 + 'px'; h.style.top = f._p.y - 10 + 'px';
-  h.textContent = `${f.cs}${f.route ? ' · ' + f.route.org.code + '→' + f.route.dst.code : ''} · ${f.ground ? 'on ground' : Math.round(f.alt * 3.281 / 100) * 100 + ' ft'}`; });
+  h.textContent = `${f.cs}${f.route ? ' · ' + f.route.org.code + '→' + f.route.dst.code : ''} · ${f.ground ? t('on ground') : Math.round(f.alt * 3.281 / 100) * 100 + ' ft'}`; });
 map.on('mouseout', () => $('hov').style.display = 'none');
 
 /* ---------- flight data ---------- */
@@ -146,11 +157,14 @@ function seedDemo() {
       route: demoRoute(al, o, d), rs: 'ok', as: 'ok', ac: { type: ty[1], icaoType: ty[0], reg: 'TC-' + L3() + L3() + L3(), owner: AIRLINE[al][0], country: '' },
       tr: path.slice(Math.max(0, k - 20), k + 1) }); // demo: trail of the last ~20 points
   }
+  // so the emergency and military markers can be seen in demo mode too
+  const e = flights.get('d4'); if (e) { e.sq = '7700'; e.emg = 'general'; }
+  const m = flights.get('d9'); if (m) { m.mil = true; m.cs = 'RCH452'; m.sq = '4601'; m.route.airline = 'US Air Force'; m.route.airlineIata = ''; m.ac.type = 'Boeing C-17A Globemaster III'; m.ac.icaoType = 'C17'; m.ac.owner = 'US Air Force'; }
 }
 function upsert(d) {
   let f = flights.get(d.id);
   if (!f) { f = { tr: [], gone: replay }; flights.set(d.id, f); } // an aircraft that arrives during replay wasn't in that frame
-  Object.assign(f, d); return f;
+  Object.assign(f, d); X.event(f); return f;
 }
 function clearAll() { flights.clear(); hist.length = 0; select(null); redraw(); }
 
@@ -213,9 +227,9 @@ async function loadPhotos(f) {
 }
 const photoHtml = f => { const ac = f.ac || {}, pics = f.pics || (ac.thumb ? [{ src: ac.thumb, link: ac.photo || ac.thumb, by: '' }] : []); if (!pics.length) return '';
   const i = (f.pi || 0) % pics.length, p = pics[i], nav = pics.length > 1;
-  return `<div class="ph"><a href="${esc(p.link || p.src)}" target="_blank" title="Open photo"><img src="${esc(p.src)}" alt="" onerror="this.parentNode.parentNode.remove()"></a>`
-    + (nav ? `<button class="pa l" id="pp" title="Previous photo">‹</button><button class="pa r" id="pn" title="Next photo">›</button><span class="pc">${i + 1} / ${pics.length}</span>` : '')
-    + (p.by ? `<span class="by" title="Photo: ${esc(p.by)}">© ${esc(p.by)}</span>` : '') + `</div>`; };
+  return `<div class="ph"><a href="${esc(p.link || p.src)}" target="_blank" title="${t('Open photo')}"><img src="${esc(p.src)}" alt="" onerror="this.parentNode.parentNode.remove()"></a>`
+    + (nav ? `<button class="pa l" id="pp" title="${t('Previous photo')}">‹</button><button class="pa r" id="pn" title="${t('Next photo')}">›</button><span class="pc">${i + 1} / ${pics.length}</span>` : '')
+    + (p.by ? `<span class="by" title="${t('Photo')}: ${esc(p.by)}">© ${esc(p.by)}</span>` : '') + `</div>`; };
 function nearest(f) { let b = null, m = 1e9; AP.forEach(a => { const d = km(f.lat, f.lon, a[2], a[3]); if (d < m) { m = d; b = a; } }); return `${b[0]} · ${Math.round(m)} km`; }
 // Trail: positions recorded every 5 s since the app first saw this aircraft
 const drawTrail = f => trail.setLatLngs(f && !f.route ? unwrap([...f.tr, [f.lat, f.lon]].map(p => [p[0], p[1]])) : []); // the blue route replaces the trail once the route is known
@@ -225,12 +239,12 @@ setInterval(() => {
   tick++;
   flights.forEach(f => {
     if (!live && f.route) { const d = f.route.dst;
-      if (km(f.lat, f.lon, d.lat, d.lon) < 15) { f.route = demoRoute(f.cs.slice(0, 3), d, pickDst(d)); f.tr = []; if (f.id === selected) { if (!replay) drawRoute(f); renderCard(true); } }
+      if (km(f.lat, f.lon, d.lat, d.lon) < 15) { X.arrive(f); f.route = demoRoute(f.cs.slice(0, 3), d, pickDst(d)); f.tr = []; if (f.id === selected) { if (!replay) drawRoute(f); renderCard(true); } }
       f.hdg = brg(f.lat, f.lon, f.route.dst.lat, f.route.dst.lon); }
     const dist = f.spd * ts, h = f.hdg * R;
     f.lat += Math.cos(h) * dist / 111320; f.lon += Math.sin(h) * dist / (111320 * Math.cos(f.lat * R));
     if (f.lon > 180) f.lon -= 360; else if (f.lon < -180) f.lon += 360;
-    if (zone) { const inn = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); if (inn && (f.in === false || (f.in === undefined && tick > 1))) toast(`${f.cs} entered the alert zone`); f.in = inn; }
+    if (zone) { const inn = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); if (inn && (f.in === false || (f.in === undefined && tick > 1))) toast(t('{0} entered the alert zone', f.cs)); f.in = inn; }
     if (tick % 5 === 0) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 360) f.tr.shift(); } // each aircraft's last ~30 min trail
   });
   const s = flights.get(selected); if (s && !replay) { drawTrail(s); if (s.route) { const p = routePts(s); setRoute(p.done, p.rest); } if (tick % 30 === 0) loadTrace(s); }
@@ -254,23 +268,23 @@ async function poll(force) {
   if (!force && fetchedBox && fetchedBox.contains(v) && Date.now() - fetchedAt < LIVE_MS) return;
   if (!force && Date.now() - lastReq < 3000) return; lastReq = Date.now(); // at least 3 s between pan-triggered requests to stay under the rate limit
   const b = v.pad(.15), id = ++reqId, cl = (x, m) => Math.max(-m, Math.min(m, x)).toFixed(2);
-  fetchedBox = b; fetchedAt = Date.now(); $('st').textContent = 'loading…';
+  fetchedBox = b; fetchedAt = Date.now(); $('st').textContent = t('loading…');
   const r = await DATA.flights({ s: cl(b.getSouth(), 85), n: cl(b.getNorth(), 85), w: cl(b.getWest(), 180), e: cl(b.getEast(), 180) });
   if (!live || id !== reqId) return; // the map changed again in the meantime: discard the stale response
-  if (!r.ok) { fetchedBox = null; $('st').textContent = 'error: ' + r.error; return; }
+  if (!r.ok) { fetchedBox = null; $('st').textContent = t('error') + ': ' + r.error; return; }
   // If the source covered only part of the area (adsb.lol, wide view), count only the covered area as "fetched"; otherwise edges left empty won't load when panning
   if (r.covered) fetchedBox = L.latLngBounds([r.covered.s, r.covered.w], [r.covered.n, r.covered.e]);
   const seen = new Set(r.flights.map(d => d.id));
-  flights.forEach((f, id) => { if (!seen.has(id)) { flights.delete(id); if (selected === id) select(null); } });
+  flights.forEach((f, id) => { if (!seen.has(id) && !watch.has(id)) { flights.delete(id); if (selected === id) select(null); } });
   r.flights.forEach(upsert); redraw();
-  $('st').textContent = `${r.src} · last updated ${new Date().toLocaleTimeString('en-US')}${r.partial ? ' · wide view: center only, zoom in' : ''}`;
+  $('st').textContent = `${r.src} · ${t('last updated')} ${new Date().toLocaleTimeString(LOC())}${r.partial ? ' · ' + t('wide view: center only, zoom in') : ''}`;
   pumpRoutes();
 }
 setInterval(() => poll(true), LIVE_MS);
 map.on('moveend', () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => { poll(); pumpRoutes(); }, 400); }); // when zooming/panning ends, request the new area right away
 function setMode(l) {
   live = l; ts = l ? 1 : 30; exitReplay(); $('mLive').classList.toggle('on', l); $('mDemo').classList.toggle('on', !l); clearAll(); fetchedBox = null;
-  if (l) poll(true); else { seedDemo(); $('st').textContent = 'demo (30x speed)'; }
+  if (l) poll(true); else { seedDemo(); $('st').textContent = t('demo (30x speed)'); }
   redraw();
 }
 $('mDemo').onclick = () => setMode(false); $('mLive').onclick = () => setMode(true);
@@ -294,7 +308,8 @@ function openAp(a) {
 function closeAp() { apSel = null; $('apc').classList.remove('show'); }
 async function loadAp(s) {
   let e = apCache.get(s.code);
-  if (!e || Date.now() - e.t > 600e3) { const r = await DATA.airport(s.lat, s.lon); e = r.ok ? { v: r, t: Date.now() } : null; if (e) apCache.set(s.code, e); }
+  if (!e || Date.now() - e.t > 600e3) { const [r, m] = await Promise.all([DATA.airport(s.lat, s.lon), DATA.metar(s.lat, s.lon)]);
+    e = r.ok ? { v: { ...r, metar: m.ok ? m : null }, t: Date.now() } : null; if (e) apCache.set(s.code, e); }
   if (apSel !== s) return; s.info = e?.v; s.err = !e; renderAp();
 }
 function apFlights(s, k) { // k: 'dst' (arrivals) | 'org' (departures)
@@ -302,22 +317,24 @@ function apFlights(s, k) { // k: 'dst' (arrivals) | 'org' (departures)
 }
 function apRows(s) {
   const arr = s.tab === 'arr', k = arr ? 'dst' : 'org', o = arr ? 'org' : 'dst', list = apFlights(s, k);
-  if (!list.length) return `<div class="none">${live && !flights.size ? 'No aircraft loaded yet' : 'No ' + (arr ? 'arrivals' : 'departures') + ' found nearby'}</div>`;
+  if (!list.length) return `<div class="none">${live && !flights.size ? t('No aircraft loaded yet') : t(arr ? 'No arrivals found nearby' : 'No departures found nearby')}</div>`;
   return list.slice(0, 40).map(({ f, d }) => {
-    const st = f.ground ? (arr && d < 25 ? 'landed' : 'on ground') : `${Math.round(d)} km${arr && f.spd > 30 ? ' · ~' + eta(d / (f.spd * 3.6)) : ''}`;
+    const st = f.ground ? (arr && d < 25 ? t('landed') : t('on ground')) : `${Math.round(d)} km${arr && f.spd > 30 ? ' · ~' + eta(d / (f.spd * 3.6)) : ''}`;
     return `<div class="row" data-id="${esc(f.id)}"><b>${esc(f.cs)}</b><span>${esc(f.route[o].code)} · ${st}</span></div>`; }).join('');
 }
 function renderAp() {
   const s = apSel; if (!s) return; const i = s.info, w = i?.weather, p = i?.place, x = w && (WX[w.code] || ['—', '']);
-  const place = p ? [p.city, p.country].filter(Boolean).join(', ') : s.err ? 'Couldn\'t load airport info' : 'Loading…';
-  const ph = i?.photo ? `<div class="ph"><a href="${esc(i.photo.link || i.photo.src)}" target="_blank" title="Open on Wikipedia"><img src="${esc(i.photo.src)}" alt="" onerror="this.parentNode.parentNode.remove()"></a><span class="by">Wikipedia</span></div>` : '';
-  const wx = w ? `<div class="wx"><span class="i">${x[1]}</span><div class="d">${x[0]}<br><small>Feels like ${Math.round(w.feels)}°C</small></div><span class="t">${Math.round(w.temp)}°C</span></div>`
-    + `<div class="wg"><div><span>Wind</span><b>${Math.round(w.wind)} kt ${Math.round(w.dir)}°</b></div><div><span>Gusts</span><b>${Math.round(w.gust)} kt</b></div>`
-    + `<div><span>Humidity</span><b>${Math.round(w.hum)}%</b></div><div><span>Pressure</span><b>${Math.round(w.pres)} hPa</b></div>`
-    + `<div><span>Visibility</span><b>${w.vis == null ? '—' : w.vis >= 10000 ? (w.vis / 1000).toFixed(0) + ' km' : (w.vis / 1000).toFixed(1) + ' km'}</b></div></div>`
-    : `<div class="rtx" style="margin-top:12px">${s.err ? 'Weather unavailable' : 'Loading weather…'}</div>`;
-  $('apc').innerHTML = `<div class="ch"><div class="cn"><h2>${esc(s.code)}</h2><small>${esc(s.name)}</small><br><small>${esc(place)}</small></div><button id="ax" class="ib" title="Close">✕</button></div>`
-    + `${ph}${wx}<div class="tabs"><button data-t="arr" class="${s.tab === 'arr' ? 'on' : ''}">Arrivals</button><button data-t="dep" class="${s.tab === 'dep' ? 'on' : ''}">Departures</button></div><div id="apr">${apRows(s)}</div>`;
+  const place = p ? [p.city, p.country].filter(Boolean).join(', ') : t(s.err ? 'Couldn\'t load airport info' : 'Loading…');
+  const ph = i?.photo ? `<div class="ph"><a href="${esc(i.photo.link || i.photo.src)}" target="_blank" title="${t('Open on Wikipedia')}"><img src="${esc(i.photo.src)}" alt="" onerror="this.parentNode.parentNode.remove()"></a><span class="by">Wikipedia</span></div>` : '';
+  const wx = w ? `<div class="wx"><span class="i">${x[1]}</span><div class="d">${t(x[0])}<br><small>${t('Feels like')} ${Math.round(w.feels)}°C</small></div><span class="t">${Math.round(w.temp)}°C</span></div>`
+    + `<div class="wg"><div><span>${t('Wind')}</span><b>${Math.round(w.wind)} kt ${Math.round(w.dir)}°</b></div><div><span>${t('Gusts')}</span><b>${Math.round(w.gust)} kt</b></div>`
+    + `<div><span>${t('Humidity')}</span><b>${Math.round(w.hum)}%</b></div><div><span>${t('Pressure')}</span><b>${Math.round(w.pres)} hPa</b></div>`
+    + `<div><span>${t('Visibility')}</span><b>${w.vis == null ? '—' : w.vis >= 10000 ? (w.vis / 1000).toFixed(0) + ' km' : (w.vis / 1000).toFixed(1) + ' km'}</b></div></div>`
+    : `<div class="rtx" style="margin-top:12px">${t(s.err ? 'Weather unavailable' : 'Loading weather…')}</div>`;
+  const mt = i?.metar?.metar, metar = mt ? `<div class="mt"><span class="fc ${esc(mt.cat)}">${esc(mt.cat || 'METAR')}</span>${esc(mt.icao)}${mt.dist > 15 ? ' · ' + mt.dist + ' km' : ''}<code>${esc(mt.raw)}</code>`
+    + (i.metar.taf ? `<details><summary>TAF</summary><code>${esc(i.metar.taf)}</code></details>` : '') + `</div>` : '';
+  $('apc').innerHTML = `<div class="ch"><div class="cn"><h2>${esc(s.code)}</h2><small>${esc(s.name)}</small><br><small>${esc(place)}</small></div><button id="ax" class="ib" title="${t('Close')}">✕</button></div>`
+    + `${ph}${wx}${metar}<div class="tabs"><button data-t="arr" class="${s.tab === 'arr' ? 'on' : ''}">${t('Arrivals')}</button><button data-t="dep" class="${s.tab === 'dep' ? 'on' : ''}">${t('Departures')}</button></div><div id="apr">${apRows(s)}</div>`;
 }
 $('apc').onclick = e => {
   if (e.target.id === 'ax') return closeAp();
@@ -337,7 +354,7 @@ setInterval(() => { if (apSel) { pumpAp(); if ($('apr')) $('apr').innerHTML = ap
 /* ---------- alert zone ---------- */
 function drawZone() { zoneLayer && zoneLayer.remove(); zoneLayer = null; $('bZ').classList.toggle('on', !!zone);
   if (zone) zoneLayer = L.circle([zone.lat, zone.lon], { radius: zoneR() * 1000, color: '#ff6b5e', weight: 2, dashArray: '6 6', fillOpacity: .07, interactive: false }).addTo(map); }
-$('bZ').onclick = () => { if (zone) { zone = null; save('sky.zone', null); drawZone(); } else { placing = true; toast('Click the map to set the zone center'); } };
+$('bZ').onclick = () => { if (zone) { zone = null; save('sky.zone', null); drawZone(); } else { placing = true; toast(t('Click the map to set the zone center')); } };
 $('zR').value = zoneR();
 $('zR').onchange = function () { const r = Math.max(3, Math.min(500, Math.round(+this.value) || ZONE_R)); this.value = r; if (zone) { zone.r = r; save('sky.zone', zone); initIn(); drawZone(); } else zoneRDef = r; };
 let zoneRDef = ZONE_R; // radius chosen while there's no zone; applied to the next zone
@@ -346,22 +363,22 @@ const initIn = () => flights.forEach(f => { if (zone) f.in = km(f.lat, f.lon, zo
 drawZone();
 
 /* ---------- replay history ---------- */
-function exitReplay() { if (!replay) return; replay = false; $('rpLive').classList.add('on'); $('rpT').textContent = 'history';
+function exitReplay() { if (!replay) return; replay = false; $('rpLive').classList.add('on'); $('rpT').textContent = t('history');
   flights.forEach(f => { f.gone = false; f.rp = null; }); $('rpS').value = $('rpS').max; const s = flights.get(selected); drawRoute(s); drawTrail(s); redraw(); }
 $('rpS').oninput = function () { const s = hist[+this.value]; if (!s) return; replay = true; $('rpLive').classList.remove('on');
   const m = new Map(s.ids.map((id, i) => [id, i * 3])); trail.setLatLngs([]); drawRoute(null);
   flights.forEach(f => { const o = m.get(f.id); f.gone = o === undefined; f.rp = o === undefined ? null : [s.buf[o], s.buf[o + 1], s.buf[o + 2]]; }); redraw();
-  $('rpT').textContent = new Date(s.t).toLocaleTimeString('en-US'); };
+  $('rpT').textContent = new Date(s.t).toLocaleTimeString(LOC()); };
 $('rpLive').onclick = exitReplay;
 
 /* ---------- selection, favorites, panel, list ---------- */
 function select(id) {
-  closeAp(); selected = id; const f = flights.get(id);
+  closeAp(); X.sel(); selected = id; const f = flights.get(id);
   if (f) { map.panTo(f.rp ? [f.rp[0], f.rp[1]] : [f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); loadTrace(f); } }
   if (replay) { drawRoute(null); trail.setLatLngs([]); } else { drawRoute(f); drawTrail(f); } redraw(); // don't mix a trail/route drawn for the live position into replay
   $('card').classList.toggle('show', !!f); if (f) renderCard(true); renderList();
 }
-const ft = m => Math.round(m * 3.281).toLocaleString('en-US') + ' ft';
+const ft = m => Math.round(m * 3.281).toLocaleString(LOC()) + ' ft';
 function renderCard(full) {
   const f = flights.get(selected); if (!f) return;
   const ac = f.ac || {};
@@ -369,28 +386,30 @@ function renderCard(full) {
     const iata = f.route?.airlineIata, sub = f.route?.airline || ac.owner || ac.country || f.country || '';
     const photo = photoHtml(f);
     $('card').innerHTML = `<div class="ch">${iata ? `<img class="logo" src="https://images.kiwi.com/airlines/64/${esc(iata)}.png" alt="" onerror="this.remove()">` : ''}`
-      + `<div class="cn"><h2>${esc(f.cs)}</h2><small>${esc(sub)}</small></div><button id="cx" class="ib" title="Close">✕</button></div>${photo}${routeHtml(f)}<div id="kvs"></div><button id="fv"></button>`;
+      + `<div class="cn"><h2>${esc(f.cs)}</h2><small>${esc(sub)}</small></div><button id="cx" class="ib" title="${t('Close')}">✕</button></div>${X.top(f)}${photo}${routeHtml(f)}<div id="kvs"></div>${X.bottom(f)}<div class="bt"><button id="fv"></button><button id="wt"></button></div>${X.bottom2(f)}`;
   }
   if (f.route && $('pgb')) { const { org, dst } = f.route, a = km(org.lat, org.lon, f.lat, f.lon), b = km(f.lat, f.lon, dst.lat, dst.lon);
     $('pgb').style.width = Math.min(100, a / (a + b) * 100).toFixed(1) + '%';
-    $('pgt').textContent = `${Math.round(a)} km flown · ${Math.round(b)} km to go${f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) : ''}`; }
+    $('pgt').textContent = t('{0} km flown · {1} km to go', Math.round(a), Math.round(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) : ''); }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
-    ['Altitude', f.ground ? 'on ground' : ft(f.alt)], ['Speed', Math.round(f.spd * 1.944) + ' kt'], ['Heading', Math.round(f.hdg) + '°'],
+    ['Altitude', f.ground ? t('on ground') : ft(f.alt)], ['Speed', Math.round(f.spd * 1.944) + ' kt'], ['Heading', Math.round(f.hdg) + '°'],
     ['Vertical speed', Math.round(f.vr * 196.85) + ' ft/min'], ['Nearest airport', nearest(f)], ['Position', f.lat.toFixed(2) + ', ' + f.lon.toFixed(2)]];
   if (ac.owner && ac.owner !== f.route?.airline) rows.splice(2, 0, ['Owner', ac.owner]);
-  $('kvs').innerHTML = rows.map(r => `<div class="kv"><span>${r[0]}</span><b>${esc(r[1])}</b></div>`).join('');
-  $('fv').textContent = fav.has(f.id) ? '★ Favorited' : '☆ Favorite';
+  X.rows(f, rows);
+  $('kvs').innerHTML = rows.map(r => `<div class="kv"><span>${t(r[0])}</span><b>${esc(r[1])}</b></div>`).join('');
+  $('fv').textContent = fav.has(f.id) ? t('★ Favorited') : t('☆ Favorite'); X.sync(f);
 }
-const eta = h => h < 1 ? Math.round(h * 60) + ' min' : Math.floor(h) + ' h ' + Math.round(h % 1 * 60) + ' min';
+const eta = h => h < 1 ? Math.round(h * 60) + t(' min') : Math.floor(h) + t(' h ') + Math.round(h % 1 * 60) + t(' min');
 function routeHtml(f) {
-  if (!f.route) return `<div class="rtx" style="margin-top:12px">${{ loading: 'Loading route info…', none: 'Route info not found', err: 'Couldn\'t load route info' }[f.rs] || ''}</div>`;
+  if (!f.route) return `<div class="rtx" style="margin-top:12px">${t({ loading: 'Loading route info…', none: 'Route info not found', err: 'Couldn\'t load route info' }[f.rs] || '')}</div>`;
   const { org, dst } = f.route;
   return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(org.name)}</small></div><span>✈</span>`
     + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(dst.name)}</small></div></div><div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
 }
 $('card').onclick = e => {
   if (e.target.id === 'cx') return select(null);
+  if (X.click(e)) return;
   if (e.target.id === 'pp' || e.target.id === 'pn') { const f = flights.get(selected), n = f?.pics?.length; if (!n) return;
     f.pi = ((f.pi || 0) + (e.target.id === 'pn' ? 1 : n - 1)) % n; return renderCard(true); }
   if (e.target.id !== 'fv') return;
@@ -401,13 +420,14 @@ function renderList() {
   const arr = [...flights.values()].filter(f => vis(f) && (f.cs.toLowerCase().includes(q) || (f.reg || '').toLowerCase().includes(q))).sort((a, b) => (a.ground - b.ground) || (/^[A-Z]{2,3}\d/.test(b.cs) - /^[A-Z]{2,3}\d/.test(a.cs)) || a.cs.localeCompare(b.cs)).slice(0, 200); // airborne flights with callsigns first
   for (const f of flights.values()) { const c = acCode(f); if (c && !knownTypes.has(c)) { knownTypes.add(c); const o = document.createElement('option'); o.value = c; if (f.ac?.type) o.label = f.ac.type; $('tpList').appendChild(o); } }
   for (const f of flights.values()) { const c = airCode(f); if (c) addAir(c, f.route?.airline); }
-  $('meta').textContent = `${arr.length} / ${flights.size} FLIGHTS`;
+  const emgN = [...flights.values()].filter(f => !f.gone && isEmg(f)).length;
+  $('meta').textContent = `${arr.length} / ${flights.size} ${t('FLIGHTS')}` + (emgN ? ` · ⚠ ${emgN}` : '');
   let st = '';
   if (live && (flt.dep || flt.arr)) { const v = map.getBounds(), inV = [...flights.values()].filter(f => !f.ground && v.contains([f.lat, f.lon]));
-    const done = inV.filter(f => f.rs && f.rs !== 'loading').length; if (done < inV.length) st = `loading route info · ${done} / ${inV.length} aircraft`; }
+    const done = inV.filter(f => f.rs && f.rs !== 'loading').length; if (done < inV.length) st = t('loading route info · {0} / {1} aircraft', done, inV.length); }
   $('apSt').textContent = st;
-  $('list').innerHTML = arr.map(f => `<div class="row ${f.id === selected ? 'on' : ''}" data-id="${esc(f.id)}"><b>${fav.has(f.id) ? '★ ' : ''}${esc(f.cs)}</b>`
-    + `<span>${f.route ? esc(f.route.org.code + '→' + f.route.dst.code) + ' · ' : ''}${f.ground ? 'on ground' : Math.round(f.alt * 3.281 / 100) * 100 + ' ft'}</span></div>`).join('');
+  $('list').innerHTML = arr.map(f => `<div class="row ${f.id === selected ? 'on' : ''}" data-id="${esc(f.id)}"><b>${isEmg(f) ? '⚠ ' : ''}${fav.has(f.id) ? '★ ' : ''}${esc(f.cs)}</b>`
+    + `<span>${f.route ? esc(f.route.org.code + '→' + f.route.dst.code) + ' · ' : ''}${f.ground ? t('on ground') : Math.round(f.alt * 3.281 / 100) * 100 + ' ft'}</span></div>`).join('');
 }
 $('list').onpointerdown = e => { const r = e.target.closest('.row'); if (r) select(r.dataset.id); };
 $('q').oninput = renderList; setInterval(renderList, 2000);
@@ -418,18 +438,18 @@ const applyF = e => {
   // two handles on one bar: left = min, right = max altitude; they can't cross each other
   const a = $('fA'), m = $('fM');
   if (+a.value > +m.value) { if (e && e.target === m) m.value = a.value; else a.value = m.value; }
-  flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.fav = $('fF').checked; flt.ground = $('fG').checked;
+  flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.fav = $('fF').checked; flt.ground = $('fG').checked; flt.mil = $('fMil').checked;
   flt.dep = apCode($('fDep').value); flt.arr = apCode($('fArr').value); flt.type = $('fTp').value.trim().toUpperCase(); $('fTp').classList.toggle('set', !!flt.type); flt.air = $('fAl').value.trim().toUpperCase(); $('fAl').classList.toggle('set', !!flt.air);
   $('fDep').classList.toggle('set', !!flt.dep); $('fArr').classList.toggle('set', !!flt.arr); pumpRoutes();
-  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value, al: $('fAl').value });
+  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, f: flt.fav, g: flt.ground, mi: flt.mil, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value, al: $('fAl').value });
   a.style.zIndex = flt.alt > 22500 ? 3 : 1; // so "min" can still be grabbed at the right end when the handles overlap
   $('dr').style.setProperty('--a', flt.alt / 450 + '%'); $('dr').style.setProperty('--b', flt.maxAlt / 450 + '%');
-  $('vA').textContent = flt.alt.toLocaleString('en-US'); $('vM').textContent = flt.maxAlt >= 45000 ? '45,000+' : flt.maxAlt.toLocaleString('en-US'); $('vS').textContent = flt.spd;
+  $('vA').textContent = flt.alt.toLocaleString(LOC()); $('vM').textContent = flt.maxAlt >= 45000 ? (45000).toLocaleString(LOC()) + '+' : flt.maxAlt.toLocaleString(LOC()); $('vS').textContent = flt.spd;
   redraw(); renderList();
 };
-['fA', 'fM', 'fS', 'fF', 'fG', 'fDep', 'fArr', 'fTp', 'fAl'].forEach(i => $(i).oninput = applyF);
+['fA', 'fM', 'fS', 'fF', 'fG', 'fMil', 'fDep', 'fArr', 'fTp', 'fAl'].forEach(i => $(i).oninput = applyF);
 { const v = LS('sky.flt', null); // restore the filters from the last session
-  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; } }
+  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fMil').checked = !!v.mi; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; } }
 $('fSw').onclick = () => { const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; applyF(); };
 
 /* ---------- airport filter (departure / arrival) ---------- */
@@ -462,9 +482,9 @@ const setMenu = open => { $('side').classList.toggle('hide', !open); document.bo
 $('close').onclick = () => setMenu(false); $('open').onclick = () => setMenu(true);
 $('side').addEventListener('transitionend', () => { map.invalidateSize(); redraw(); });
 setMenu(LS('sky.menu', true)); map.invalidateSize();
-const clock = () => $('clock').textContent = new Date().toLocaleTimeString('en-US'); clock(); setInterval(clock, 1000);
+const clock = () => $('clock').textContent = new Date().toLocaleTimeString(LOC()); clock(); setInterval(clock, 1000);
 map.on('click', e => {
-  if (placing) { placing = false; zone = { lat: e.latlng.lat, lon: e.latlng.lng, r: zoneRDef }; save('sky.zone', zone); initIn(); drawZone(); toast(`Alert zone set (${zoneR()} km)`); return; }
+  if (placing) { placing = false; zone = { lat: e.latlng.lat, lon: e.latlng.lng, r: zoneRDef }; save('sky.zone', zone); initIn(); drawZone(); toast(t('Alert zone set ({0} km)', zoneR())); return; }
   const f = hit(e.containerPoint); select(f ? f.id : null);
 });
 applyF(); setMode(false);
