@@ -519,8 +519,8 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   // video: respect reduced motion
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) { const v = $('#heroVid'); v.removeAttribute('autoplay'); v.pause(); v.controls = true; }
 
-  // soft yellow line that follows the mouse pointer and fades out after a short while
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  // soft yellow line that follows the mouse pointer and fades out after a short while (asked for explicitly, so it does not depend on the reduced-motion setting)
+  try {
     const cv = $('#trail'), cx = cv.getContext('2d'), LIFE = 650; let pts = [], run = false, W = 0, H = 0, dpr = 1, col = '245,196,49';
     const size = () => { dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); };
     const rgb = () => { const m = /#([0-9a-f]{6})/i.exec(getComputedStyle(root).getPropertyValue('--accent').trim()); if (m) col = [0, 2, 4].map(i => parseInt(m[1].substr(i, 2), 16)).join(','); };
@@ -533,7 +533,7 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
     addEventListener('pointermove', e => { if (e.pointerType && e.pointerType !== 'mouse') return; const last = pts[pts.length - 1];
       if (last && Math.hypot(e.clientX - last.x, e.clientY - last.y) < 2) return; pts.push({ x: e.clientX, y: e.clientY, t: performance.now() }); if (pts.length > 80) pts.shift();
       if (!run) { run = true; requestAnimationFrame(draw); } }, { passive: true });
-  }
+  } catch (err) { console.warn('trail', err); }
   // start language: saved choice, else the browser language
   setLang(ls.get('st.lang') || (/^tr/i.test(navigator.language || '') ? 'tr' : 'en'));
 })();
