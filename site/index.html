@@ -111,7 +111,7 @@ header,main,footer{position:relative;z-index:1}
     <a class="btn primary" href="#get-started">Get started</a>
     <a class="btn" href="https://github.com/SametDuhan/airock">View on GitHub</a>
   </div>
-  <div class="shot"><img src="screenshot.jpg" alt="SkyTrack in demo mode, with a selected flight's route and details" width="1280" height="719"></div>
+  <div class="shot"><img src="screenshot.jpg" alt="SkyTrack in demo mode, with a selected flight's route and details" width="1280" height="671"></div>
 </div>
 
 <section id="features"><div class="wrap">
@@ -121,10 +121,17 @@ header,main,footer{position:relative;z-index:1}
     <div class="card"><h3>Live flights</h3><p>Aircraft positions refresh every 15 seconds. Move the map and the new area loads right away.</p></div>
     <div class="card"><h3>Flight details</h3><p>Airline, aircraft type, registration, photo, route, distance and time left, altitude, speed and vertical speed.</p></div>
     <div class="card"><h3>Route and trail</h3><p>The route is drawn as a great-circle arc. The last ~30 minutes of the flight path show as a trail.</p></div>
-    <div class="card"><h3>Filters</h3><p>Altitude range, minimum speed, departure/arrival airport, aircraft on the ground, and favorites only.</p></div>
+    <div class="card"><h3>Filters</h3><p>Altitude range, minimum speed, departure/arrival airport, airline, aircraft type, aircraft on the ground, and favorites only.</p></div>
     <div class="card"><h3>Alert zone</h3><p>Pick a 10–500 km circle on the map. Get a notification when an aircraft enters it.</p></div>
     <div class="card"><h3>Replay</h3><p>Rewind the last hour with the slider at the bottom, then press “Live” to return.</p></div>
     <div class="card"><h3>Demo mode</h3><p>45 simulated flights, no internet needed. Time runs 30× faster.</p></div>
+    <div class="card"><h3>Airport panel</h3><p>Click an airport for its photo, city and country, current weather, METAR and TAF, and live arrivals and departures. Click a flight to open it.</p></div>
+    <div class="card"><h3>Watchlist</h3><p>Watch a plane and get a notification when it takes off or lands, wherever it is in the world.</p></div>
+    <div class="card"><h3>Today's flights</h3><p>See every flight an aircraft made today, with times, distance and top altitude. Click one to draw it on the map.</p></div>
+    <div class="card"><h3>Emergency alerts</h3><p>Aircraft squawking 7500, 7600 or 7700 get a blinking red ring and a notification.</p></div>
+    <div class="card"><h3>Rain radar</h3><p>Add a live precipitation layer to the map with one click.</p></div>
+    <div class="card"><h3>Plane spotter mode</h3><p>An optional mode with a logbook, “new aircraft” and “new type” badges, extra details and CSV export. Off by default, so the app stays simple.</p></div>
+    <div class="card"><h3>English and Turkish</h3><p>Switch the whole interface between English and Turkish with one button.</p></div>
     <div class="card"><h3>Map styles</h3><p>Standard, light and dark maps.</p></div>
     <div class="card"><h3>Fast with many planes</h3><p>All aircraft are drawn on one canvas. Around 3,700 aircraft over Europe draw in about 8 ms.</p></div>
   </div>
@@ -149,9 +156,13 @@ npm start</pre>
   <h2>Data sources</h2>
   <p class="sub">Fully open data. Free sources have rate limits, so fewer aircraft may show when zoomed out.</p>
   <div class="src">
-    <div class="card"><h3>adsb.lol</h3><p>Live positions for the zoomed-in view.</p></div>
+    <div class="card"><h3>adsb.lol and adsb.fi</h3><p>Live positions and today's flights. Requests are spread over both feeds.</p></div>
     <div class="card"><h3>OpenSky</h3><p>Wide view and backup source.</p></div>
     <div class="card"><h3>adsbdb.com</h3><p>Route, aircraft type, registration and photo.</p></div>
+    <div class="card"><h3>Open-Meteo</h3><p>Airport weather.</p></div>
+    <div class="card"><h3>aviationweather.gov</h3><p>METAR and TAF reports.</p></div>
+    <div class="card"><h3>RainViewer</h3><p>Rain radar layer.</p></div>
+    <div class="card"><h3>Wikipedia and OpenStreetMap</h3><p>Airport photos, and the city and country of each airport.</p></div>
   </div>
 </div></section>
 </main>
