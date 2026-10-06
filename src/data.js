@@ -42,21 +42,30 @@
     { name: 'airplanes.live', on: false, point: (la, lo, r) => `https://api.airplanes.live/v2/point/${la}/${lo}/${r}`, hex: h => `https://api.airplanes.live/v2/hex/${h}`, by: (k, v) => `https://api.airplanes.live/v2/${k}/${v}` }];
   const FEEDS = ALL_FEEDS.filter(f => f.on !== false);
   const feedPause = {}; // feed name → time until which we skip it (after a 429 or an error)
+  // Hedged request: the preferred feed gets HEDGE_MS to answer; if it is slow, the next feed is asked as well and the first good answer wins.
+  // A 429 pauses that feed for as long as it asks (Retry-After), otherwise 30 s.
+  const HEDGE_MS = 2500; let rot = 0;
   async function fromFeeds(first, fetchUrl, delayMs) {
-    await sleep(delayMs); const errs = [];
-    for (let k = 0; k < FEEDS.length; k++) {
-      const f = FEEDS[(first + k) % FEEDS.length]; if (Date.now() < (feedPause[f.name] || 0)) { errs.push(f.name + ': paused'); continue; }
-      try { const r = await get(fetchUrl(f)); if (r.status === 429) { feedPause[f.name] = Date.now() + 60000; throw new Error('rate limited (429)'); }
-        if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); return { name: f.name, ac: j.ac || j.aircraft || [] }; }
-      catch (e) { errs.push(f.name + ': ' + e.message); }
-    }
-    throw new Error(errs.join(', '));
+    await sleep(delayMs); const errs = [], live = FEEDS.map((_, k) => FEEDS[(first + k) % FEEDS.length]).filter(f => Date.now() >= (feedPause[f.name] || 0));
+    FEEDS.forEach(f => { if (!live.includes(f)) errs.push(f.name + ': paused'); });
+    if (!live.length) throw new Error(errs.join(', '));
+    const ask = async f => { const r = await get(fetchUrl(f), 7000);
+      if (r.status === 429) { feedPause[f.name] = Date.now() + Math.min(120, Math.max(10, +r.headers.get('retry-after') || 30)) * 1000; throw new Error(f.name + ': rate limited (429)'); }
+      if (!r.ok) throw new Error(f.name + ': HTTP ' + r.status); const j = await r.json(); return { name: f.name, ac: j.ac || j.aircraft || [] }; };
+    return new Promise((resolve, reject) => {
+      let next = 0, pending = 0, done = false, timer = null;
+      const fail = e => { errs.push(e.message); pending--; if (!done) { if (next < live.length) start(); else if (!pending) { done = true; reject(new Error(errs.join(', '))); } } };
+      const start = () => { clearTimeout(timer); const f = live[next++]; pending++;
+        if (next < live.length) timer = setTimeout(() => { if (!done) start(); }, HEDGE_MS);
+        ask(f).then(r => { pending--; if (!done) { done = true; clearTimeout(timer); resolve(r); } }, fail); };
+      start();
+    });
   }
   async function adsbLol(b) {
-    const { circles, partial, covered } = cover(b, MAX_CIRCLES * FEEDS.length), seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
+    rot++; const { circles, partial, covered } = cover(b, MAX_CIRCLES * FEEDS.length), seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
     await Promise.all(circles.map(async (c, i) => {
       try {
-        const r = await fromFeeds(i % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 350);
+        const r = await fromFeeds((i + rot) % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 150);
         r.ac.forEach(a => a.lat != null && a.lon != null && seen.set(a.hex, a)); used.add(r.name); okN++; good.push(c);
       } catch (e) { lastErr = e.message; }
     }));
