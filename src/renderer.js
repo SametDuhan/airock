@@ -416,9 +416,9 @@ function renderCard(full) {
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
     ['Altitude', f.ground ? t('on ground') : ft(f.alt)], ['Speed', Math.round(f.spd * 1.944) + ' kt'], ['Heading', Math.round(f.hdg) + '°'],
     ['Vertical speed', Math.round(f.vr * 196.85) + ' ft/min'], ['Nearest airport', nearest(f)], ['Position', f.lat.toFixed(2) + ', ' + f.lon.toFixed(2)]];
-  { const tr = live && turbRow(f); if (tr) rows.splice(rows.findIndex(r => r[0] === 'Vertical speed') + 1, 0, tr); }
   if (ac.owner && ac.owner !== f.route?.airline) rows.splice(2, 0, ['Owner', ac.owner]);
   X.rows(f, rows);
+  { const tr = live && turbRow(f); if (tr) rows.push(tr); } // last row, below Position
   $('kvs').innerHTML = rows.map(r => r[2] ? `<div class="kv tbr ${r[2]}"><b>${esc(r[1])}</b></div>` : `<div class="kv"><span>${t(r[0])}</span><b>${esc(r[1])}</b></div>`).join('');
   $('fv').textContent = fav.has(f.id) ? t('★ Favorited') : t('☆ Favorite'); X.sync(f);
 }
