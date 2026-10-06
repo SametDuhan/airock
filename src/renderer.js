@@ -224,7 +224,7 @@ const windRow = f => { if (f.ground || f.spd * 1.944 < 60) return null;
   const hw = f.ws != null && f.wd != null ? SkyFuel.headwind(f.ws, f.wd, f.hdg) : f.tas != null && f.th != null ? SkyFuel.headwindFromTas(f.tas, f.spd * 1.944, f.th, f.hdg) : null;
   if (hw == null || !Number.isFinite(hw)) return null;
   const a = Math.round(Math.abs(hw)), main = a < 5 ? t('No significant head/tailwind') : hw > 0 ? t('Headwind {0} kt', a) : t('Tailwind {0} kt', a);
-  return ['Wind', main + (f.ws != null && f.wd != null ? ` · ${Math.round(f.wd)}°/${Math.round(f.ws)} kt` : '')]; };
+  return ['Wind', main + (f.ws != null && f.wd != null ? ` (${Math.round(f.wd)}°/${Math.round(f.ws)} kt)` : '')]; };
 const fuelRow = f => { const dst = f.route?.dst; if (f.ground || !dst) return null;
   const r = SkyFuel.toGo(f.ac?.icaoType || f.type, km(f.lat, f.lon, dst.lat, dst.lon), f.spd * 1.944); return r ? ['Fuel to go (est.)', `≈ ${fmtMass(r.kg)} · CO₂ ${fmtMass(r.co2)}`] : null; };
 const turbRow = f => { if (f.ground) return null;
