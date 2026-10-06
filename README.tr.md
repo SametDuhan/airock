@@ -44,7 +44,8 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 
 ## İndir
 
-Kendi sistemin için kurulum dosyasını [son sürümden](https://github.com/SametDuhan/airock/releases/latest) indir (Windows için `.exe`, macOS için `.dmg`, Linux için AppImage). Hesap gerekmez. Kaynaktan çalıştırmak istersen aşağıya bak.
+- **Windows:** [kurulum dosyasını indir](https://github.com/SametDuhan/airock/releases/latest/download/SkyTrack-Setup.exe) (`SkyTrack-Setup.exe`) ya da tüm [sürümlere](https://github.com/SametDuhan/airock/releases) bak. Kurulum dosyası henüz kod imzalı değil; Windows uyarı verirse *Daha fazla bilgi*'ye, sonra *Yine de çalıştır*'a tıkla.
+- **macOS, Linux ya da konsoldan kurmak istersen:** kaynaktan kur, aşağıya bak.
 
 ## Kurulum ve çalıştırma
 

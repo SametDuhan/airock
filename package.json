@@ -1,6 +1,6 @@
 {
   "name": "skytrack",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Free desktop flight tracker using open ADS-B data. No account or API key needed.",
   "license": "MIT",
   "author": "Samet Duhan Şahin",
@@ -29,7 +29,8 @@
       "build/icon.png"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "SkyTrack-Setup.${ext}"
     },
     "mac": {
       "target": "dmg",

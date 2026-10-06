@@ -522,8 +522,8 @@ function pumpRoutes() {
 }
 
 /* ---------- collapsible menu + clock ---------- */
-const setMenu = open => { $('side').classList.toggle('hide', !open); document.body.classList.toggle('closed', !open); save('sky.menu', open); };
-$('close').onclick = () => setMenu(false); $('open').onclick = () => setMenu(true);
+const setMenu = open => { $('side').classList.toggle('hide', !open); document.body.classList.toggle('closed', !open); save('sky.menu', open); const o = $('open'); o.dataset.otitle = open ? 'Close menu' : 'Open menu'; o.title = t(o.dataset.otitle); };
+$('open').onclick = () => setMenu(document.body.classList.contains('closed'));
 $('side').addEventListener('transitionend', () => { map.invalidateSize(); redraw(); });
 setMenu(LS('sky.menu', true)); map.invalidateSize();
 const clock = () => $('clock').textContent = new Date().toLocaleTimeString(LOC()); clock(); setInterval(clock, 1000);

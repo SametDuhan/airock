@@ -4,7 +4,7 @@
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const km = (a, b, c, d) => { const r = Math.PI / 180, x = Math.sin((c - a) * r / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin((d - b) * r / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
   // adsb.lol rejects generic User-Agents (403); the main process sends a UA with contact info (the browser sets its own UA)
-  const HEADERS = typeof window === 'undefined' ? { 'User-Agent': 'SkyTrack/0.4.1 (+https://github.com/SametDuhan/airock)' } : {};
+  const HEADERS = typeof window === 'undefined' ? { 'User-Agent': 'SkyTrack/0.5.0 (+https://github.com/SametDuhan/airock)' } : {};
   const get = (url, ms = 12000) => fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(ms) });
 
   /* ---------- adsb.lol (primary source: free, no key) ---------- */
