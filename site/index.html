@@ -100,7 +100,7 @@ header,main,footer{position:relative;z-index:1}
 </div>
 <header><div class="wrap">
   <a class="logo" href="#">SKYTRACK</a>
-  <nav><a href="#features">Features</a><a href="#get-started">Get started</a><a href="#data">Data</a><a href="https://github.com/SametDuhan/airock">GitHub</a></nav>
+  <nav><a href="#features">Features</a><a href="#get-started">Download</a><a href="#data">Data</a><a href="https://github.com/SametDuhan/airock">GitHub</a></nav>
 </div></header>
 
 <main>
@@ -108,7 +108,8 @@ header,main,footer{position:relative;z-index:1}
   <h1>Watch the sky <span>live</span>.</h1>
   <p class="lead">SkyTrack is a free desktop flight tracker, similar to Flightradar24. It runs on Windows, macOS and Linux. No account or API key needed.</p>
   <div class="btns">
-    <a class="btn primary" href="#get-started">Get started</a>
+    <a class="btn primary" href="https://github.com/SametDuhan/airock/releases/latest/download/SkyTrack-Setup.exe">⬇ Download for Windows</a>
+    <a class="btn" href="#get-started">Install from console</a>
     <a class="btn" href="https://github.com/SametDuhan/airock">View on GitHub</a>
   </div>
   <div class="shot"><img src="screenshot.jpg" alt="SkyTrack in demo mode, with a selected flight's route and details" width="1280" height="671"></div>
@@ -143,8 +144,12 @@ header,main,footer{position:relative;z-index:1}
 </div></section>
 
 <section id="get-started" style="background:var(--panel);border-block:1px solid var(--line)"><div class="wrap">
-  <h2>Get started</h2>
-  <p class="sub">You need <a href="https://nodejs.org">Node.js</a> 18 or newer.</p>
+  <h2>Download</h2>
+  <p class="sub">Pick the way that suits you. Both are free, and no account is needed.</p>
+  <div class="btns" style="margin:20px 0 6px"><a class="btn primary" href="https://github.com/SametDuhan/airock/releases/latest/download/SkyTrack-Setup.exe">⬇ Download for Windows (.exe)</a></div>
+  <p class="note" style="text-align:center">One click, then run the installer. Windows may show a “Windows protected your PC” notice because the installer isn't code-signed yet: choose <b>More info</b> → <b>Run anyway</b>. All releases: <a href="https://github.com/SametDuhan/airock/releases">GitHub Releases</a>.</p>
+  <h3 style="margin-top:34px">Or install from the console</h3>
+  <p class="sub">Works on Windows, macOS and Linux. You need <a href="https://nodejs.org">Node.js</a> 18 or newer and <a href="https://git-scm.com">Git</a>.</p>
   <ol class="steps">
     <li>Clone the project.</li>
     <li>Install dependencies.</li>
@@ -154,7 +159,7 @@ header,main,footer{position:relative;z-index:1}
 cd airock
 npm install
 npm start</pre>
-  <p class="note">Note: live mode does not work if you open <code>index.html</code> in a browser. It only works from the desktop app.</p>
+  <p class="note">To build an installer yourself, run <code>npm run dist</code>. Live mode does not work if you open <code>index.html</code> in a browser. It only works from the desktop app.</p>
 </div></section>
 
 <section id="data"><div class="wrap">

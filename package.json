@@ -29,7 +29,8 @@
       "build/icon.png"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "SkyTrack-Setup.${ext}"
     },
     "mac": {
       "target": "dmg",
