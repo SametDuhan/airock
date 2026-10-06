@@ -15,7 +15,7 @@
 #app{display:flex;height:100%}
 aside{width:300px;flex-shrink:0;overflow-y:auto;overflow-x:hidden;background:var(--pn);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2;transition:margin-left .35s cubic-bezier(.2,.7,.2,1)}
 aside.hide{margin-left:-301px}
-.brand{display:flex;justify-content:space-between;align-items:center;padding:12px 12px 8px 16px;font:700 13px ui-monospace,monospace;letter-spacing:.2em;color:var(--ac)}
+.brand{display:flex;justify-content:space-between;align-items:center;padding:16px 12px 12px 16px}.brand .bt{font:800 26px Cambria,Georgia,serif;letter-spacing:.14em;background:linear-gradient(100deg,#ffd75e 0%,var(--ac) 45%,#fff3c4 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 8px rgba(242,194,48,.35))}
 .ib{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1}.ib:hover{border-color:var(--ac);color:var(--ac)}
 #open{position:absolute;top:12px;left:12px;z-index:1000;background:var(--pn);width:38px;height:38px;font-size:18px;display:none}body.closed #open{display:block}
 .sec{padding:4px 16px 10px;border-bottom:1px solid var(--line)}.lbl{font:600 10px ui-monospace,monospace;letter-spacing:.14em;color:var(--mut);margin:6px 0 7px;text-transform:uppercase}
@@ -95,9 +95,12 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 .mt{margin:12px 0 4px;font-size:11px;color:var(--mut)}.mt code,#apc details code{display:block;margin-top:5px;padding:7px;background:#111;border-radius:3px;font:11px/1.45 ui-monospace,monospace;color:var(--fg);white-space:normal;word-break:break-word}
 .fc{display:inline-block;font:700 10px ui-monospace,monospace;padding:2px 6px;border-radius:3px;margin-right:6px;color:#fff}.fc.VFR{background:#2e9e4f}.fc.MVFR{background:#2f8cff}.fc.IFR{background:#e0453a}.fc.LIFR{background:#b03fd0}
 #apc summary{cursor:pointer;font-size:11px;color:var(--mut);margin-top:6px}
+#wdLv{background:var(--ac);color:#111;border:1px solid var(--ac);border-radius:3px;padding:7px 8px;font:700 12px inherit;outline:0}#wdLv option{background:var(--ac);color:#111}
+.fold>.lbl{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}.fold>.lbl:hover{color:var(--ac)}.fold>.lbl::after{content:'▾';font-size:12px;transition:transform .2s}
+.fold.collapsed>.lbl::after{transform:rotate(-90deg)}.fold.collapsed>*:not(.lbl){display:none}
 </style></head>
 <body><div id="app">
-<aside id="side"><div class="brand">SKYTRACK<span class="bb"><button id="lang" class="ib" title="Language / Dil">TR</button><button id="close" class="ib" title="Close menu">✕</button></span></div>
+<aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button id="lang" class="ib" title="Language / Dil">TR</button><button id="close" class="ib" title="Close menu">✕</button></span></div>
 <div class="sec"><div class="lbl">Data</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Live</button></div><div id="st"></div></div>
 <div class="sec"><div class="lbl">Mode</div><div class="btns"><button id="mNorm" class="on">Normal</button><button id="mSpot">Plane spotter</button></div></div>
 <div class="sec" id="spt" style="display:none"></div>

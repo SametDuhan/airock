@@ -47,3 +47,10 @@ function setWind(i) {
 $('bWd').onclick = () => setWind(windI >= 0 ? -1 : windLast);
 $('wdLv').onchange = () => setWind(+$('wdLv').value);
 { let tm; map.on('moveend', () => { clearTimeout(tm); tm = setTimeout(drawWind, 800); }); }
+
+/* ---------- collapsible sidebar sections (click a section title to fold / unfold it; remembered between sessions) ---------- */
+{ let fold = {}; try { fold = JSON.parse(localStorage.getItem('sky.fold') || '{}') || {}; } catch {}
+  document.querySelectorAll('#side > .sec, #side > .flt').forEach((sec, i) => { const lbl = sec.querySelector(':scope > .lbl'); if (!lbl) return;
+    const key = 's' + i; // by position, so it doesn't change with the language
+    sec.classList.add('fold'); sec.classList.toggle('collapsed', !!fold[key]);
+    lbl.onclick = () => { const c = sec.classList.toggle('collapsed'); fold[key] = c; try { localStorage.setItem('sky.fold', JSON.stringify(fold)); } catch {} }; }); }
