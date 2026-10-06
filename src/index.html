@@ -97,31 +97,42 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 .fc{display:inline-block;font:700 10px ui-monospace,monospace;padding:2px 6px;border-radius:3px;margin-right:6px;color:#fff}.fc.VFR{background:#2e9e4f}.fc.MVFR{background:#2f8cff}.fc.IFR{background:#e0453a}.fc.LIFR{background:#b03fd0}
 #apc summary{cursor:pointer;font-size:11px;color:var(--mut);margin-top:6px}
 #wdLv{background:var(--ac);color:#111;border:1px solid var(--ac);border-radius:3px;padding:7px 8px;font:700 12px inherit;outline:0}#wdLv option{background:var(--ac);color:#111}
-.fold>.lbl{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}.fold>.lbl:hover{color:var(--ac)}.fold>.lbl::after{content:'▾';font-size:12px;transition:transform .2s}
+.fold>.lbl{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}.fold>.lbl:hover{color:var(--ac)}.fold>.lbl::after{content:'';width:22px;height:22px;border-radius:6px;flex:none;background:var(--ac);opacity:.75;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 8.5 11 13l4.5-4.5'/%3E%3C/svg%3E") center/22px no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 8.5 11 13l4.5-4.5'/%3E%3C/svg%3E") center/22px no-repeat;transition:transform .25s cubic-bezier(.2,.7,.2,1),opacity .2s}.fold>.lbl:hover::after{opacity:1}
 .fold.collapsed>.lbl::after{transform:rotate(-90deg)}.fold.collapsed>*:not(.lbl){display:none}
+
+/* sidebar polish */
+.sec,.flt{padding:6px 16px 14px}.lbl{font:700 11px ui-monospace,monospace;letter-spacing:.16em;margin:8px 0 10px;color:#a8a296}
+.sec:not(.collapsed)>.lbl,.flt:not(.collapsed)>.lbl{color:var(--fg)}.fold>.lbl{padding:2px 0}
+.btns button{border-radius:7px;background:#ffffff08;padding:8px 6px;transition:background .15s,border-color .15s,color .15s}.btns button:hover{background:#ffffff12}.btns button.on:hover{background:var(--ac)}
+.btns.seg{gap:0;border:1px solid var(--line);border-radius:8px;padding:2px;background:#111}.btns.seg button{border:0;background:transparent;border-radius:6px}.btns.seg button:hover{background:#ffffff10}.btns.seg button.on{background:var(--ac)}
+.zr{margin-top:10px;padding:7px 10px;background:#ffffff06;border:1px solid var(--line);border-radius:7px}.zr input{margin-left:auto;text-align:right;border-radius:5px}
+#st{margin-top:8px;font:11px ui-monospace,monospace;color:var(--mut)}
+.flt .fr{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 4px;color:#a8a296;font-weight:600}
+.flt .fl{font:700 10px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:#a8a296;margin:20px 0 0}
+.apr{margin:6px 0 0}.apr input{border-radius:6px;padding:8px 9px}.apr .ib{border-radius:6px}
+.flt .cks{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}.flt .cks .ck{margin:4px 0}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button id="lang" class="lsw" data-l="en" title="Language / Dil" aria-label="Language / Dil"><i>EN</i><i>TR</i></button></span></div>
 <div class="sec"><div class="lbl">Data</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Live</button></div><div id="st"></div></div>
 <div class="sec"><div class="lbl">Mode</div><div class="btns"><button id="mNorm" class="on">Normal</button><button id="mSpot">Plane spotter</button></div></div>
 <div class="sec" id="spt" style="display:none"></div>
-<div class="sec"><div class="lbl">Map</div><div class="btns wrap"><button id="bAp" class="on">Airports</button><button id="bZ">Alert zone</button><button id="bRd" title="Rain radar">Radar</button><button id="bTb" title="Turbulence advisories (SIGMET / G-AIRMET)">Turbulence</button><button id="bWd" title="Wind arrows">Wind</button><button id="bNt" title="Day / night">Night</button></div><select id="wdLv" style="display:none;width:100%;margin-top:6px"><option value="0">Wind: FL050</option><option value="1">Wind: FL100</option><option value="2">Wind: FL180</option><option value="3">Wind: FL300</option><option value="4" selected>Wind: FL340</option><option value="5">Wind: FL390</option></select>
-<label class="zr">Zone radius <input id="zR" type="number" min="3" max="500" step="1" value="100"> km</label>
-<div class="btns" id="tiles" style="margin-top:6px"><button data-t="osm">Standard</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div></div>
-<div class="flt"><div class="lbl">Filters</div><div>Altitude <b id="vA">0</b> – <b id="vM">45.000+</b> ft</div>
+<div class="sec"><div class="lbl">Map</div><div class="btns seg" id="tiles"><button data-t="osm">Standard</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div><div class="btns wrap" style="margin-top:8px"><button id="bAp" class="on">Airports</button><button id="bZ">Alert zone</button><button id="bRd" title="Rain radar">Radar</button><button id="bTb" title="Turbulence advisories (SIGMET / G-AIRMET)">Turbulence</button><button id="bWd" title="Wind arrows">Wind</button><button id="bNt" title="Day / night">Night</button></div><select id="wdLv" style="display:none;width:100%;margin-top:6px"><option value="0">Wind: FL050</option><option value="1">Wind: FL100</option><option value="2">Wind: FL180</option><option value="3">Wind: FL300</option><option value="4" selected>Wind: FL340</option><option value="5">Wind: FL390</option></select>
+<label class="zr"><span>Zone radius</span> <input id="zR" type="number" min="3" max="500" step="1" value="100"> <span>km</span></label>
+</div>
+<div class="flt"><div class="lbl">Filters</div><div class="fr"><span>Altitude</span><span><b id="vA">0</b> – <b id="vM">45.000+</b> ft</span></div>
 <div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">min</span><span class="rmax">max</span></div>
-<div style="height:8px"></div>
-<div>Speed <b id="vS">0</b> – <b id="vSM">600+</b> kt</div>
+<div class="fr"><span>Speed</span><span><b id="vS">0</b> – <b id="vSM">600+</b> kt</span></div>
 <div class="dr" id="dr2"><input id="fS" type="range" min="0" max="600" step="25" value="0"><input id="fSM" type="range" min="0" max="600" step="25" value="600"><span class="rmin">min</span><span class="rmax">max</span></div>
-<div>Airport</div>
+<div class="fl">Airport</div>
 <div class="apr"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button id="fSw" class="ib" title="Departure ↔ arrival">⇄</button><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"></div>
-<div>Airline</div>
+<div class="fl">Airline</div>
 <div class="apr"><input id="fAl" list="alList" placeholder="e.g. THY, Pegasus, Lufthansa" autocomplete="off"></div><datalist id="alList"></datalist>
-<div>Aircraft type</div>
+<div class="fl">Aircraft type</div>
 <div class="apr"><input id="fTp" list="tpList" placeholder="e.g. B738, A320, boeing 777" autocomplete="off"></div><datalist id="tpList"></datalist>
 <div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
-<label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
-<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div>
+<div class="cks"><label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
+<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div></div>
 <div class="sec" id="wls" style="display:none"></div>
 <div class="sec" id="srch"><div class="lbl">Aircraft</div><input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></div></aside>
 <main><div id="map"></div>
