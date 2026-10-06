@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
   version: () => ipcRenderer.invoke('version'),
+  openskyGet: () => ipcRenderer.invoke('openskyGet'),
+  openskySet: (id, sec) => ipcRenderer.invoke('openskySet', id, sec),
   tray: on => ipcRenderer.invoke('tray', on),
   show: () => ipcRenderer.invoke('show'),
   onUpdate: cb => ipcRenderer.on('update', (_, d) => cb(d)),

@@ -109,7 +109,35 @@ const TR = {
   '{0} more aircraft match your alerts': '{0} uçak daha uyarılarınla eşleşiyor',
   '⚙ Settings': '⚙ Ayarlar',
   '📍 Overhead': '📍 Tepemde',
-  '🔔 Alerts': '🔔 Uyarılar'
+  '🔔 Alerts': '🔔 Uyarılar',
+  // stats, trails, clouds, reliability
+  'A free OpenSky API client gives the wide view a much higher daily limit. Create one in your OpenSky account. It is stored encrypted on this computer.': 'Ücretsiz bir OpenSky API istemcisi geniş görünüme çok daha yüksek bir günlük limit sağlar. OpenSky hesabında bir tane oluştur. Bu bilgisayarda şifrelenmiş olarak saklanır.',
+  'Aircraft trails': 'Uçak izleri',
+  'Based on the aircraft SkyTrack has loaded around the map.': 'SkyTrack\'in haritanın çevresinde yüklediği uçaklara göre.',
+  'Busiest airports': 'En yoğun havalimanları',
+  'Clouds': 'Bulutlar',
+  'Connected as {0}': '{0} olarak bağlı',
+  'Could not store the credentials': 'Bilgiler saklanamadı',
+  'Data sources are busy, retrying shortly. Showing the last known positions.': 'Veri kaynakları yoğun, birazdan yeniden denenecek. Son bilinen konumlar gösteriliyor.',
+  'Fastest': 'En hızlı',
+  'Highest': 'En yüksek',
+  'How far back you can rewind': 'Ne kadar geriye sarabilirsin',
+  'In the air': 'Havada',
+  'No connection to the data sources. Showing the last known positions.': 'Veri kaynaklarına bağlanılamıyor. Son bilinen konumlar gösteriliyor.',
+  'On the ground': 'Yerde',
+  'OpenSky account (optional)': 'OpenSky hesabı (isteğe bağlı)',
+  'Replay history': 'Geri sarma geçmişi',
+  'Satellite imagery with clouds (NASA, latest daily image)': 'Bulutlu uydu görüntüsü (NASA, son günlük görüntü)',
+  'Save': 'Kaydet',
+  'Stats': 'İstatistikler',
+  'Top aircraft types': 'En çok görülen tipler',
+  'Top airlines': 'En çok görülen havayolları',
+  'Trails': 'İzler',
+  'You can also try Demo mode.': 'Demo modunu da deneyebilirsin.',
+  '{0} aircraft with an emergency code': '{0} uçak acil durum kodu veriyor',
+  '📊 Stats': '📊 İstatistikler',
+  'OpenSky account saved': 'OpenSky hesabı kaydedildi',
+  'OpenSky account removed': 'OpenSky hesabı kaldırıldı'
 };
 // Languages: English (default texts), Turkish (TR below), Spanish / German / French (DICT in langs.js)
 const LANGS = [{ c: 'en', n: 'English', loc: 'en-US' }, { c: 'tr', n: 'Türkçe', loc: 'tr-TR' }, { c: 'es', n: 'Español', loc: 'es-ES' }, { c: 'de', n: 'Deutsch', loc: 'de-DE' }, { c: 'fr', n: 'Français', loc: 'fr-FR' }];

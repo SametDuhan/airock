@@ -79,6 +79,21 @@ async function setRadar(on) {
 }
 $('bRd').onclick = () => setRadar(!radarLayer);
 
+/* ---------- satellite imagery with clouds (NASA GIBS, VIIRS true color, the latest daily image; free, no key) ---------- */
+let cloudLayer = null;
+function setClouds(on) {
+  $('bCl').classList.toggle('on', on);
+  if (!on) { cloudLayer && cloudLayer.remove(); cloudLayer = null; return; }
+  cloudLayer = L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg',
+    { opacity: .75, zIndex: 4, maxNativeZoom: 9, maxZoom: 19, className: 'sat-tiles', attribution: 'Imagery &copy; NASA GIBS' }).addTo(map);
+}
+$('bCl').onclick = () => setClouds(!cloudLayer);
+
+/* ---------- trails button: off / short (5 min) / long (30 min) ---------- */
+function setTrail(m) { TRAIL = m; save('sky.trail', m); $('bTr').classList.toggle('on', m > 0); $('bTr').textContent = t('Trails') + (m === 1 ? ' · 5 min' : m === 2 ? ' · 30 min' : ''); redraw(); }
+$('bTr').onclick = () => setTrail((TRAIL + 1) % 3);
+setTrail(TRAIL);
+
 /* ---------- plane spotter mode: logbook ---------- */
 let spot = LS('sky.spot', false), logb = LS('sky.log', []);
 const saveLog = () => save('sky.log', logb.slice(-5000));

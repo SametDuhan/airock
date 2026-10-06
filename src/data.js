@@ -81,9 +81,22 @@
 
   /* ---------- OpenSky (fallback source: the daily credit limit is low for anonymous use) ---------- */
   let openSkyPause = 0; // when credits run out (429), don't query OpenSky for 10 min
+  // Optional OpenSky API client (client credentials, OAuth2): gives a much higher daily limit than anonymous use. Set from the app's Settings.
+  let osAuth = null, osToken = null;
+  function setOpenSky(id, secret) { osAuth = id && secret ? { id: String(id), secret: String(secret) } : null; osToken = null; openSkyPause = 0; return { ok: true, set: !!osAuth }; }
+  async function osHeaders() {
+    if (!osAuth) return {};
+    if (!osToken || Date.now() > osToken.exp - 60000) {
+      const r = await fetch('https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token', { method: 'POST', headers: { ...HEADERS, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ grant_type: 'client_credentials', client_id: osAuth.id, client_secret: osAuth.secret }), signal: AbortSignal.timeout(12000) });
+      if (!r.ok) { osToken = null; return {}; } // wrong credentials: fall back to anonymous access
+      const j = await r.json(); osToken = { t: j.access_token, exp: Date.now() + (j.expires_in || 1800) * 1000 };
+    }
+    return { Authorization: 'Bearer ' + osToken.t };
+  }
   async function openSky(b) {
     if (Date.now() < openSkyPause) throw new Error('daily credits used up, waiting');
-    const r = await get(`https://opensky-network.org/api/states/all?lamin=${b.s}&lomin=${b.w}&lamax=${b.n}&lomax=${b.e}`, 15000);
+    const r = await fetch(`https://opensky-network.org/api/states/all?lamin=${b.s}&lomin=${b.w}&lamax=${b.n}&lomax=${b.e}`, { headers: { ...HEADERS, ...(await osHeaders().catch(() => ({}))) }, signal: AbortSignal.timeout(15000) });
     if (r.status === 429) { openSkyPause = Date.now() + 600000; throw new Error('daily credits used up (429)'); }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return ((await r.json()).states || []).filter(s => s[5] != null && s[6] != null).map(s => ({ id: s[0], cs: (s[1] || '').trim() || s[0].toUpperCase(), reg: '', type: '', country: s[2],
@@ -309,7 +322,7 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  const api = { flights, find, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
+  const api = { flights, find, setOpenSky, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
   root.SkyData = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

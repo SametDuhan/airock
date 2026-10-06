@@ -12,8 +12,11 @@ const UNIT_ROWS = [['dist', 'Distance', [['km', 'km'], ['mi', 'mi'], ['nm', 'nm'
 function renderSettings() {
   stm.innerHTML = `<div class="bx"><div class="hd"><h2>${t('Settings')}</h2>${closeX()}</div><h3>${t('Units')}</h3>`
     + UNIT_ROWS.map(([k, l, o]) => `<div class="sr"><span>${t(l)}</span><div class="btns seg">${o.map(([v, tx]) => `<button data-u="${k}" data-v="${v}" class="${U[k] === v ? 'on' : ''}">${tx}</button>`).join('')}</div></div>`).join('')
+    + `<h3>${t('Replay history')}</h3><div class="sr"><span>${t('How far back you can rewind')}</span><div class="btns seg">${[[5, '1 h'], [15, '3 h'], [30, '6 h']].map(([v, tx]) => `<button data-h="${v}" class="${HSTEP === v ? 'on' : ''}">${tx}</button>`).join('')}</div></div>`
+    + (window.api?.openskySet ? `<h3>${t('OpenSky account (optional)')}</h3><div class="rtx">${t('A free OpenSky API client gives the wide view a much higher daily limit. Create one in your OpenSky account. It is stored encrypted on this computer.')}</div><div class="os"><input id="osId" placeholder="Client ID" autocomplete="off"><input id="osSec" type="password" placeholder="Client secret" autocomplete="off"><button class="bt2" id="osSave">${t('Save')}</button></div><div class="rtx" id="osSt"></div>` : '')
     + `<h3>${t('App')}</h3><label class="ck" id="lTray"><input id="sTray" type="checkbox"> ${t('Keep running in the tray')}</label><label class="ck"><input id="sNot" type="checkbox"> ${t('Desktop notifications')}</label>`
     + `<div style="margin-top:14px"><button class="bt2" id="tourAgain">${t('Show the tour again')}</button></div><div class="vrs">${esc($('ver').textContent)}</div></div>`;
+  if (window.api?.openskyGet) window.api.openskyGet().then(r => { if ($('osSt')) { $('osSt').textContent = r.set ? t('Connected as {0}', r.id) : ''; if (r.set && $('osId')) $('osId').placeholder = r.id; } });
   const tr = $('sTray'), nt = $('sNot'); tr.checked = !!LS('sky.tray', false); nt.checked = !!LS('sky.notif', true);
   if (!window.api?.tray) $('lTray').style.display = 'none';
   tr.onchange = () => { save('sky.tray', tr.checked); try { window.api.tray(tr.checked); } catch {} if (tr.checked) toast(t('SkyTrack keeps running in the tray when you close the window')); };
@@ -22,6 +25,8 @@ function renderSettings() {
 stm.onclick = e => {
   if (e.target === stm || e.target.closest('[data-x]')) return modal(stm, false);
   const b = e.target.closest('[data-u]'); if (b) { U[b.dataset.u] = b.dataset.v === 'true' ? true : b.dataset.v === 'false' ? false : b.dataset.v; save('sky.units', U); renderSettings(); refreshAll(); return; }
+  const hb = e.target.closest('[data-h]'); if (hb) { HSTEP = +hb.dataset.h; save('sky.hstep', HSTEP); renderSettings(); return; }
+  if (e.target.id === 'osSave') { const id = $('osId').value.trim(), sec = $('osSec').value.trim(); window.api.openskySet(id, sec).then(r => { toast(r.ok ? t(r.set ? 'OpenSky account saved' : 'OpenSky account removed') : t('Could not store the credentials')); renderSettings(); }); return; }
   if (e.target.id === 'tourAgain') { modal(stm, false); startTour(); }
 };
 $('bSet').onclick = () => { renderSettings(); modal(stm, true); };
@@ -141,6 +146,24 @@ try { window.api?.onUpdate?.(u => { upd.hidden = false;
   else if (u.state === 'manual') upd.innerHTML = `<span>${t('New version {0} available', u.version)}</span><button id="updGo" data-url="${esc(u.url)}">${t('Download')}</button>`; }); } catch {}
 upd.onclick = e => { if (e.target.id !== 'updGo') return; const u = e.target.dataset.url; if (u) window.open(u); else try { window.api.installUpdate(); } catch {} };
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { modal(stm, false); modal(alm, false); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { modal(stm, false); modal(alm, false); modal(stt, false); } });
+
+/* ---------- stats: what SkyTrack currently sees ---------- */
+const stt = $('stt'); let sttT = null;
+function statsHtml() {
+  const L = [...flights.values()].filter(f => !f.gone), air = L.filter(f => !f.ground), top = (m, n = 5) => [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
+  const hi = air.reduce((b, f) => (!b || f.alt > b.alt ? f : b), null), fa = air.reduce((b, f) => (!b || f.spd > b.spd ? f : b), null);
+  const al = new Map(), ty = new Map(), ap = new Map(); let emg = 0;
+  L.forEach(f => { const c = airCode(f); if (c) al.set(c, (al.get(c) || 0) + 1); const k = acCode(f); if (k) ty.set(k, (ty.get(k) || 0) + 1); if (isEmg(f)) emg++;
+    if (f.alt * 3.281 < 4000) { const a = nearAp(f.lat, f.lon); if (a) ap.set(a, (ap.get(a) || 0) + 1); } });
+  const bars = (arr, lab) => { const mx = Math.max(1, ...arr.map(x => x[1])); return arr.length ? arr.map(([k, n]) => `<div class="bar2"><span>${esc(lab(k))}</span><i style="width:${Math.round(n / mx * 100)}%"></i><b>${n}</b></div>`).join('') : `<div class="none">—</div>`; };
+  const tiles = [[t('In the air'), air.length], [t('On the ground'), L.length - air.length], [t('Highest'), hi ? fmtAlt(hi.alt * 3.281, 100) : '—', hi?.cs], [t('Fastest'), fa ? fmtSpd(fa.spd * 1.944) : '—', fa?.cs]];
+  return `<div class="bx"><div class="hd"><h2>${t('Stats')}</h2>${closeX()}</div><div class="rtx">${t('Based on the aircraft SkyTrack has loaded around the map.')}</div>`
+    + `<div class="st4">${tiles.map(x => `<div><span>${esc(x[0])}</span><b>${esc(x[1])}</b>${x[2] ? `<small>${esc(x[2])}</small>` : ''}</div>`).join('')}</div>`
+    + (emg ? `<div class="emgn">⚠ ${t('{0} aircraft with an emergency code', emg)}</div>` : '')
+    + `<div class="cols"><div><h3>${t('Top airlines')}</h3>${bars(top(al), k => AIRLINE[k]?.[0] || k)}</div><div><h3>${t('Top aircraft types')}</h3>${bars(top(ty), k => k)}</div><div><h3>${t('Busiest airports')}</h3>${bars(top(ap), k => k)}</div></div></div>`; }
+const renderStats = () => { if (stt.classList.contains('show')) stt.innerHTML = statsHtml(); };
+stt.onclick = e => { if (e.target === stt || e.target.closest('[data-x]')) { modal(stt, false); clearInterval(sttT); } };
+$('bStats').onclick = () => { renderStats(); modal(stt, true); stt.innerHTML = statsHtml(); clearInterval(sttT); sttT = setInterval(renderStats, 3000); };
 
 refreshAll();

@@ -72,6 +72,7 @@ watch = new Map(LS('sky.watch', [])), flt = { alt: 0, maxAlt: 45000, spd: 0, max
 const X = { top: () => '', bottom: () => '', bottom2: () => '', rows: () => {}, sync: () => {}, click: () => false, event: () => {}, arrive: () => {}, sel: () => {} };
 const EMG = { 7500: 'Hijacking', 7600: 'Radio failure', 7700: 'General emergency' }; // squawk codes
 const isEmg = f => !!f.emg || f.sq in EMG;
+let HSTEP = LS('sky.hstep', 5), TRAIL = LS('sky.trail', 0); // history: seconds per frame (720 frames: 1 h / 3 h / 6 h); trails: 0 off, 1 short, 2 long
 let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
 
 /* ---------- appearance: altitude color + filter ---------- */
@@ -137,6 +138,13 @@ const PlaneLayer = L.Layer.extend({
     // Icons shrink as you zoom out so thousands of aircraft don't pile up at continent scale
     const z = map.getZoom(), k = z <= 4 ? .55 : z <= 5 ? .65 : z <= 6 ? .8 : 1;
     let sel = null; const cLon = map.getCenter().lng;
+    if (TRAIL && !replay) { // fading-free, batched by color: one stroke per altitude color keeps thousands of trails cheap
+      const N = TRAIL === 2 ? 360 : 60, paths = new Map(); let n = 0;
+      flights.forEach(f => { if (f.gone || f.ground || !f.tr || f.tr.length < 2 || !vis(f) || n > 1500) return;
+        const pts = f.tr.slice(-N), st = Math.max(1, Math.ceil(pts.length / 36)), col = color(f.alt); let p0 = null, path = paths.get(col); if (!path) paths.set(col, path = new Path2D());
+        for (let i = 0; i < pts.length; i += st) { const p = map.latLngToContainerPoint([pts[i][0], nearLon(pts[i][1], cLon)]); i ? path.lineTo(p.x, p.y) : path.moveTo(p.x, p.y); p0 = p; }
+        const q = map.latLngToContainerPoint([f.lat, nearLon(f.lon, cLon)]); path.lineTo(q.x, q.y); n++; });
+      ctx.save(); ctx.lineWidth = 1.5; ctx.lineJoin = 'round'; ctx.globalAlpha = .55; paths.forEach((pa, col) => { ctx.strokeStyle = col; ctx.stroke(pa); }); ctx.restore(); ctx.lineWidth = .7; ctx.strokeStyle = '#000'; }
     flights.forEach(f => {
       f._p = null; if (f.gone || !vis(f)) return;
       const [lat, lon, hdg] = f.rp || [f.lat, f.lon, f.hdg], p = map.latLngToContainerPoint([lat, nearLon(lon, cLon)]); // nearest world copy at the date line
@@ -300,7 +308,7 @@ setInterval(() => {
     if (tick % 5 === 0) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 360) f.tr.shift(); } // each aircraft's last ~30 min trail
   });
   const s = flights.get(selected); if (s && !replay) { drawTrail(s); if (s.route) { const p = routePts(s); setRoute(p.done, p.rest); } if (tick % 30 === 0) loadTrace(s); }
-  if (tick % 5 === 0 || !hist.length) { // history recording: every 5 s, at most 720 frames. Recording continues while replaying
+  if (tick % HSTEP === 0 || !hist.length) { // history recording: every HSTEP seconds (5 / 15 / 30), at most 720 frames. Recording continues while replaying
     // One Float32Array per frame (lat, lon, hdg triples) + an id list: far less memory than many small arrays with thousands of aircraft
     const ids = [], buf = new Float32Array(flights.size * 3); let i = 0;
     flights.forEach(f => { ids.push(f.id); buf[i++] = f.lat; buf[i++] = f.lon; buf[i++] = f.hdg; });
@@ -315,6 +323,12 @@ setInterval(() => {
 // Requests an area slightly larger than the visible one; panning/zooming within that area makes no new request
 const LIVE_MS = 15000;
 let fetchedBox = null, fetchedAt = 0, reqId = 0, moveTimer = null, lastReq = 0;
+// Last good positions are kept for the next start, so the map is not empty while the first request is on its way (or when the data sources are busy)
+let cacheAt = 0;
+function saveCache() { if (Date.now() - cacheAt < 60000) return; cacheAt = Date.now(); const v = map.getBounds();
+  const a = [...flights.values()].filter(f => !f.gone && v.contains([f.lat, f.lon])).slice(0, 700).map(f => ({ id: f.id, cs: f.cs, reg: f.reg, type: f.type, country: f.country, lat: +f.lat.toFixed(4), lon: +f.lon.toFixed(4), ground: f.ground, alt: Math.round(f.alt), spd: Math.round(f.spd), hdg: Math.round(f.hdg), vr: f.vr, sq: f.sq, emg: f.emg, cat: f.cat }));
+  save('sky.cache', { t: Date.now(), c: [map.getCenter().lat, map.getCenter().lng, map.getZoom()], f: a }); }
+function loadCache() { const c = LS('sky.cache', null); if (!c || Date.now() - c.t > 1800e3) return; (c.f || []).forEach(d => { if (!flights.has(d.id)) upsert({ ...d, stale: true }); }); redraw(); }
 async function poll(force) {
   if (!live) return; const v = map.getBounds();
   if (!force && fetchedBox && fetchedBox.contains(v) && Date.now() - fetchedAt < LIVE_MS) return;
@@ -323,19 +337,21 @@ async function poll(force) {
   fetchedBox = b; fetchedAt = Date.now(); $('st').textContent = t('loading…');
   const r = await DATA.flights({ s: cl(b.getSouth(), 85), n: cl(b.getNorth(), 85), w: cl(b.getWest(), 180), e: cl(b.getEast(), 180) });
   if (!live || id !== reqId) return; // the map changed again in the meantime: discard the stale response
-  if (!r.ok) { fetchedBox = null; $('st').textContent = t('error') + ': ' + r.error; return; }
+  if (!r.ok) { fetchedBox = null; const busy = /429|rate|paused|credit|limit/i.test(r.error || '');
+    $('st').textContent = t(busy ? 'Data sources are busy, retrying shortly. Showing the last known positions.' : 'No connection to the data sources. Showing the last known positions.') + (flights.size ? '' : ' ' + t('You can also try Demo mode.')); $('st').title = r.error || ''; return; }
+  $('st').title = '';
   // If the source covered only part of the area (adsb.lol, wide view), count only the covered area as "fetched"; otherwise edges left empty won't load when panning
   if (r.covered) fetchedBox = L.latLngBounds([r.covered.s, r.covered.w], [r.covered.n, r.covered.e]);
   const seen = new Set(r.flights.map(d => d.id));
   flights.forEach((f, id) => { if (!seen.has(id) && !watch.has(id)) { flights.delete(id); if (selected === id) select(null); } });
-  r.flights.forEach(upsert); redraw();
+  r.flights.forEach(upsert); redraw(); saveCache();
   $('st').textContent = `${r.src} · ${t('last updated')} ${new Date().toLocaleTimeString(LOC(), TF())}${r.partial ? ' · ' + t('wide view: center only, zoom in') : ''}`;
   pumpRoutes();
 }
 setInterval(() => poll(true), LIVE_MS);
 map.on('moveend', () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => { poll(); pumpRoutes(); }, 400); }); // when zooming/panning ends, request the new area right away
 function setMode(l) {
-  live = l; ts = l ? 1 : 30; exitReplay(); $('mLive').classList.toggle('on', l); $('mDemo').classList.toggle('on', !l); clearAll(); fetchedBox = null;
+  live = l; save('sky.live', l); ts = l ? 1 : 30; exitReplay(); $('mLive').classList.toggle('on', l); $('mDemo').classList.toggle('on', !l); clearAll(); fetchedBox = null;
   if (l) poll(true); else { seedDemo(); $('st').textContent = t('demo (30x speed)'); }
   redraw();
 }
@@ -573,4 +589,4 @@ map.on('click', e => {
   if (placing) { placing = false; zone = { lat: e.latlng.lat, lon: e.latlng.lng, r: zoneRDef }; save('sky.zone', zone); initIn(); drawZone(); toast(t('Alert zone set ({0})', fmtDist(zoneR()))); return; }
   const f = hit(e.containerPoint); select(f ? f.id : null);
 });
-applyF(); setMode(false);
+applyF(); setMode(LS('sky.live', true) && navigator.onLine !== false); if (live) { const c = LS('sky.cache', null); if (c?.c) map.setView([c.c[0], c.c[1]], c.c[2], { animate: false }); loadCache(); }

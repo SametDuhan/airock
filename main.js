@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, session, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, session, Tray, Menu, nativeImage, safeStorage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const data = require('./src/data.js'); // flight, route and aircraft data (shared with the browser build)
@@ -7,6 +7,8 @@ const data = require('./src/data.js'); // flight, route and aircraft data (share
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 const settings = (() => { try { return JSON.parse(fs.readFileSync(settingsFile(), 'utf8')); } catch { return {}; } })();
 const saveSettings = () => { try { fs.writeFileSync(settingsFile(), JSON.stringify(settings)); } catch {} };
+// OpenSky API client (optional): stored encrypted with the operating system's keychain when it is available
+const osLoad = () => { try { if (settings.os && safeStorage.isEncryptionAvailable()) { const [id, sec] = JSON.parse(safeStorage.decryptString(Buffer.from(settings.os, 'base64'))); return { id, sec }; } } catch {} return null; };
 let win = null, tray = null, quitting = false;
 const showWin = () => { if (!win) return createWindow(); if (win.isMinimized()) win.restore(); win.show(); win.focus(); };
 function setupTray() {
@@ -65,6 +67,13 @@ ipcMain.handle('trace', (_, hex) => data.trace(hex));
 
 // Airport panel: weather, city/country, photo
 ipcMain.handle('version', () => app.getVersion());
+ipcMain.handle('openskyGet', () => { const c = osLoad(); return { set: !!c, id: c ? c.id : '' }; });
+ipcMain.handle('openskySet', (_, id, sec) => {
+  id = String(id || '').trim(); sec = String(sec || '').trim();
+  if (!id || !sec) { delete settings.os; saveSettings(); data.setOpenSky('', ''); return { ok: true, set: false }; }
+  if (!safeStorage.isEncryptionAvailable()) return { ok: false, error: 'encryption unavailable' };
+  settings.os = safeStorage.encryptString(JSON.stringify([id, sec])).toString('base64'); saveSettings(); data.setOpenSky(id, sec); return { ok: true, set: true };
+});
 ipcMain.handle('tray', (_, on) => { settings.tray = !!on; saveSettings(); if (on) setupTray(); else if (tray) { tray.destroy(); tray = null; } });
 ipcMain.handle('show', () => showWin());
 ipcMain.handle('airport', (_, lat, lon) => data.airport(lat, lon));
@@ -86,6 +95,7 @@ app.whenReady().then(() => {
   });
   // Only allow the notifications permission (alert zone); camera, location etc. are denied
   session.defaultSession.setPermissionRequestHandler((_, perm, cb) => cb(perm === 'notifications'));
+  { const c = osLoad(); if (c) data.setOpenSky(c.id, c.sec); }
   createWindow(); setupUpdates();
   app.on('activate', () => BrowserWindow.getAllWindows().length || createWindow());
 });
