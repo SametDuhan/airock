@@ -7,8 +7,10 @@ const load = src => new Promise((ok, no) => { const s = document.createElement('
       await load('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'); }
   catch { document.getElementById('map').innerHTML = '<p style="padding:30px">Could not load the map library. Run "npm install" or check your internet connection.</p>'; return; } }
   await load('geo.js');
+  await load('fuel.js');
   await load('data.js');
   await load('i18n.js');
   await load('renderer.js');
   await load('extras.js');
+  await load('layers.js');
 })();

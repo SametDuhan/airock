@@ -219,6 +219,14 @@ async function loadTurb(f) {
   if (!res.ok) { f.tbs = 'err'; f.tbsAt = Date.now(); } else { f.tb = res; f.tbs = 'ok'; tbCache.set(f.id, { v: res, t: Date.now() }); }
   if (f.id === selected) renderCard();
 }
+const fmtMass = kg => kg >= 1000 ? (kg / 1000).toFixed(1) + ' t' : Math.round(kg / 10) * 10 + ' kg';
+const windRow = f => { if (f.ground || f.spd * 1.944 < 60) return null;
+  const hw = f.ws != null && f.wd != null ? SkyFuel.headwind(f.ws, f.wd, f.hdg) : f.tas != null && f.th != null ? SkyFuel.headwindFromTas(f.tas, f.spd * 1.944, f.th, f.hdg) : null;
+  if (hw == null || !Number.isFinite(hw)) return null;
+  const a = Math.round(Math.abs(hw)), main = a < 5 ? t('No significant head/tailwind') : hw > 0 ? t('Headwind {0} kt', a) : t('Tailwind {0} kt', a);
+  return ['Wind', main + (f.ws != null && f.wd != null ? ` · ${Math.round(f.wd)}°/${Math.round(f.ws)} kt` : '')]; };
+const fuelRow = f => { const dst = f.route?.dst; if (f.ground || !dst) return null;
+  const r = SkyFuel.toGo(f.ac?.icaoType || f.type, km(f.lat, f.lon, dst.lat, dst.lon), f.spd * 1.944); return r ? ['Fuel to go (est.)', `≈ ${fmtMass(r.kg)} · CO₂ ${fmtMass(r.co2)}`] : null; };
 const turbRow = f => { if (f.ground) return null;
   if (f.tbs === 'ok') { const r = f.tb, k = r.km;
     return [t('Turbulence'), r.level >= 3 ? t('High turbulence risk ahead (~{0} km)', k) : r.level === 2 ? t('Moderate turbulence possible ahead (~{0} km)', k) : t('No turbulence reported or forecast on the route ahead'), 'tb' + r.level]; }
@@ -411,13 +419,15 @@ function renderCard(full) {
   }
   if (f.route && $('pgb')) { const { org, dst } = f.route, a = km(org.lat, org.lon, f.lat, f.lon), b = km(f.lat, f.lon, dst.lat, dst.lon);
     $('pgb').style.width = Math.min(100, a / (a + b) * 100).toFixed(1) + '%';
-    $('pgt').textContent = t('{0} km flown · {1} km to go', Math.round(a), Math.round(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) : ''); }
+    $('pgt').textContent = t('{0} km flown · {1} km to go', Math.round(a), Math.round(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) + ' · ' + t('arrives {0}', new Date(Date.now() + b / (f.spd * 3.6) * 3600e3).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' })) : ''); }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
     ['Altitude', f.ground ? t('on ground') : ft(f.alt)], ['Speed', Math.round(f.spd * 1.944) + ' kt'], ['Heading', Math.round(f.hdg) + '°'],
     ['Vertical speed', Math.round(f.vr * 196.85) + ' ft/min'], ['Nearest airport', nearest(f)], ['Position', f.lat.toFixed(2) + ', ' + f.lon.toFixed(2)]];
   if (ac.owner && ac.owner !== f.route?.airline) rows.splice(2, 0, ['Owner', ac.owner]);
+  { const w = windRow(f); if (w) rows.splice(rows.findIndex(r => r[0] === 'Vertical speed') + 1, 0, w); }
   X.rows(f, rows);
+  { const fr = fuelRow(f); if (fr) rows.push(fr); }
   { const tr = live && turbRow(f); if (tr) rows.push(tr); } // last row, below Position
   $('kvs').innerHTML = rows.map(r => r[2] ? `<div class="kv tbr ${r[2]}"><b>${esc(r[1])}</b></div>` : `<div class="kv"><span>${t(r[0])}</span><b>${esc(r[1])}</b></div>`).join('');
   $('fv').textContent = fav.has(f.id) ? t('★ Favorited') : t('☆ Favorite'); X.sync(f);

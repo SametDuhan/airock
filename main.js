@@ -33,6 +33,8 @@ ipcMain.handle('watch', (_, hexes) => data.watch(hexes));
 ipcMain.handle('legs', (_, hex) => data.legs(hex));
 ipcMain.handle('metar', (_, lat, lon) => data.metar(lat, lon));
 ipcMain.handle('radar', () => data.radar());
+ipcMain.handle('turbMap', () => data.turbMap());
+ipcMain.handle('wind', (_, b, hpa) => data.wind(b, hpa));
 ipcMain.handle('turb', (_, pts, altFt) => data.turb(pts, altFt));
 
 app.whenReady().then(() => {
