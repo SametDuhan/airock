@@ -1,21 +1,46 @@
+# Builds the installers for Windows, macOS and Linux and attaches them to the GitHub release of the pushed tag (v*).
+# Can also be run by hand: Actions → release → Run workflow, with the tag (e.g. v0.6.0).
 name: release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attach the files to (e.g. v0.6.0)
+        required: true
 permissions:
   contents: write
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            args: --win
+          - os: macos-latest
+            args: --mac --x64 --arm64
+          - os: ubuntu-latest
+            args: --linux
     runs-on: ${{ matrix.os }}
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: npm ci
       - run: npm test
-      - run: npx electron-builder --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npx electron-builder ${{ matrix.args }} --publish never
+      - name: Attach the installers to the release
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(dist/*.exe dist/*.dmg dist/*.AppImage)
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "SkyTrack ${TAG#v}" --notes "See the assets below."
+          gh release upload "$TAG" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"

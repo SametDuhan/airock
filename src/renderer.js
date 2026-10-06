@@ -94,7 +94,7 @@ function toast(msg, id) {
   d.querySelector('span').textContent = emg ? msg.slice(1).trim() : msg; $('toast').appendChild(d);
   d.onclick = e => { if (!e.target.closest('.tx') && id && flights.has(id)) select(id); d.remove(); };
   setTimeout(() => d.remove(), emg ? 8000 : 4000);
-  try { new Notification('SkyTrack', { body: msg }); } catch {}
+  if (LS('sky.notif', true)) try { const n = new Notification('SkyTrack', { body: msg }); n.onclick = () => { try { window.api?.show?.(); } catch {} if (id && flights.has(id)) select(id); }; } catch {}
 }
 
 /* ---------- aircraft: single canvas layer ---------- */
@@ -223,7 +223,7 @@ const routePts = f => { const { org, dst } = f.route, p = [f.lat, f.lon], fl = f
 async function loadTrace(f) {
   if (!live || f.trAt && Date.now() - f.trAt < 60000) return; f.trAt = Date.now();
   const res = await DATA.trace(f.id); if (!res.ok) return;
-  f.flown = res.points; if (f.id === selected && !replay && f.route) { const p = routePts(f); setRoute(p.done, p.rest); }
+  f.flown = res.points; f.prof = res.prof; if (f.id === selected && $('prf')) X.sync(f); if (f.id === selected && !replay && f.route) { const p = routePts(f); setRoute(p.done, p.rest); }
 }
 function drawRoute(f) {
   routeEnds.clearLayers();
@@ -371,8 +371,9 @@ function apRows(s) {
   const arr = s.tab === 'arr', k = arr ? 'dst' : 'org', o = arr ? 'org' : 'dst', list = apFlights(s, k);
   if (!list.length) return `<div class="none">${live && !flights.size ? t('No aircraft loaded yet') : t(arr ? 'No arrivals found nearby' : 'No departures found nearby')}</div>`;
   return list.slice(0, 40).map(({ f, d }) => {
-    const st = f.ground ? (arr && d < 25 ? t('landed') : t('on ground')) : `${Math.round(d)} km${arr && f.spd > 30 ? ' · ~' + eta(d / (f.spd * 3.6)) : ''}`;
-    return `<div class="row" data-id="${esc(f.id)}"><b>${esc(f.cs)}</b><span>${esc(f.route[o].code)} · ${st}</span></div>`; }).join('');
+    const ft_ = f.alt * 3.281, eta_ = !f.ground && f.spd > 30 ? '~' + eta(d / (f.spd * 3.6)) : '';
+    const [st, cl] = f.ground ? [arr && d < 25 ? 'landed' : 'on ground', 'g'] : arr ? (d < 40 && ft_ < 5000 ? ['Landing', 'ok'] : d < 150 ? ['Approaching', 'am'] : ['En route', 'mu']) : (d < 60 && ft_ < 12000 ? ['Departed', 'ok'] : ['En route', 'mu']);
+    return `<div class="row ar" data-id="${esc(f.id)}"><div class="rm"><b>${esc(f.cs)}</b><small>${esc(f.route[o].code)}${acCode(f) ? ' · ' + esc(acCode(f)) : ''}</small></div><div class="rs"><i class="sp ${cl}">${t(st)}</i><small>${Math.round(d)} km${eta_ ? ' · ' + eta_ : ''}</small></div></div>`; }).join('');
 }
 function renderAp() {
   const s = apSel; if (!s) return; const i = s.info, w = i?.weather, p = i?.place, x = w && (WX[w.code] || ['—', '']);
@@ -386,7 +387,7 @@ function renderAp() {
   const mt = i?.metar?.metar, metar = mt ? `<div class="mt"><span class="fc ${esc(mt.cat)}">${esc(mt.cat || 'METAR')}</span>${esc(mt.icao)}${mt.dist > 15 ? ' · ' + mt.dist + ' km' : ''}<code>${esc(mt.raw)}</code>`
     + (i.metar.taf ? `<details><summary>TAF</summary><code>${esc(i.metar.taf)}</code></details>` : '') + `</div>` : '';
   $('apc').innerHTML = `<div class="ch"><div class="cn"><h2>${esc(s.code)}</h2><small>${esc(s.name)}</small><br><small>${esc(place)}</small></div><button id="ax" class="ib" title="${t('Close')}">✕</button></div>`
-    + `${ph}${wx}${metar}<div class="tabs"><button data-t="arr" class="${s.tab === 'arr' ? 'on' : ''}">${t('Arrivals')}</button><button data-t="dep" class="${s.tab === 'dep' ? 'on' : ''}">${t('Departures')}</button></div><div id="apr">${apRows(s)}</div>`;
+    + `${ph}${wx}${metar}<div class="tabs"><button data-t="arr" class="${s.tab === 'arr' ? 'on' : ''}">${t('Arrivals')} <em>${apFlights(s, 'dst').length}</em></button><button data-t="dep" class="${s.tab === 'dep' ? 'on' : ''}">${t('Departures')} <em>${apFlights(s, 'org').length}</em></button></div><div id="apr">${apRows(s)}</div>`;
 }
 $('apc').onclick = e => {
   if (e.target.id === 'ax') return closeAp();
@@ -445,6 +446,8 @@ function flagHtml(reg) {
   const c = SkyGeo.regCountry(reg); if (!c) return '';
   return `<img class="flag" src="https://flagcdn.com/w40/${c.toLowerCase()}.png" alt="${c}" title="${c}" onerror="this.remove()">`;
 }
+// Short labels for the three big tiles in the card (the full words do not fit in every language)
+const TILE_L = { en: ['Altitude', 'Speed', 'Vert. speed'], tr: ['İrtifa', 'Hız', 'Dikey hız'], es: ['Altitud', 'Veloc.', 'Vel. vert.'], de: ['Höhe', 'Tempo', 'Steigrate'], fr: ['Altitude', 'Vitesse', 'Vit. vert.'] };
 function renderCard(full) {
   const f = flights.get(selected); if (!f) return;
   const ac = f.ac || {};
@@ -467,8 +470,8 @@ function renderCard(full) {
   X.rows(f, rows);
   { const fr = fuelRow(f); if (fr) rows.push(fr); }
   { const tr = live && turbRow(f); if (tr) rows.push(tr); } // last row, below Position
-  const sg = f.ground ? '' : (f.vr * 196.85 > 100 ? '↑ ' : f.vr * 196.85 < -100 ? '↓ ' : ''), tiles = [
-    [t('Altitude'), f.ground ? '0' : Math.round(f.alt * 3.281).toLocaleString(LOC()), 'ft'], [t('Speed'), Math.round(f.spd * 1.944), 'kt'], [t('Vertical speed'), sg + Math.abs(Math.round(f.vr * 196.85)).toLocaleString(LOC()), 'ft/min']];
+  const TL = TILE_L[LANG] || TILE_L.en, vsn = Math.round(f.vr * 196.85), sg = f.ground || !vsn ? '' : vsn > 0 ? '+' : '−', tiles = [
+    [t('Altitude'), f.ground ? '0' : Math.round(f.alt * 3.281).toLocaleString(LOC()), 'ft'], [TL[1], Math.round(f.spd * 1.944), 'kt'], [TL[2], sg + Math.abs(vsn).toLocaleString(LOC()), 'ft/min']];
   const tl = `<div class="st3">${tiles.map(x => `<div><span>${esc(x[0])}</span><b>${esc(x[1])}</b><small>${x[2]}</small></div>`).join('')}</div>`;
   for (const n of ['Altitude', 'Speed', 'Vertical speed']) { const k = rows.findIndex(r => r[0] === n); if (k >= 0) rows.splice(k, 1); }
   $('kvs').innerHTML = tl + rows.map(r => r[2] ? `<div class="kv tbr ${r[2]}"><b>${esc(r[1])}</b></div>` : `<div class="kv${r[3] ? ' xr' : ''}"><span>${t(r[0])}</span><b>${esc(r[1])}</b>${r[3] || ''}</div>`).join('');

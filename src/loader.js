@@ -10,7 +10,9 @@ const load = src => new Promise((ok, no) => { const s = document.createElement('
   await load('fuel.js');
   await load('data.js');
   await load('i18n.js');
+  await load('langs.js');
   await load('renderer.js');
   await load('extras.js');
   await load('layers.js');
+  await load('features.js');
 })();

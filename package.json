@@ -1,10 +1,15 @@
 {
   "name": "skytrack",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "description": "Free desktop flight tracker using open ADS-B data. No account or API key needed.",
   "license": "MIT",
   "author": "Samet Duhan Şahin",
-  "keywords": ["flight-tracker", "adsb", "electron", "leaflet"],
+  "keywords": [
+    "flight-tracker",
+    "adsb",
+    "electron",
+    "leaflet"
+  ],
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -34,11 +39,13 @@
     },
     "mac": {
       "target": "dmg",
-      "category": "public.app-category.utilities"
+      "category": "public.app-category.utilities",
+      "artifactName": "SkyTrack-mac-${arch}.${ext}"
     },
     "linux": {
       "target": "AppImage",
-      "category": "Utility"
+      "category": "Utility",
+      "artifactName": "SkyTrack-linux-${arch}.${ext}"
     }
   },
   "repository": {

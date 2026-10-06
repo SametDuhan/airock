@@ -148,9 +148,16 @@
     const d = 12742 * Math.asin(Math.sqrt(Math.sin((b[1] - a[1]) * Math.PI / 360) ** 2 + Math.cos(a[1] * Math.PI / 180) * Math.cos(b[1] * Math.PI / 180) * Math.sin((b[2] - a[2]) * Math.PI / 360) ** 2)); return d > .4 * gs * 1.852 * dt; };
   const gapBreak = (a, b) => b[0] - a[0] > LEG_GAP_S && (lowAlt(a) || lowAlt(b) || !flewThrough(a, b));
   const MAX_PTS = 500;
+  const legStart = trace => { let i = trace.length - 1;
+    while (i > 0 && trace[i][3] !== 'ground' && !(trace[i][6] & 2) && !gapBreak(trace[i - 1], trace[i])) i--; return i; };
+  // Altitude / speed profile of the current flight: [seconds since the flight's first point, altitude ft, groundspeed kt], downsampled
+  function profOf(trace) {
+    const a = trace.slice(legStart(trace)).filter(p => typeof p[3] === 'number' || p[3] === 'ground'); if (!a.length) return [];
+    const t0 = a[0][0], rows = a.map(p => [Math.round(p[0] - t0), p[3] === 'ground' ? 0 : p[3], typeof p[4] === 'number' ? Math.round(p[4]) : null]);
+    const step = Math.max(1, Math.ceil(rows.length / 140)); return rows.filter((_, k) => k % step === 0 || k === rows.length - 1);
+  }
   function legOf(trace) {
-    let i = trace.length - 1;
-    while (i > 0 && trace[i][3] !== 'ground' && !(trace[i][6] & 2) && !gapBreak(trace[i - 1], trace[i])) i--;
+    const i = legStart(trace);
     const pts = trace.slice(i).filter(p => typeof p[1] === 'number' && typeof p[2] === 'number').map(p => [p[1], p[2]]);
     const step = Math.max(1, Math.ceil(pts.length / MAX_PTS));
     return pts.filter((_, k) => k % step === 0 || k === pts.length - 1);
@@ -162,7 +169,7 @@
       const r = await get(`https://adsb.lol/data/traces/${hex.slice(-2)}/trace_full_${hex}.json`, 15000);
       if (r.status === 404) return { ok: true, points: [] };
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      return { ok: true, points: legOf((await r.json()).trace || []) };
+      const tr = (await r.json()).trace || []; return { ok: true, points: legOf(tr), prof: profOf(tr) };
     } catch (e) { return { ok: false, error: e.message }; }
   }
 

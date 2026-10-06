@@ -1,13 +1,31 @@
-const { app, BrowserWindow, ipcMain, shell, session } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, session, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const data = require('./src/data.js'); // flight, route and aircraft data (shared with the browser build)
 
+// Small settings file in the user data folder (only the tray option for now)
+const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
+const settings = (() => { try { return JSON.parse(fs.readFileSync(settingsFile(), 'utf8')); } catch { return {}; } })();
+const saveSettings = () => { try { fs.writeFileSync(settingsFile(), JSON.stringify(settings)); } catch {} };
+let win = null, tray = null, quitting = false;
+const showWin = () => { if (!win) return createWindow(); if (win.isMinimized()) win.restore(); win.show(); win.focus(); };
+function setupTray() {
+  if (tray) return;
+  tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.png')).resize({ width: 18, height: 18 }));
+  tray.setToolTip('SkyTrack');
+  tray.setContextMenu(Menu.buildFromTemplate([{ label: 'Open SkyTrack', click: showWin }, { type: 'separator' }, { label: 'Quit', click: () => { quitting = true; app.quit(); } }]));
+  tray.on('click', showWin);
+}
+if (!app.requestSingleInstanceLock()) app.quit(); else app.on('second-instance', showWin);
 function createWindow() {
   const w = new BrowserWindow({
     width: 1400, height: 860, minWidth: 900, minHeight: 600,
     backgroundColor: '#141414', title: 'SkyTrack', icon: path.join(__dirname, 'build', 'icon.png'),
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false }
   });
+  win = w;
+  w.on('close', e => { if (settings.tray && !quitting) { e.preventDefault(); w.hide(); setupTray(); } });
+  w.on('closed', () => { win = null; });
   w.removeMenu();
   // Open links from inside the app (e.g. aircraft photos) in the system browser, not in the app window
   w.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//.test(url)) shell.openExternal(url); return { action: 'deny' }; });
@@ -27,6 +45,8 @@ ipcMain.handle('trace', (_, hex) => data.trace(hex));
 
 // Airport panel: weather, city/country, photo
 ipcMain.handle('version', () => app.getVersion());
+ipcMain.handle('tray', (_, on) => { settings.tray = !!on; saveSettings(); if (on) setupTray(); else if (tray) { tray.destroy(); tray = null; } });
+ipcMain.handle('show', () => showWin());
 ipcMain.handle('airport', (_, lat, lon) => data.airport(lat, lon));
 
 // Watchlist, today's flights of an aircraft, METAR/TAF, rain radar
@@ -48,4 +68,5 @@ app.whenReady().then(() => {
   createWindow();
   app.on('activate', () => BrowserWindow.getAllWindows().length || createWindow());
 });
+app.on('before-quit', () => { quitting = true; });
 app.on('window-all-closed', () => process.platform !== 'darwin' && app.quit());

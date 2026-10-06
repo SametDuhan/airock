@@ -210,6 +210,7 @@ header{position:sticky;top:0;z-index:20}
 .topbar a{color:var(--text);text-decoration:none;display:inline-flex;gap:8px;align-items:center}.topbar a:hover{color:var(--accent)}.topbar .vt{font:700 11px ui-monospace,Consolas,monospace;background:var(--accent);color:var(--accent-ink);padding:2px 8px;border-radius:999px}
 #new{padding-bottom:20px}.nw{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px 28px;max-width:760px}.nw .hd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}.nw .hd .vt{font:800 14px ui-monospace,Consolas,monospace;background:var(--accent);color:var(--accent-ink);padding:4px 12px;border-radius:999px}.nw .hd span{color:var(--muted);font-size:13px}
 .nw ul{margin:0;padding:0;list-style:none;display:grid;gap:10px}.nw li{position:relative;padding-left:26px;line-height:1.5}.nw li::before{content:'';position:absolute;left:0;top:.45em;width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--glow)}.nw p{margin:0 0 10px;line-height:1.55}.nw a{color:var(--accent)}
+.alts{margin:14px 0 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted)}.alts a{padding:5px 12px;border:1px solid var(--line);border-radius:999px;color:var(--text);text-decoration:none;font-weight:600}.alts a:hover{border-color:var(--accent);color:var(--accent)}.alts [hidden]{display:none}
 </style>
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
 </head>
@@ -237,7 +238,7 @@ header{position:sticky;top:0;z-index:20}
   </svg></div>
 </div>
 
-<div class="topbar"><div class="wrap"><span class="dlc" id="dlc" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 20h16"/></svg><b id="dlCount">0</b> <span data-i18n="top.dl">downloads so far</span></span><a href="#new"><span class="vt" id="topVer">v0.5.3</span><span data-i18n="top.new">See what's new</span> →</a></div></div>
+<div class="topbar"><div class="wrap"><span class="dlc" id="dlc" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 20h16"/></svg><b id="dlCount">0</b> <span data-i18n="top.dl">downloads so far</span></span><a href="#new"><span class="vt" id="topVer">v0.6.0</span><span data-i18n="top.new">See what's new</span> →</a></div></div>
 <header><div class="wrap">
   <a class="logo" href="#top" aria-label="SkyTrack"><img src="favicon.svg" alt="" width="30" height="30">SKYTRACK</a>
   <nav>
@@ -252,7 +253,7 @@ header{position:sticky;top:0;z-index:20}
 
 <main id="top">
 <div class="wrap hero">
-  <span class="badge"><i></i><span id="badgeTxt" data-i18n="hero.badge">Free &amp; open source · v0.5.3</span></span>
+  <span class="badge"><i></i><span id="badgeTxt" data-i18n="hero.badge">Free &amp; open source · v0.6.0</span></span>
   <h1><span class="p" data-i18n="hero.h1a">Watch the sky</span> <span class="g" data-i18n="hero.h1b">live.</span></h1>
   <p class="lead" data-i18n="hero.lead">SkyTrack is a free desktop flight tracker, similar to Flightradar24. See every flight on the map, with turbulence ahead, wind, weather and more. No account or API key needed.</p>
   <div class="btns">
@@ -260,7 +261,7 @@ header{position:sticky;top:0;z-index:20}
     <a class="btn ghost" href="#download" data-i18n="hero.console">Install from console</a>
     <a class="btn ghost" href="https://github.com/SametDuhan/airock">GitHub</a>
   </div>
-  <p class="trust"><b id="trustVer">Windows · 78 MB · v0.5.3</b> · <span data-i18n="hero.trust">macOS &amp; Linux: install from source</span></p>
+  <p class="trust"><b id="trustVer">Windows · 78 MB · v0.6.0</b> · <span data-i18n="hero.trust">macOS &amp; Linux: install from source</span></p>
   <div class="mobile-note"><span data-i18n="hero.mobile">SkyTrack is a desktop app. Open this page on your computer to download it.</span><br><button class="btn ghost" id="copyLink" style="padding:8px 16px;font-size:14px" data-i18n="hero.copylink">Copy page link</button></div>
 
   <div class="frame reveal">
@@ -381,7 +382,7 @@ header{position:sticky;top:0;z-index:20}
 <section id="new"><div class="wrap">
   <p class="eyebrow reveal" data-i18n="new.eyebrow">What's new</p>
   <h2 class="reveal" data-i18n="new.h2">In the latest version</h2>
-  <div class="nw reveal"><div class="hd"><span class="vt" id="nwVer">v0.5.3</span><span id="nwDate"></span></div><div id="nwBody"><p data-i18n="new.fb">Loading the release notes…</p></div>
+  <div class="nw reveal"><div class="hd"><span class="vt" id="nwVer">v0.6.0</span><span id="nwDate"></span></div><div id="nwBody"><p data-i18n="new.fb">Loading the release notes…</p></div>
     <p style="margin:14px 0 0"><a href="https://github.com/SametDuhan/airock/releases" data-i18n="dl.all">All releases</a></p></div>
 </div></section>
 
@@ -395,6 +396,7 @@ header{position:sticky;top:0;z-index:20}
       <h3 data-i18n="dl.win">One click, then run the installer</h3>
       <p data-i18n="dl.winp">Download the installer and run it. SkyTrack opens right after.</p>
       <a class="btn primary" id="dlMain2" href="https://github.com/SametDuhan/airock/releases/latest/download/SkyTrack-Setup.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 20h16"/></svg><span id="dlLabel2" data-i18n="dl.btn">Download for Windows (.exe)</span></a>
+      <div class="alts" id="dlAlts" hidden><span data-i18n="dl.alt">Also available for</span> <a id="altMacA" hidden>macOS (Apple silicon)</a><a id="altMacI" hidden>macOS (Intel)</a><a id="altLin" hidden>Linux (AppImage)</a></div>
       <ul class="mini"><li data-i18n="dl.m1">Windows 10 or newer, 64-bit</li><li data-i18n="dl.m2">No account, no API key, no ads</li><li data-i18n="dl.m3">Open source (MIT): read or build the code yourself</li></ul>
       <p class="note"><span data-i18n="dl.warn">Windows may show “Windows protected your PC” because the installer is not code-signed yet. Choose <b>More info</b> → <b>Run anyway</b>.</span> <a href="https://github.com/SametDuhan/airock/releases" data-i18n="dl.all">All releases</a></p>
     </div>
@@ -450,9 +452,9 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
 <script>
 (() => {
   const TR = {
-    'top.dl':'indirme yapıldı','top.new':'Yenilikleri gör','new.eyebrow':'Yenilikler','new.h2':'Son sürümde neler var','new.fb':'Sürüm notları yükleniyor…',
+    'top.dl':'indirme yapıldı','dl.alt':'Ayrıca şunlar için:','top.new':'Yenilikleri gör','new.eyebrow':'Yenilikler','new.h2':'Son sürümde neler var','new.fb':'Sürüm notları yükleniyor…',
     'nav.features':'Özellikler','nav.download':'İndir','nav.faq':'SSS','nav.data':'Veri',
-    'hero.badge':'Ücretsiz ve açık kaynak · v0.5.3','hero.h1a':'Gökyüzünü','hero.h1b':'canlı izle.',
+    'hero.badge':'Ücretsiz ve açık kaynak · v0.6.0','hero.h1a':'Gökyüzünü','hero.h1b':'canlı izle.',
     'hero.lead':'SkyTrack, Flightradar24 benzeri ücretsiz bir masaüstü uçuş takip uygulaması. Haritada tüm uçuşları, önlerindeki türbülansı, rüzgarı, hava durumunu ve daha fazlasını gör. Hesap ya da API anahtarı gerekmez.',
     'hero.dl':'Windows için indir','hero.console':'Konsoldan kur','hero.trust':'macOS ve Linux: kaynaktan kur',
     'hero.mobile':'SkyTrack bir masaüstü uygulamasıdır. İndirmek için bu sayfayı bilgisayarında aç.','hero.copylink':'Sayfa bağlantısını kopyala',
@@ -528,7 +530,8 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
     $('#trustVer').textContent = `Windows · ${mb} MB · ${rel.tag}`; $('#badgeTxt').textContent = (lang === 'tr' ? 'Ücretsiz ve açık kaynak · ' : 'Free & open source · ') + rel.tag; }
   fetch('https://api.github.com/repos/SametDuhan/airock/releases/latest').then(r => r.ok ? r.json() : null).then(j => {
     if (!j) return; notes = { tag: j.tag_name, body: j.body || '', date: j.published_at };
-    const a = (j.assets || []).find(x => /SkyTrack-Setup\.exe$/.test(x.name)); if (a) rel = { tag: j.tag_name, size: a.size }; applyRelease(); }).catch(() => {});
+    const a = (j.assets || []).find(x => /SkyTrack-Setup\.exe$/.test(x.name)); if (a) rel = { tag: j.tag_name, size: a.size }; applyRelease();
+    [['altMacA', /mac.*arm64\.dmg$/i], ['altMacI', /mac.*x64\.dmg$/i], ['altLin', /\.AppImage$/i]].forEach(([id, re]) => { const f = (j.assets || []).find(x => re.test(x.name)); if (f) { $('#' + id).href = f.browser_download_url; $('#' + id).hidden = false; $('#dlAlts').hidden = false; } }); }).catch(() => {});
   // total downloads of the installer across all releases
   fetch('https://api.github.com/repos/SametDuhan/airock/releases?per_page=100').then(r => r.ok ? r.json() : null).then(list => {
     if (!list) return; const n = list.reduce((t, r) => t + (r.assets || []).filter(x => /\.(exe|dmg|AppImage)$/i.test(x.name)).reduce((u, x) => u + (x.download_count || 0), 0), 0);

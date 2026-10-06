@@ -37,7 +37,13 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
 - **Map layers**: besides rain radar, the **Turbulence** button draws SIGMET / G-AIRMET turbulence areas, **Wind** draws wind arrows (pick the flight level in the selector that appears) and **Night** shades the night side of the Earth.
 - **Foldable menu**: click a section title in the left menu (Data, Mode, Map, Filters, Aircraft) to fold it. SkyTrack remembers what you folded.
 - **Plane spotter mode**: switch to it under **Mode**. It adds a logbook (**📓 Log sighting** on a flight card, CSV export), *new aircraft* / *new type* badges, and extra details (ICAO24, squawk, category). In normal mode none of this is shown.
-- **English and Turkish**: the **TR / EN** button at the top of the menu switches the whole interface. It starts in your system language.
+- **Five languages**: the language button at the top of the menu switches the whole interface between English, Turkish, Spanish, German and French. It starts in your system language. To add another language, add a table to `src/langs.js` and an entry to `LANGS` in `src/i18n.js`.
+- **Different aircraft icons**: helicopters get a rotor icon, four-engine airliners are drawn larger with all four engines, and twin-engine airliners, small jets and other aircraft each have their own shape. All are colored by altitude.
+- **Altitude and speed profile**: on a live flight card, a small chart shows the altitude and speed over the current flight.
+- **Share image**: **📷 Share image** on a flight card saves (and copies) a picture of the flight with its route, callsign and numbers.
+- **Flight diary**: **📓 Flight diary** under **Mode** keeps your own flights (date, route, flight number, aircraft), with total distance, trips around the Earth, an estimated CO₂ per passenger, and CSV export. **Add to diary** on a flight card fills it in for you.
+- **Tray and notifications**: under **Mode** you can keep SkyTrack running in the system tray when the window is closed (so watchlist notifications keep coming), and turn desktop notifications on or off.
+- **Downloads for every system**: Windows installer, macOS (.dmg, Apple silicon and Intel) and Linux (.AppImage) are attached to each release by the build workflow.
 - **Favorites**: star a flight (☆) to find it again later.
 - **Alert zone** (*Alert zone*): click the map to set a circle (100 km by default; change the radius in the menu, 10–500 km). You get a notification when an aircraft enters it, including one that first appears inside it.
 - **Replay**: rewind the last hour with the slider at the bottom, then press *● Live* to return to live.

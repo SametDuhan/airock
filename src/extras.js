@@ -159,10 +159,51 @@ const EMG_INFO = {
       'Kontrol uçuşu güvenlik olayı olarak ele alır, çevresindeki hava sahasını sessizce boşaltır ve yetkilileri bilgilendirir. Kontrolörler telsizden bu konuda soru sormaz.',
       'Çok nadirdir. Kod yanlışlıkla da girilebildiği için haritada 7500 görmek gerçek bir kaçırma olduğunu kanıtlamaz.'] }
 };
+Object.assign(EMG_INFO[7700], {
+  es: ['Emergencia general', 'El código 7700 es el código internacional de emergencia general. La tripulación lo activa cuando el avión o las personas a bordo corren un peligro serio y necesitan prioridad del control aéreo.',
+    'Fallo de motor, fuego o humo, emergencia médica, pérdida de presión en cabina, combustible muy bajo, daños estructurales o por el tiempo.',
+    'Los controladores despejan el espacio aéreo, dan prioridad de aterrizaje y los bomberos esperan en la pista. La mayoría de estos vuelos terminan con un aterrizaje normal.',
+    'No siempre significa una catástrofe. Muchas tripulaciones lo declaran pronto por precaución, y a veces el código se introduce por error.'],
+  de: ['Allgemeiner Notfall', 'Squawk 7700 ist der internationale Code für einen allgemeinen Notfall. Die Crew setzt ihn, wenn das Flugzeug oder die Personen an Bord in ernster Gefahr sind und Vorrang von der Flugsicherung brauchen.',
+    'Triebwerksausfall, Feuer oder Rauch, medizinischer Notfall, Druckverlust in der Kabine, sehr wenig Treibstoff, Struktur- oder Wetterschäden.',
+    'Die Lotsen räumen den Luftraum, geben Landevorrang und die Feuerwehr wartet an der Piste. Die meisten dieser Flüge enden mit einer normalen Landung.',
+    'Es bedeutet nicht immer eine Katastrophe. Crews erklären oft vorsorglich früh einen Notfall, und manchmal wird der Code versehentlich gesetzt.'],
+  fr: ['Urgence générale', 'Le code 7700 est le code international d\'urgence générale. L\'équipage l\'affiche lorsque l\'avion ou les personnes à bord sont en danger sérieux et ont besoin de la priorité du contrôle aérien.',
+    'Panne moteur, feu ou fumée, urgence médicale, perte de pressurisation, carburant très bas, dommages structurels ou liés à la météo.',
+    'Les contrôleurs dégagent l\'espace aérien, donnent la priorité à l\'atterrissage et les pompiers attendent sur la piste. La plupart de ces vols se terminent par un atterrissage normal.',
+    'Cela ne signifie pas toujours une catastrophe. Les équipages déclarent souvent tôt par précaution, et le code est parfois saisi par erreur.'] });
+Object.assign(EMG_INFO[7600], {
+  es: ['Fallo de radio', 'El código 7600 significa que la aeronave ha perdido el contacto por radio con el control de tráfico aéreo.',
+    'La radio o los auriculares se averían, la tripulación está en la frecuencia equivocada o la radio está fuera de alcance.',
+    'La tripulación sigue los procedimientos de pérdida de comunicaciones: continúa por la ruta prevista, el control aparta al resto del tráfico y la aeronave aterriza según lo previsto, normalmente atenta a las señales luminosas de la torre.',
+    'Suele ser inofensivo y a menudo se resuelve en minutos, tras lo cual se vuelve a cambiar el código.'],
+  de: ['Funkausfall', 'Squawk 7600 bedeutet, dass das Flugzeug den Funkkontakt zur Flugsicherung verloren hat.',
+    'Funkgerät oder Headset fallen aus, die Crew ist auf der falschen Frequenz oder außer Reichweite.',
+    'Die Crew folgt den festgelegten Verfahren bei Funkausfall: Sie fliegt die geplante Route weiter, die Flugsicherung hält anderen Verkehr fern und das Flugzeug landet wie geplant, meist mit Blick auf Lichtsignale des Towers.',
+    'Meist harmlos und oft nach Minuten behoben, danach wird der Code zurückgesetzt.'],
+  fr: ['Panne radio', 'Le code 7600 signifie que l\'appareil a perdu le contact radio avec le contrôle aérien.',
+    'La radio ou le casque tombe en panne, l\'équipage est sur la mauvaise fréquence ou hors de portée.',
+    'L\'équipage applique les procédures de perte de communication : il poursuit la route prévue, le contrôle écarte les autres avions et l\'appareil atterrit comme prévu, en surveillant les signaux lumineux de la tour.',
+    'C\'est généralement sans gravité et souvent réglé en quelques minutes, après quoi le code est remis comme avant.'] });
+Object.assign(EMG_INFO[7500], {
+  es: ['Secuestro', 'El código 7500 indica interferencia ilícita: un secuestro o un intento de tomar el control de la aeronave.',
+    'La tripulación puede activarlo en silencio, sin hablar por radio, para no alertar al secuestrador.',
+    'El control trata el vuelo como un incidente de seguridad, despeja discretamente el espacio aéreo y avisa a las autoridades. Los controladores evitan preguntar por radio.',
+    'Es muy raro. También se introduce por error, así que un 7500 en el mapa no prueba un secuestro real.'],
+  de: ['Entführung', 'Squawk 7500 steht für unrechtmäßigen Eingriff: eine Entführung oder den Versuch, die Kontrolle über das Flugzeug zu übernehmen.',
+    'Die Crew kann ihn lautlos setzen, ohne Funkspruch, damit der Entführer nichts bemerkt.',
+    'Die Flugsicherung behandelt den Flug als Sicherheitsvorfall, räumt unauffällig den Luftraum und informiert die Behörden. Lotsen fragen nicht per Funk nach.',
+    'Sehr selten. Auch versehentliche Eingaben kommen vor, ein 7500 auf der Karte ist also kein Beweis für eine echte Entführung.'],
+  fr: ['Détournement', 'Le code 7500 signale une intervention illicite : un détournement ou une tentative de prise de contrôle de l\'appareil.',
+    'L\'équipage peut l\'afficher discrètement, sans parler à la radio, pour ne pas alerter le pirate.',
+    'Le contrôle traite le vol comme un incident de sûreté, dégage discrètement l\'espace aérien et prévient les autorités. Les contrôleurs évitent de poser des questions à la radio.',
+    'C\'est très rare. Des saisies accidentelles existent, donc un 7500 sur la carte ne prouve pas un vrai détournement.'] });
+const EMG_L = { en: ['What does it mean?', 'When is it used?', 'What happens next?', 'Good to know', 'Close'], tr: ['Ne anlama gelir?', 'Ne zaman verilir?', 'Sonrasında ne olur?', 'Bilmekte fayda var', 'Kapat'],
+  es: ['¿Qué significa?', '¿Cuándo se usa?', '¿Qué ocurre después?', 'Conviene saber', 'Cerrar'], de: ['Was bedeutet das?', 'Wann wird er gesetzt?', 'Was passiert dann?', 'Gut zu wissen', 'Schließen'], fr: ['Que signifie-t-il ?', 'Quand est-il utilisé ?', 'Que se passe-t-il ensuite ?', 'À savoir', 'Fermer'] };
 const emgCode = f => EMG[f.sq] ? f.sq : ({ unlawful: 7500, nordo: 7600 }[f.emg] || 7700);
 function showEmg(code) {
-  const i = EMG_INFO[code]; if (!i) return; const [ti, what, when, next, note] = i[LANG === 'tr' ? 'tr' : 'en'];
-  const L = LANG === 'tr' ? ['Ne anlama gelir?', 'Ne zaman verilir?', 'Sonrasında ne olur?', 'Bilmekte fayda var', 'Kapat'] : ['What does it mean?', 'When is it used?', 'What happens next?', 'Good to know', 'Close'];
+  const i = EMG_INFO[code]; if (!i) return; const [ti, what, when, next, note] = i[LANG] || i.en;
+  const L = EMG_L[LANG] || EMG_L.en;
   let m = document.getElementById('emgm'); if (m) m.remove();
   m = document.createElement('div'); m.id = 'emgm';
   m.innerHTML = `<div class="bx"><div class="hd"><span class="cd">${code}</span><h2>${esc(ti)}</h2><button class="ib" data-x aria-label="${L[4]}" title="${L[4]}"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l8 8M11 3l-8 8"/></svg></button></div>`
@@ -197,16 +238,24 @@ X.click = e => {
 };
 
 /* ---------- language ---------- */
+const lm = $('lmenu');
+lm.innerHTML = LANGS.map(l => `<button data-l="${l.c}"><i>${l.c.toUpperCase()}</i>${l.n}</button>`).join('');
 function setLang(l) {
-  LANG = l; save('sky.lang', l); applyLang(); $('lang').dataset.l = l;
+  LANG = l; save('sky.lang', l); applyLang(); document.documentElement.lang = l; $('lang').querySelector('.lc').textContent = l.toUpperCase();
+  lm.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.l === l));
   if (!live) $('st').textContent = t('demo (30x speed)');
   renderSpt(); renderWatch(); renderList(); applyF(); if (selected) renderCard(true); if (apSel) renderAp();
   if ($('lb').classList.contains('show')) openLog();
+  if (typeof renderDiary === 'function' && $('dy')?.classList.contains('show')) renderDiary();
 }
-$('lang').onclick = () => setLang(LANG === 'tr' ? 'en' : 'tr');
-$('lang').dataset.l = LANG;
+const lmToggle = open => { lm.hidden = !open; $('lang').setAttribute('aria-expanded', open); };
+$('lang').onclick = e => { e.stopPropagation(); lmToggle(lm.hidden); };
+lm.onclick = e => { const b = e.target.closest('button'); if (b) { setLang(b.dataset.l); lmToggle(false); } };
+document.addEventListener('click', e => { if (!lm.hidden && !e.target.closest('#lmenu')) lmToggle(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') lmToggle(false); });
+$('lang').querySelector('.lc').textContent = LANG.toUpperCase(); lm.querySelector(`[data-l="${LANG}"]`).classList.add('on');
 
-setSpot(spot); renderWatch(); renderSpt(); if (LANG === 'tr') setLang('tr');
+setSpot(spot); renderWatch(); renderSpt(); if (LANG !== 'en') setLang(LANG);
 
 /* ---------- history slider fill ---------- */
 { const sl = $('rpS'), fill = () => sl.style.setProperty('--p', (+sl.max ? sl.value / sl.max * 100 : 100) + '%'); sl.addEventListener('input', fill); setInterval(fill, 400); fill(); }

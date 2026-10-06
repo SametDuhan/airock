@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
   version: () => ipcRenderer.invoke('version'),
+  tray: on => ipcRenderer.invoke('tray', on),
+  show: () => ipcRenderer.invoke('show'),
   flights: bounds => ipcRenderer.invoke('flights', bounds),
   route: cs => ipcRenderer.invoke('route', cs),
   aircraft: hex => ipcRenderer.invoke('aircraft', hex),
