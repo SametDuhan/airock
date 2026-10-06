@@ -98,7 +98,10 @@
   }
 
   /* ---------- adsbdb.com: route (by callsign) and aircraft info (by ICAO24 code) ---------- */
-  const ap = a => ({ code: a.iata_code || a.icao_code, icao: a.icao_code, name: a.municipality || a.name, lat: a.latitude, lon: a.longitude });
+  // Only the city: "Arnavutköy, Istanbul" -> "Istanbul", "Shanghai (Pudong)" -> "Shanghai". A last part that looks like an abbreviation ("D.C.") is skipped.
+  const cityName = s => { const parts = String(s || '').replace(/\s*\([^)]*\)/g, '').split(',').map(x => x.trim()).filter(Boolean); const last = parts[parts.length - 1];
+    return parts.length > 1 && last.length > 3 && !last.includes('.') ? last : parts[0] || ''; };
+  const ap = a => ({ code: a.iata_code || a.icao_code, icao: a.icao_code, name: cityName(a.municipality) || a.name, lat: a.latitude, lon: a.longitude });
   async function adsbdb(path) {
     const r = await get('https://api.adsbdb.com/v0/' + path, 10000);
     if (r.status === 404) return null;
@@ -285,7 +288,7 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  const api = { flights, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
+  const api = { flights, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
   root.SkyData = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

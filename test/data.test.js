@@ -71,3 +71,8 @@ test('ahead: heading projection and route', () => {
   assert.equal(p.length, 5); assert.ok(Math.abs(p[4][0]) < 0.01 && Math.abs(p[4][1] - 3.6) < 0.05, p[4]);
   const r = G.ahead(41, 29, 0, [50, 8.5], 500); assert.ok(r.length > 5 && G.km(41, 29, r.at(-1)[0], r.at(-1)[1]) <= 520);
 });
+
+test('cityName: only the city of an airport', () => {
+  assert.equal(D.cityName('Arnavutköy, Istanbul'), 'Istanbul'); assert.equal(D.cityName('Shanghai (Pudong)'), 'Shanghai');
+  assert.equal(D.cityName('Pendik, Istanbul'), 'Istanbul'); assert.equal(D.cityName('London'), 'London'); assert.equal(D.cityName('Washington, D.C.'), 'Washington'); assert.equal(D.cityName(''), '');
+});
