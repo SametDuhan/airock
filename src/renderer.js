@@ -67,7 +67,7 @@ const zoneR = () => zone?.r || ZONE_R;
 const APO = AP.map(a => ({ code: a[0], name: a[1], lat: a[2], lon: a[3] }));
 const { R, brg, km, gc, unwrap, nearLon } = window.SkyGeo;
 const flights = new Map(), routeCache = new Map(), acCache = new Map(), picCache = new Map(), fav = new Set(LS('sky.fav', [])), hist = [],
-watch = new Map(LS('sky.watch', [])), flt = { alt: 0, maxAlt: 45000, spd: 0, fav: false, ground: true, dep: '', arr: '', type: '', air: '' };
+watch = new Map(LS('sky.watch', [])), flt = { alt: 0, maxAlt: 45000, spd: 0, maxSpd: 600, fav: false, ground: true, dep: '', arr: '', type: '', air: '' };
 // Hooks filled in by extras.js (watchlist, today's flights, spotter logbook): they keep this file focused on the map itself
 const X = { top: () => '', bottom: () => '', bottom2: () => '', rows: () => {}, sync: () => {}, click: () => false, event: () => {}, arrive: () => {}, sel: () => {} };
 const EMG = { 7500: 'Hijacking', 7600: 'Radio failure', 7700: 'General emergency' }; // squawk codes
@@ -86,7 +86,7 @@ const typeIs = (f, t) => { const c = acCode(f); return c === t || c.startsWith(t
 const airCode = f => /^[A-Z]{3}(?=\d)/.exec(f.cs.toUpperCase())?.[0] || '';
 const airIs = (f, a) => { const c = airCode(f), n = (f.route?.airline || AIRLINE[c]?.[0] || '').toUpperCase();
   return c === a || (f.route?.airlineIata || '').toUpperCase() === a || (a.length > 2 && n.includes(a)); };
-const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (!flt.fav || fav.has(f.id))
+const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (flt.maxSpd >= 600 || f.spd * 1.944 <= flt.maxSpd) && (!flt.fav || fav.has(f.id))
   && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)) && (!flt.type || typeIs(f, flt.type)) && (!flt.air || airIs(f, flt.air)); };
 function toast(msg) {
   const d = document.createElement('div'); d.className = 'tm'; d.textContent = msg; $('toast').appendChild(d); setTimeout(() => d.remove(), 4000);
@@ -163,7 +163,7 @@ function upsert(d) {
   if (!f) { f = { tr: [], gone: replay }; flights.set(d.id, f); } // an aircraft that arrives during replay wasn't in that frame
   Object.assign(f, d); X.event(f); return f;
 }
-function clearAll() { flights.clear(); hist.length = 0; select(null); redraw(); }
+function clearAll() { flights.clear(); hist.length = 0; replay = false; $('rpLive').classList.add('on'); $('rpT').textContent = t('history'); $('rpS').max = 0; $('rpS').value = 0; $('rpS').disabled = true; $('rpTip').classList.remove('show'); select(null); redraw(); }
 
 /* ---------- route (from → to) ---------- */
 // Cache: a found route is valid for 6 hours, a "none" answer for 10 min. Errors (network, 429) aren't cached; the aircraft is retried after 60 s, and all requests wait 30 s in the meantime.
@@ -183,14 +183,10 @@ async function loadRoute(f) {
 function showRoute(f) { if (f.id !== selected) return; if (!replay) drawRoute(f); renderCard(true); }
 // Departure → aircraft → arrival, as great-circle arcs
 // Flown: the real trace from adsb.lol when available (otherwise a great-circle arc from the departure airport); rest: great circle to the destination
-// The day's trace can still contain the previous leg (e.g. the aircraft landed here earlier and turned around quickly without ground reports):
-// start the drawn path at the last point near the departure airport, so it never reaches back into an earlier flight
-// If the departure was never seen (no coverage there, so the previous landing wasn't seen either), the earlier leg flew towards the departure
-// airport, i.e. away from the destination: the current leg starts at the trace point farthest from the destination.
-const flownLeg = f => { const t = f.flown, o = f.route.org, d = f.route.dst; if (!(t?.length > 1)) return null;
+// The day's trace (already cut to the current flight by data.js legOf) may still start a bit before the departure airport: start the drawn path at the last point near it
+const flownLeg = f => { const t = f.flown, o = f.route.org; if (!(t?.length > 1)) return null;
   for (let k = t.length - 1; k > 0; k--) if (km(t[k][0], t[k][1], o.lat, o.lon) < 40) return t.slice(k);
-  let m = 0, far = -1; t.forEach((q, k) => { const x = km(q[0], q[1], d.lat, d.lon); if (x >= far) { far = x; m = k; } });
-  return t.slice(m); };
+  return t; }; // the trace is already cut to the current flight (data.js legOf); a route origin that is nowhere near it is just a wrong/stale route, so don't cut anything
 const routePts = f => { const { org, dst } = f.route, p = [f.lat, f.lon], fl = flownLeg(f);
   const done = fl?.length > 1 ? [...fl, p] : gc([org.lat, org.lon], p);
   return { done: unwrap(done), rest: unwrap(gc(p, [dst.lat, dst.lon])) }; };
@@ -207,6 +203,33 @@ function drawRoute(f) {
   [f.route.org, f.route.dst].forEach(a => L.circleMarker([a.lat, a.lon], { radius: 7, color: '#fff', weight: 2.5, fillColor: ROUTE_C, fillOpacity: 1, interactive: false })
     .bindTooltip(esc(a.code), { permanent: true, direction: 'top', offset: [0, -8], className: 'apl' }).addTo(routeEnds));
 }
+
+/* ---------- turbulence ahead (SIGMET / G-AIRMET advisories + pilot reports along the route ahead) ---------- */
+const tbCache = new Map();
+async function loadTurb(f) {
+  if (f.ground || f.tbs === 'loading') return;
+  const e = tbCache.get(f.id); if (e && Date.now() - e.t < 300e3) { f.tb = e.v; f.tbs = 'ok'; return; }
+  if (f.tbs === 'err' && Date.now() - f.tbsAt < 60e3) return;
+  f.tbs = 'loading'; const dest = f.route?.dst ? [f.route.dst.lat, f.route.dst.lon] : null;
+  const res = await DATA.turb(SkyGeo.ahead(f.lat, f.lon, f.hdg, dest), f.alt * 3.281);
+  if (!res.ok) { f.tbs = 'err'; f.tbsAt = Date.now(); } else { f.tb = res; f.tbs = 'ok'; tbCache.set(f.id, { v: res, t: Date.now() }); }
+  if (f.id === selected) renderCard();
+}
+const fmtMass = kg => kg >= 1000 ? (kg / 1000).toFixed(1) + ' t' : Math.round(kg / 10) * 10 + ' kg';
+const windRow = f => { if (f.ground || f.spd * 1.944 < 60) return null;
+  const hw = f.ws != null && f.wd != null ? SkyFuel.headwind(f.ws, f.wd, f.hdg) : f.tas != null && f.th != null ? SkyFuel.headwindFromTas(f.tas, f.spd * 1.944, f.th, f.hdg) : null;
+  if (hw == null || !Number.isFinite(hw)) return null;
+  const a = Math.round(Math.abs(hw)), main = a < 5 ? t('No significant head/tailwind') : hw > 0 ? t('Headwind {0} kt', a) : t('Tailwind {0} kt', a);
+  return ['Wind', main + (f.ws != null && f.wd != null ? ` (${Math.round(f.wd)}°/${Math.round(f.ws)} kt)` : '')]; };
+// The bar assumes the tank held the whole trip's fuel plus a 45 min reserve (the real fuel load isn't public)
+const fuelRow = f => { const dst = f.route?.dst; if (f.ground || !dst) return null; const gs = f.spd * 1.944, icao = f.ac?.icaoType || f.type;
+  const left = km(f.lat, f.lon, dst.lat, dst.lon), flown = f.route.org ? km(f.route.org.lat, f.route.org.lon, f.lat, f.lon) : 0, r = SkyFuel.toGo(icao, left, gs); if (!r) return null;
+  const rate = SkyFuel.rate(icao), reserve = rate * .75, trip = r.kg * (left + flown) / left, pct = Math.max(0, Math.min(100, (r.kg + reserve) / (trip + reserve) * 100)), col = pct > 40 ? '#4ade80' : pct > 20 ? '#facc15' : '#f87171';
+  return ['Fuel to go (est.)', `≈ ${fmtMass(r.kg)}`, '', `<div class="fbar"><i style="width:${pct.toFixed(0)}%;background:${col}"></i></div><div class="fcap">CO₂ ${fmtMass(r.co2)} · ${t('~{0}% of tank left (est., incl. reserve)', Math.round(pct))}</div>`]; };
+const turbRow = f => { if (f.ground) return null;
+  if (f.tbs === 'ok') { const r = f.tb, k = r.km;
+    return [t('Turbulence'), r.level >= 3 ? t('High turbulence risk ahead (~{0} km)', k) : r.level === 2 ? t('Moderate turbulence possible ahead (~{0} km)', k) : t('No turbulence reported or forecast on the route ahead'), 'tb' + r.level]; }
+  return [t('Turbulence'), f.tbs === 'err' ? t('Turbulence info unavailable') : t('Checking route ahead…'), 'tbx']; };
 
 /* ---------- aircraft info (type, registration, photo) ---------- */
 async function loadAircraft(f) {
@@ -248,13 +271,13 @@ setInterval(() => {
     if (tick % 5 === 0) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 360) f.tr.shift(); } // each aircraft's last ~30 min trail
   });
   const s = flights.get(selected); if (s && !replay) { drawTrail(s); if (s.route) { const p = routePts(s); setRoute(p.done, p.rest); } if (tick % 30 === 0) loadTrace(s); }
-  if (tick % 5 === 0) { // history recording: every 5 s, at most 720 frames. Recording continues while replaying
+  if (tick % 5 === 0 || !hist.length) { // history recording: every 5 s, at most 720 frames. Recording continues while replaying
     // One Float32Array per frame (lat, lon, hdg triples) + an id list: far less memory than many small arrays with thousands of aircraft
     const ids = [], buf = new Float32Array(flights.size * 3); let i = 0;
     flights.forEach(f => { ids.push(f.id); buf[i++] = f.lat; buf[i++] = f.lon; buf[i++] = f.hdg; });
     hist.push({ t: Date.now(), ids, buf });
     if (hist.length > 720) { hist.shift(); if (replay) $('rpS').value = Math.max(0, +$('rpS').value - 1); } // the oldest frame was dropped: keep the viewed frame the same
-    $('rpS').max = hist.length - 1; if (!replay) $('rpS').value = hist.length - 1;
+    $('rpS').max = hist.length - 1; $('rpS').disabled = hist.length < 2; if (!replay) $('rpS').value = hist.length - 1; else rpTip();
   }
   redraw(); if (selected) renderCard();
 }, 1000);
@@ -364,17 +387,26 @@ drawZone();
 
 /* ---------- replay history ---------- */
 function exitReplay() { if (!replay) return; replay = false; $('rpLive').classList.add('on'); $('rpT').textContent = t('history');
-  flights.forEach(f => { f.gone = false; f.rp = null; }); $('rpS').value = $('rpS').max; const s = flights.get(selected); drawRoute(s); drawTrail(s); redraw(); }
-$('rpS').oninput = function () { const s = hist[+this.value]; if (!s) return; replay = true; $('rpLive').classList.remove('on');
+  flights.forEach(f => { f.gone = false; f.rp = null; }); $('rpS').value = $('rpS').max; $('rpTip').classList.remove('show'); const s = flights.get(selected); drawRoute(s); drawTrail(s); redraw(); }
+// Yellow/black label above the slider thumb: the time of the frame being viewed
+function rpTip() {
+  const tip = $('rpTip'), sl = $('rpS'), s = hist[Math.min(+sl.value, hist.length - 1)]; if (!s || !(replay || dragging)) return tip.classList.remove('show');
+  const max = +sl.max || 1, th = 16, x = sl.offsetLeft + th / 2 + (+sl.value / max) * (sl.offsetWidth - th), ago = Math.round((Date.now() - s.t) / 1000);
+  tip.textContent = new Date(s.t).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · ' + (ago < 60 ? t('{0} s ago', ago) : t('{0} min ago', Math.round(ago / 60)));
+  tip.style.left = Math.max(tip.offsetWidth / 2, Math.min($('rp').clientWidth - tip.offsetWidth / 2, x)) + 'px'; tip.classList.add('show');
+}
+let dragging = false;
+$('rpS').onpointerdown = () => { dragging = true; }; addEventListener('pointerup', () => { if (dragging) { dragging = false; rpTip(); } });
+$('rpS').oninput = function () { const s = hist[Math.min(+this.value, hist.length - 1)]; if (!s) return; replay = true; $('rpLive').classList.remove('on');
   const m = new Map(s.ids.map((id, i) => [id, i * 3])); trail.setLatLngs([]); drawRoute(null);
   flights.forEach(f => { const o = m.get(f.id); f.gone = o === undefined; f.rp = o === undefined ? null : [s.buf[o], s.buf[o + 1], s.buf[o + 2]]; }); redraw();
-  $('rpT').textContent = new Date(s.t).toLocaleTimeString(LOC()); };
+  $('rpT').textContent = new Date(s.t).toLocaleTimeString(LOC()); rpTip(); };
 $('rpLive').onclick = exitReplay;
 
 /* ---------- selection, favorites, panel, list ---------- */
 function select(id) {
   closeAp(); X.sel(); selected = id; const f = flights.get(id);
-  if (f) { map.panTo(f.rp ? [f.rp[0], f.rp[1]] : [f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); loadTrace(f); } }
+  if (f) { map.panTo(f.rp ? [f.rp[0], f.rp[1]] : [f.lat, f.lon]); if (live) { loadRoute(f); loadAircraft(f); loadTrace(f); loadTurb(f); } }
   if (replay) { drawRoute(null); trail.setLatLngs([]); } else { drawRoute(f); drawTrail(f); } redraw(); // don't mix a trail/route drawn for the live position into replay
   $('card').classList.toggle('show', !!f); if (f) renderCard(true); renderList();
 }
@@ -393,23 +425,27 @@ function renderCard(full) {
     $('card').innerHTML = `<div class="ch">${iata ? `<img class="logo" src="https://images.kiwi.com/airlines/64/${esc(iata)}.png" alt="" onerror="this.remove()">` : ''}`
       + `<div class="cn"><h2>${esc(f.cs)}</h2><small>${esc(sub)}</small></div>${flagHtml(ac.reg || f.reg)}<button id="cx" class="ib" title="${t('Close')}">✕</button></div>${X.top(f)}${photo}${routeHtml(f)}<div id="kvs"></div>${X.bottom(f)}<div class="bt"><button id="fv"></button><button id="wt"></button></div>${X.bottom2(f)}`;
   }
+  if (full) { const h = $('card').querySelector('h2'); if (h) for (let px = 26; px > 14 && h.scrollWidth > h.clientWidth; px--) h.style.fontSize = px + 'px'; } // long callsigns: shrink the font until the whole name fits
   if (f.route && $('pgb')) { const { org, dst } = f.route, a = km(org.lat, org.lon, f.lat, f.lon), b = km(f.lat, f.lon, dst.lat, dst.lon);
     $('pgb').style.width = Math.min(100, a / (a + b) * 100).toFixed(1) + '%';
-    $('pgt').textContent = t('{0} km flown · {1} km to go', Math.round(a), Math.round(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) : ''); }
+    $('pgt').textContent = t('{0} km flown · {1} km to go', Math.round(a), Math.round(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) + ' · ' + t('arrives {0}', new Date(Date.now() + b / (f.spd * 3.6) * 3600e3).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' })) : ''); }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
     ['Altitude', f.ground ? t('on ground') : ft(f.alt)], ['Speed', Math.round(f.spd * 1.944) + ' kt'], ['Heading', Math.round(f.hdg) + '°'],
     ['Vertical speed', Math.round(f.vr * 196.85) + ' ft/min'], ['Nearest airport', nearest(f)], ['Position', f.lat.toFixed(2) + ', ' + f.lon.toFixed(2)]];
   if (ac.owner && ac.owner !== f.route?.airline) rows.splice(2, 0, ['Owner', ac.owner]);
+  { const w = windRow(f); if (w) rows.splice(rows.findIndex(r => r[0] === 'Vertical speed') + 1, 0, w); }
   X.rows(f, rows);
-  $('kvs').innerHTML = rows.map(r => `<div class="kv"><span>${t(r[0])}</span><b>${esc(r[1])}</b></div>`).join('');
+  { const fr = fuelRow(f); if (fr) rows.push(fr); }
+  { const tr = live && turbRow(f); if (tr) rows.push(tr); } // last row, below Position
+  $('kvs').innerHTML = rows.map(r => r[2] ? `<div class="kv tbr ${r[2]}"><b>${esc(r[1])}</b></div>` : `<div class="kv${r[3] ? ' xr' : ''}"><span>${t(r[0])}</span><b>${esc(r[1])}</b>${r[3] || ''}</div>`).join('');
   $('fv').textContent = fav.has(f.id) ? t('★ Favorited') : t('☆ Favorite'); X.sync(f);
 }
 const eta = h => h < 1 ? Math.round(h * 60) + t(' min') : Math.floor(h) + t(' h ') + Math.round(h % 1 * 60) + t(' min');
 function routeHtml(f) {
   if (!f.route) return `<div class="rtx" style="margin-top:12px">${t({ loading: 'Loading route info…', none: 'Route info not found', err: 'Couldn\'t load route info' }[f.rs] || '')}</div>`;
   const { org, dst } = f.route;
-  return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(org.name)}</small></div><span>✈</span>`
+  return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(org.name)}</small></div><span class="fl"><i>✈</i></span>`
     + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(dst.name)}</small></div></div><div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
 }
 $('card').onclick = e => {
@@ -443,18 +479,21 @@ const applyF = e => {
   // two handles on one bar: left = min, right = max altitude; they can't cross each other
   const a = $('fA'), m = $('fM');
   if (+a.value > +m.value) { if (e && e.target === m) m.value = a.value; else a.value = m.value; }
-  flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.fav = $('fF').checked; flt.ground = $('fG').checked;
+  const sa = $('fS'), sm = $('fSM'); // same two-handle bar for speed
+  if (+sa.value > +sm.value) { if (e && e.target === sm) sm.value = sa.value; else sa.value = sm.value; }
+  flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.maxSpd = +$('fSM').value; flt.fav = $('fF').checked; flt.ground = $('fG').checked;
   flt.dep = apCode($('fDep').value); flt.arr = apCode($('fArr').value); flt.type = $('fTp').value.trim().toUpperCase(); $('fTp').classList.toggle('set', !!flt.type); flt.air = $('fAl').value.trim().toUpperCase(); $('fAl').classList.toggle('set', !!flt.air);
   $('fDep').classList.toggle('set', !!flt.dep); $('fArr').classList.toggle('set', !!flt.arr); pumpRoutes();
-  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value, al: $('fAl').value });
+  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, sm: $('fSM').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value, al: $('fAl').value });
   a.style.zIndex = flt.alt > 22500 ? 3 : 1; // so "min" can still be grabbed at the right end when the handles overlap
   $('dr').style.setProperty('--a', flt.alt / 450 + '%'); $('dr').style.setProperty('--b', flt.maxAlt / 450 + '%');
-  $('vA').textContent = flt.alt.toLocaleString(LOC()); $('vM').textContent = flt.maxAlt >= 45000 ? (45000).toLocaleString(LOC()) + '+' : flt.maxAlt.toLocaleString(LOC()); $('vS').textContent = flt.spd;
+  $('vA').textContent = flt.alt.toLocaleString(LOC()); $('vM').textContent = flt.maxAlt >= 45000 ? (45000).toLocaleString(LOC()) + '+' : flt.maxAlt.toLocaleString(LOC()); $('vS').textContent = flt.spd; $('vSM').textContent = flt.maxSpd >= 600 ? '600+' : flt.maxSpd;
+  sa.style.zIndex = flt.spd > 300 ? 3 : 1; $('dr2').style.setProperty('--a', flt.spd / 6 + '%'); $('dr2').style.setProperty('--b', flt.maxSpd / 6 + '%');
   redraw(); renderList();
 };
-['fA', 'fM', 'fS', 'fF', 'fG', 'fDep', 'fArr', 'fTp', 'fAl'].forEach(i => $(i).oninput = applyF);
+['fA', 'fM', 'fS', 'fSM', 'fF', 'fG', 'fDep', 'fArr', 'fTp', 'fAl'].forEach(i => $(i).oninput = applyF);
 { const v = LS('sky.flt', null); // restore the filters from the last session
-  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; } }
+  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fSM').value = v.sm ?? 600; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; } }
 $('fSw').onclick = () => { const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; applyF(); };
 
 /* ---------- airport filter (departure / arrival) ---------- */

@@ -25,3 +25,9 @@ test('regCountry: registration prefix -> country code', () => {
   assert.equal(regCountry('N123AB'), 'US'); assert.equal(regCountry('TC-JJA'), 'TR'); assert.equal(regCountry('JA8089'), 'JP');
   assert.equal(regCountry('B-HNA'), 'HK'); assert.equal(regCountry('B-1234'), 'CN'); assert.equal(regCountry(''), '');
 });
+
+test('sun / night: solstice subsolar point and terminator', () => {
+  const { sun, night } = require('../src/geo.js'), s = sun(new Date('2026-06-21T12:00:00Z'));
+  assert.ok(Math.abs(s.lat - 23.4) < 0.3 && Math.abs(s.lon) < 5, JSON.stringify(s));
+  const n = night(new Date('2026-06-21T12:00:00Z')); assert.ok(n.length > 300 && n.at(-1)[0] === -90, 'night over the south pole in northern summer');
+});

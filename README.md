@@ -17,7 +17,9 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
 - **Flight details**: click a plane to see:
   - its airline and logo, aircraft type, registration and a photo (when one is available)
   - its route (departure → arrival), progress bar, distance left and estimated time left
-  - its altitude, speed and vertical speed
+  - its altitude, speed and vertical speed, head/tail wind, and a rough fuel and CO₂ estimate for the rest of the flight (with a bar for the estimated fuel left)
+  - a **turbulence** line: green when no turbulence is reported or forecast on the route ahead at its altitude, yellow for moderate, red for high (SIGMET / G-AIRMET advisories and recent pilot reports)
+  - the flag of the country it is registered in, and an estimated arrival time
 - **Route and trail**: the route is drawn as a great-circle arc, the actual shortest path over the globe. The trail shows where the plane has flown over the last ~30 minutes. In live mode the flown part follows the plane's real track, and it starts at the departure airport, so an earlier flight of the same aircraft never leaks into the line.
 - **Airport panel**: click an airport (yellow dot) to open a panel on the right with:
   - a photo of the airport, and the city and country it is in
@@ -25,13 +27,15 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
   - **Arrivals** and **Departures** lists of the aircraft you can see; click one to open its flight card, just like clicking it on the map
 - **Filters**:
   - an altitude range on one slider (left handle = minimum, right handle = maximum)
-  - a minimum speed
+  - a speed range (left handle = minimum, right handle = maximum)
   - departure and/or arrival airport, by code (IST, LTFM) or city name
   - aircraft on the ground on or off, and a favorites-only option
 - **Emergencies**: an aircraft squawking 7500, 7600 or 7700 gets a blinking red ring and a notification, and the list shows ⚠.
 - **Watchlist**: press **🔔 Watch** on a flight card. SkyTrack asks for your watched aircraft anywhere in the world every 45 seconds and notifies you when one takes off or lands.
 - **Today's flights**: on a live flight card, **Today's flights** lists every flight the aircraft made today (times, distance, top altitude). Click one to draw it on the map.
 - **Rain radar**: the **Radar** button adds a live precipitation layer. The airport panel also shows the airport's METAR and TAF, with its VFR/IFR flight category.
+- **Map layers**: besides rain radar, the **Turbulence** button draws SIGMET / G-AIRMET turbulence areas, **Wind** draws wind arrows (pick the flight level in the selector that appears) and **Night** shades the night side of the Earth.
+- **Foldable menu**: click a section title in the left menu (Data, Mode, Map, Filters, Aircraft) to fold it. SkyTrack remembers what you folded.
 - **Plane spotter mode**: switch to it under **Mode**. It adds a logbook (**📓 Log sighting** on a flight card, CSV export), *new aircraft* / *new type* badges, and extra details (ICAO24, squawk, category). In normal mode none of this is shown.
 - **English and Turkish**: the **TR / EN** button at the top of the menu switches the whole interface. It starts in your system language.
 - **Favorites**: star a flight (☆) to find it again later.
@@ -87,8 +91,8 @@ The repository is named `airock`; the app itself is SkyTrack. Your filters and a
 | Aircraft positions, wide view or backup | [OpenSky Network](https://opensky-network.org) | Covers a large area in one request. Has a low daily limit for anonymous users. |
 | Route, aircraft type, registration, photo | [adsbdb.com](https://www.adsbdb.com) | Free, no key. Some flights may be missing or out of date. |
 | Airline logos | images.kiwi.com | |
-| Airport weather | [Open-Meteo](https://open-meteo.com) | Free, no key. |
-| METAR and TAF | [aviationweather.gov](https://aviationweather.gov) | Free, no key. |
+| Airport weather, wind at flight levels | [Open-Meteo](https://open-meteo.com) | Free, no key. |
+| METAR and TAF, turbulence advisories, pilot reports | [aviationweather.gov](https://aviationweather.gov) | Free, no key. Turbulence "none" means none reported or forecast, not a guarantee. |
 | Rain radar | [RainViewer](https://www.rainviewer.com) | Free, no key. |
 | Today's flights of an aircraft | [adsb.lol](https://adsb.lol) day traces | Free, no key. |
 | Airport city and country | [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org) | Free, no key. |

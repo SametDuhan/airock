@@ -32,7 +32,7 @@
   const fromAdsb = a => { const g = a.alt_baro === 'ground', ft = g ? 0 : typeof a.alt_baro === 'number' ? a.alt_baro : a.alt_geom || 0;
     return { id: a.hex, cs: (a.flight || '').trim() || a.r || a.hex.toUpperCase(), reg: a.r || '', type: a.t || '', country: '', lat: a.lat, lon: a.lon,
       ground: g, alt: ft / 3.281, spd: (a.gs || 0) / 1.944, hdg: a.track ?? a.true_heading ?? 0, vr: (a.baro_rate ?? a.geom_rate ?? 0) / 196.85,
-      sq: a.squawk || '', emg: a.emergency && a.emergency !== 'none' ? a.emergency : '', cat: a.category || '' }; };
+      wd: a.wd ?? null, ws: a.ws ?? null, tas: a.tas ?? null, th: a.true_heading ?? null, sq: a.squawk || '', emg: a.emergency && a.emergency !== 'none' ? a.emergency : '', cat: a.category || '' }; };
   // Two free community feeds with the same data format. Circles are spread over both, so each one stays well under its own rate limit
   // and a wide view covers twice as much. If a feed fails (e.g. 429), its circle is retried on the other one.
   const FEEDS = [
@@ -98,7 +98,10 @@
   }
 
   /* ---------- adsbdb.com: route (by callsign) and aircraft info (by ICAO24 code) ---------- */
-  const ap = a => ({ code: a.iata_code || a.icao_code, icao: a.icao_code, name: a.municipality || a.name, lat: a.latitude, lon: a.longitude });
+  // Only the city: "Arnavutköy, Istanbul" -> "Istanbul", "Shanghai (Pudong)" -> "Shanghai". A last part that looks like an abbreviation ("D.C.") is skipped.
+  const cityName = s => { const parts = String(s || '').replace(/\s*\([^)]*\)/g, '').split(',').map(x => x.trim()).filter(Boolean); const last = parts[parts.length - 1];
+    return parts.length > 1 && last.length > 3 && !last.includes('.') ? last : parts[0] || ''; };
+  const ap = a => ({ code: a.iata_code || a.icao_code, icao: a.icao_code, name: cityName(a.municipality) || a.name, lat: a.latitude, lon: a.longitude });
   async function adsbdb(path) {
     const r = await get('https://api.adsbdb.com/v0/' + path, 10000);
     if (r.status === 404) return null;
@@ -139,7 +142,11 @@
   // A long silence only means a new flight if the aircraft was low on either side of it (landed/took off unseen). High on both sides it is
   // just a coverage hole (e.g. an ocean crossing) and the flight continues.
   const lowAlt = p => p[3] === 'ground' || (typeof p[3] === 'number' && p[3] < 15000);
-  const gapBreak = (a, b) => b[0] - a[0] > LEG_GAP_S && (lowAlt(a) || lowAlt(b));
+  // ...unless the aircraft could not have flown on through the gap: if the two ends are much closer than a cruising aircraft would have covered
+  // in that time, it landed (and turned around) without being seen, even when both ends are at altitude (e.g. coverage starts only after climb-out)
+  const flewThrough = (a, b) => { const gs = typeof a[4] === 'number' && a[4] > 100 ? Math.min(a[4], 520) : 400, dt = (b[0] - a[0]) / 3600;
+    const d = 12742 * Math.asin(Math.sqrt(Math.sin((b[1] - a[1]) * Math.PI / 360) ** 2 + Math.cos(a[1] * Math.PI / 180) * Math.cos(b[1] * Math.PI / 180) * Math.sin((b[2] - a[2]) * Math.PI / 360) ** 2)); return d > .4 * gs * 1.852 * dt; };
+  const gapBreak = (a, b) => b[0] - a[0] > LEG_GAP_S && (lowAlt(a) || lowAlt(b) || !flewThrough(a, b));
   const MAX_PTS = 500;
   function legOf(trace) {
     let i = trace.length - 1;
@@ -227,7 +234,65 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  const api = { flights, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, legOf, cover, bounds };
+  /* ---------- turbulence ahead: SIGMET / G-AIRMET advisories + recent pilot reports (aviationweather.gov) ---------- */
+  // severity: 0 none/smooth, 1 light, 2 moderate, 3 severe or worse
+  const sevOf = x => { x = String(x || '').toUpperCase(); return /SEV|EXTRM/.test(x) ? 3 : /MOD/.test(x) ? 2 : /LGT/.test(x) ? 1 : 0; };
+  const inPoly = (lat, lon, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [yi, xi] = poly[i], [yj, xj] = poly[j];
+    if ((xi > lon) !== (xj > lon) && lat < (yj - yi) * (lon - xi) / (xj - xi) + yi) c = !c; } return c; };
+  // pts: [[lat, lon]...] ahead of the aircraft; adv: [{sev, base, top (ft), poly}]; peps: [{lat, lon, ft, sev}]
+  function turbAssess(pts, altFt, adv, peps) {
+    let level = 0, at = null, src = '', n = 0; const hit = (sev, i, s) => { n++; if (sev > level || (sev === level && i < at)) { level = sev; at = i; src = s; } };
+    for (const a of adv) { if (a.sev < 2 || !(altFt >= (a.base ?? 0) - 2000 && altFt <= (a.top ?? 99999) + 2000)) continue;
+      const i = pts.findIndex(p => inPoly(p[0], p[1], a.poly)); if (i >= 0) hit(a.sev, i, 'advisory'); }
+    for (const r of peps) { if (r.sev < 2 || Math.abs(r.ft - altFt) > 4000) continue;
+      let best = -1; for (let i = 0; i < pts.length; i++) if (km(pts[i][0], pts[i][1], r.lat, r.lon) < 75) { best = i; break; } if (best >= 0) hit(r.sev, best, 'pirep'); }
+    let dist = null; if (at !== null) { dist = 0; for (let i = 1; i <= at; i++) dist += km(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]); }
+    return { level, km: dist === null ? null : Math.round(dist), n, src };
+  }
+  const text = async (url, ms = 12000) => { const r = await get(url, ms); if (!r.ok && r.status !== 204) throw new Error('HTTP ' + r.status); const t = await r.text(); return t.trim() ? JSON.parse(t) : []; };
+  const fl = ft => ft >= 99999 ? '' : ft <= 0 ? 'SFC' : 'FL' + String(Math.round(ft / 100)).padStart(3, '0');
+  // Current turbulence SIGMETs (worldwide) and G-AIRMETs (USA): [{sev 2|3, base, top (ft), poly, name}]
+  async function advisories() {
+    const now = Date.now() / 1000;
+    const [is, ga] = await Promise.allSettled([text('https://aviationweather.gov/api/data/isigmet?format=json'), text('https://aviationweather.gov/api/data/gairmet?type=tango&format=json')]);
+    if (is.status !== 'fulfilled' && ga.status !== 'fulfilled') throw new Error('no data');
+    const adv = [], P = c => c.map(q => [+q.lat, +q.lon]);
+    if (is.status === 'fulfilled') for (const x of is.value) if (x.hazard === 'TURB' && Array.isArray(x.coords) && x.coords.length > 2 && now >= x.validTimeFrom - 1800 && now <= x.validTimeTo)
+      adv.push({ sev: Math.max(2, sevOf(x.qualifier)), base: x.base ?? 0, top: x.top ?? 99999, poly: P(x.coords), name: `${x.firName || x.firId || ''} ${x.qualifier || ''}`.trim() });
+    if (ga.status === 'fulfilled') for (const x of ga.value) if (/^TURB/.test(x.hazard) && Array.isArray(x.coords) && x.coords.length > 2 && now <= x.expireTime)
+      adv.push({ sev: Math.max(2, sevOf(x.severity)), base: x.base ? +x.base * 100 : 0, top: x.top ? +x.top * 100 : 99999, poly: P(x.coords), name: 'G-AIRMET ' + x.hazard });
+    return adv.map(a => ({ ...a, lv: `${fl(a.base)}${a.top < 99999 ? '–' + fl(a.top) : '+'}` }));
+  }
+  async function turbMap() { try { return { ok: true, adv: await advisories() }; } catch (e) { return { ok: false, error: e.message }; } }
+  async function turb(pts, altFt) {
+    if (!Array.isArray(pts) || pts.length < 1 || pts.length > 80 || !pts.every(p => Array.isArray(p) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 540) || !Number.isFinite(+altFt)) return { ok: false, error: 'invalid input' };
+    const lats = pts.map(p => p[0]), lons = pts.map(p => p[1]), pad = 1.5, bb = [Math.min(...lats) - pad, Math.min(...lons) - pad, Math.max(...lats) + pad, Math.max(...lons) + pad].map(v => +v.toFixed(2));
+    const [ad, pi] = await Promise.allSettled([advisories(), text(`https://aviationweather.gov/api/data/pirep?format=json&age=2&bbox=${bb[0]},${bb[1]},${bb[2]},${bb[3]}`)]);
+    if (ad.status !== 'fulfilled' && pi.status !== 'fulfilled') return { ok: false, error: 'no data' };
+    const adv = ad.status === 'fulfilled' ? ad.value : [], peps = [];
+    if (pi.status === 'fulfilled') for (const x of pi.value) { const sev = Math.max(sevOf(x.tbInt1), sevOf(x.tbInt2)), ft = (x.fltLvl ?? ((x.tbBas1 + x.tbTop1) / 2)) * 100;
+      if (typeof x.lat === 'number' && typeof x.lon === 'number' && Number.isFinite(ft)) peps.push({ lat: x.lat, lon: x.lon, ft, sev: /MOD-SEV/.test(x.tbInt1 + x.tbInt2) ? 3 : sev }); }
+    // advisories in the western hemisphere may come with longitudes on the other side of the date line: compare on the same copy as the path
+    const near = lon0 => poly => poly.map(([la, lo]) => [la, lo + 360 * Math.round((lon0 - lo) / 360)]);
+    adv.forEach(a => { a.poly = near(pts[0][1])(a.poly); }); peps.forEach(r => { r.lon = r.lon + 360 * Math.round((pts[0][1] - r.lon) / 360); });
+    const res = turbAssess(pts, +altFt, adv, peps); return { ok: true, ...res, adv: adv.length, pireps: peps.length };
+  }
+
+  /* ---------- wind grid at a pressure level (open-meteo, free, no key) ---------- */
+  const HPA = [850, 700, 500, 300, 250, 200];
+  async function wind(b, hpa) {
+    const s = Math.max(-80, +b.s), n = Math.min(80, +b.n), w = +b.w, e = +b.e; hpa = +hpa;
+    if (![s, n, w, e].every(Number.isFinite) || !HPA.includes(hpa) || n <= s || e <= w || e - w > 720) return { ok: false, error: 'invalid area' };
+    const C = 8, R = 6, lat = [], lon = [], pos = [];
+    for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) { const la = s + (n - s) * (i + .5) / R, lo = w + (e - w) * (j + .5) / C; pos.push([la, lo]); lat.push(la.toFixed(2)); lon.push((((lo + 540) % 360) - 180).toFixed(2)); }
+    try {
+      const r = await get(`https://api.open-meteo.com/v1/forecast?latitude=${lat.join(',')}&longitude=${lon.join(',')}&hourly=wind_speed_${hpa}hPa,wind_direction_${hpa}hPa&wind_speed_unit=kn&forecast_hours=1&timezone=GMT`, 15000);
+      if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(), a = Array.isArray(j) ? j : [j];
+      return { ok: true, hpa, pts: a.map((x, i) => ({ lat: pos[i][0], lon: pos[i][1], kt: x.hourly?.['wind_speed_' + hpa + 'hPa']?.[0], dir: x.hourly?.['wind_direction_' + hpa + 'hPa']?.[0] })).filter(p => Number.isFinite(p.kt) && Number.isFinite(p.dir)) };
+    } catch (e) { return { ok: false, error: e.message }; }
+  }
+
+  const api = { flights, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
   root.SkyData = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

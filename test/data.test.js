@@ -32,7 +32,7 @@ test('legOf: keeps only the current flight of the day trace', () => {
 test('legOf: a long gap or a "new leg" flag also starts a new flight', () => {
   const gap = [[0, 1, 1, 30000], [60, 2, 2, 3000], [5000, 3, 3, 4000], [5060, 4, 4, 20000]];
   assert.deepEqual(D.legOf(gap), [[3, 3], [4, 4]]);
-  const ocean = [[0, 1, 1, 36000], [60, 2, 2, 36000], [5000, 3, 3, 36000], [5060, 4, 4, 36000]];
+  const ocean = [[0, 48, 16, 36000], [60, 47.9, 16.1, 36000], [5000, 30, 40, 36000], [5060, 29.9, 40.1, 36000]]; // ~2,800 km in 1.4 h
   assert.equal(D.legOf(ocean).length, 4); // a coverage hole at cruise altitude is not a new flight
   const flag = [[0, 1, 1, 30000, 0, 0, 0], [60, 2, 2, 30000, 0, 0, 2], [120, 3, 3, 30000, 0, 0, 0]];
   assert.deepEqual(D.legOf(flag), [[2, 2], [3, 3]]);
@@ -54,4 +54,33 @@ test('splitLegs: ignores tiny hops and a long gap splits a leg', () => {
 });
 test('watch: invalid lists are rejected before any network call', async () => {
   assert.equal((await D.watch([])).ok, false); assert.equal((await D.watch(['zz'])).ok, false);
+});
+
+test('turbAssess: advisory polygon / pilot report ahead -> level', () => {
+  const pts = [[0, 0], [0, 1], [0, 2], [0, 3]], box = (a, b) => [[-1, a], [1, a], [1, b], [-1, b]];
+  assert.equal(D.turbAssess(pts, 35000, [], []).level, 0);
+  const mod = D.turbAssess(pts, 35000, [{ sev: 2, base: 20000, top: 45000, poly: box(1.5, 2.5) }], []);
+  assert.equal(mod.level, 2); assert.ok(mod.km > 100 && mod.km < 240, mod.km);
+  assert.equal(D.turbAssess(pts, 35000, [{ sev: 3, base: 0, top: 45000, poly: box(1.5, 2.5) }], []).level, 3);
+  assert.equal(D.turbAssess(pts, 10000, [{ sev: 3, base: 20000, top: 45000, poly: box(1.5, 2.5) }], []).level, 0, 'other altitude');
+  assert.equal(D.turbAssess(pts, 35000, [], [{ lat: 0.2, lon: 2, ft: 36000, sev: 2 }]).level, 2);
+  assert.equal(D.turbAssess(pts, 35000, [], [{ lat: 0.2, lon: 2, ft: 36000, sev: 1 }]).level, 0, 'light is ignored');
+});
+test('ahead: heading projection and route', () => {
+  const G = require('../src/geo.js'), p = G.ahead(0, 0, 90, null, 400, 100);
+  assert.equal(p.length, 5); assert.ok(Math.abs(p[4][0]) < 0.01 && Math.abs(p[4][1] - 3.6) < 0.05, p[4]);
+  const r = G.ahead(41, 29, 0, [50, 8.5], 500); assert.ok(r.length > 5 && G.km(41, 29, r.at(-1)[0], r.at(-1)[1]) <= 520);
+});
+
+test('cityName: only the city of an airport', () => {
+  assert.equal(D.cityName('Arnavutköy, Istanbul'), 'Istanbul'); assert.equal(D.cityName('Shanghai (Pudong)'), 'Shanghai');
+  assert.equal(D.cityName('Pendik, Istanbul'), 'Istanbul'); assert.equal(D.cityName('London'), 'London'); assert.equal(D.cityName('Washington, D.C.'), 'Washington'); assert.equal(D.cityName(''), '');
+});
+
+test('legOf: a gap at altitude that the aircraft could not have flown through is a new flight', () => {
+  // landed, turned around for hours, first seen again at altitude near the same place: ends are ~30 km apart after a 2.5 h gap at ~450 kt
+  const t = [[0, 48, 16, 30000, 450], [60, 47, 17, 29000, 450], [9060, 47.2, 17.2, 20000, 400], [9120, 47.3, 17.4, 21000, 400]];
+  assert.deepEqual(D.legOf(t), [[47.2, 17.2], [47.3, 17.4]]);
+  const cruise = [[0, 48, 16, 36000, 450], [60, 47.9, 16.1, 36000, 450], [4000, 30, 40, 36000, 450], [4060, 29.9, 40.1, 36000, 450]]; // a real coverage hole at cruise (~3000 km in 1.1 h)
+  assert.equal(D.legOf(cruise).length, 4);
 });

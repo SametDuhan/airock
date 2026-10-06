@@ -9,5 +9,8 @@ contextBridge.exposeInMainWorld('api', {
   watch: hexes => ipcRenderer.invoke('watch', hexes),
   legs: hex => ipcRenderer.invoke('legs', hex),
   metar: (lat, lon) => ipcRenderer.invoke('metar', lat, lon),
-  radar: () => ipcRenderer.invoke('radar')
+  radar: () => ipcRenderer.invoke('radar'),
+  turbMap: () => ipcRenderer.invoke('turbMap'),
+  wind: (b, hpa) => ipcRenderer.invoke('wind', b, hpa),
+  turb: (pts, altFt) => ipcRenderer.invoke('turb', pts, altFt)
 });

@@ -28,7 +28,29 @@
   const regCountry = reg => { const r = String(reg || '').toUpperCase().replace(/\s/g, ''); if (!r) return '';
     if (/^B-\d{5}$/.test(r)) return 'TW'; if (/^N\d/.test(r)) return 'US'; if (/^JA\d/.test(r)) return 'JP'; if (/^HL\d/.test(r)) return 'KR';
     for (let n = Math.min(5, r.length); n > 0; n--) { const c = REG[r.slice(0, n)]; if (c) return c; } return ''; };
-  const api = { R, brg, km, gc, unwrap, nearLon, regCountry };
+  // Points ahead of an aircraft (up to maxKm): along the great circle to its destination, or straight along its heading when the route is unknown
+  function ahead(lat, lon, hdg, dest, maxKm = 1500, stepKm = 40) {
+    const out = [[lat, lon]];
+    if (dest) { const d = km(lat, lon, dest[0], dest[1]); if (d < 1) return out; const g = gc([lat, lon], dest, Math.max(1, Math.ceil(d / stepKm)));
+      let acc = 0; for (let i = 1; i < g.length; i++) { acc += km(g[i - 1][0], g[i - 1][1], g[i][0], g[i][1]); if (acc > maxKm) break; out.push(g[i]); } return out; }
+    const φ = lat * R, λ = lon * R, θ = hdg * R;
+    for (let d = stepKm; d <= maxKm; d += stepKm) { const δ = d / 6371, φ2 = Math.asin(Math.sin(φ) * Math.cos(δ) + Math.cos(φ) * Math.sin(δ) * Math.cos(θ));
+      out.push([φ2 / R, (λ + Math.atan2(Math.sin(θ) * Math.sin(δ) * Math.cos(φ), Math.cos(δ) - Math.sin(φ) * Math.sin(φ2))) / R]); }
+    return out;
+  }
+  // Subsolar point (lat, lon in degrees) for a date: low-precision solar position, good to well under a degree
+  function sun(date = new Date()) {
+    const n = date.getTime() / 86400000 - 10957.5, L = 280.46 + 0.9856474 * n, g = (357.528 + 0.9856003 * n) * R, lam = (L + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * R, eps = (23.439 - 4e-7 * n) * R;
+    const dec = Math.asin(Math.sin(eps) * Math.sin(lam)), ra = Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam)) / R, gmst = (18.697374558 + 24.06570982441908 * n) * 15;
+    return { lat: dec / R, lon: ((ra - gmst) % 360 + 540) % 360 - 180 };
+  }
+  // Night side of the Earth as a polygon covering three world copies (-540..540 degrees), so it also shows when the map is panned around
+  function night(date = new Date()) {
+    const s = sun(date), dec = Math.abs(s.lat) < .01 ? .01 : s.lat, pts = [];
+    for (let lon = -540; lon <= 540; lon += 3) pts.push([Math.atan(-Math.cos((lon - s.lon) * R) / Math.tan(dec * R)) / R, lon]);
+    const pole = dec > 0 ? -90 : 90; pts.push([pole, 540], [pole, -540]); return pts;
+  }
+  const api = { R, brg, km, gc, unwrap, nearLon, regCountry, ahead, sun, night };
   root.SkyGeo = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
