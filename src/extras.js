@@ -158,12 +158,12 @@ X.click = e => {
 
 /* ---------- language ---------- */
 function setLang(l) {
-  LANG = l; save('sky.lang', l); applyLang(); $('lang').textContent = l === 'tr' ? 'EN' : 'TR';
+  LANG = l; save('sky.lang', l); applyLang(); $('lang').dataset.l = l;
   if (!live) $('st').textContent = t('demo (30x speed)');
   renderSpt(); renderWatch(); renderList(); applyF(); if (selected) renderCard(true); if (apSel) renderAp();
   if ($('lb').classList.contains('show')) openLog();
 }
 $('lang').onclick = () => setLang(LANG === 'tr' ? 'en' : 'tr');
-$('lang').textContent = LANG === 'tr' ? 'EN' : 'TR';
+$('lang').dataset.l = LANG;
 
 setSpot(spot); renderWatch(); renderSpt(); if (LANG === 'tr') setLang('tr');
