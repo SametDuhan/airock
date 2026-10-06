@@ -19,3 +19,9 @@ test('unwrap: longitude stays continuous across 180°', () => {
 test('nearLon: world copy nearest the center', () => {
   assert.equal(nearLon(-170, 190), 190); assert.equal(nearLon(170, -190), -190); assert.equal(nearLon(10, 20), 10);
 });
+
+test('regCountry: registration prefix -> country code', () => {
+  const { regCountry } = require('../src/geo.js');
+  assert.equal(regCountry('N123AB'), 'US'); assert.equal(regCountry('TC-JJA'), 'TR'); assert.equal(regCountry('JA8089'), 'JP');
+  assert.equal(regCountry('B-HNA'), 'HK'); assert.equal(regCountry('B-1234'), 'CN'); assert.equal(regCountry(''), '');
+});

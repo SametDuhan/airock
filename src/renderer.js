@@ -379,6 +379,11 @@ function select(id) {
   $('card').classList.toggle('show', !!f); if (f) renderCard(true); renderList();
 }
 const ft = m => Math.round(m * 3.281).toLocaleString(LOC()) + ' ft';
+// Flag of the country the aircraft is registered in (from the registration prefix); hidden if unknown or offline
+function flagHtml(reg) {
+  const c = SkyGeo.regCountry(reg); if (!c) return '';
+  return `<img class="flag" src="https://flagcdn.com/w40/${c.toLowerCase()}.png" alt="${c}" title="${c}" onerror="this.remove()">`;
+}
 function renderCard(full) {
   const f = flights.get(selected); if (!f) return;
   const ac = f.ac || {};
@@ -386,7 +391,7 @@ function renderCard(full) {
     const iata = f.route?.airlineIata, sub = f.route?.airline || ac.owner || ac.country || f.country || '';
     const photo = photoHtml(f);
     $('card').innerHTML = `<div class="ch">${iata ? `<img class="logo" src="https://images.kiwi.com/airlines/64/${esc(iata)}.png" alt="" onerror="this.remove()">` : ''}`
-      + `<div class="cn"><h2>${esc(f.cs)}</h2><small>${esc(sub)}</small></div><button id="cx" class="ib" title="${t('Close')}">✕</button></div>${X.top(f)}${photo}${routeHtml(f)}<div id="kvs"></div>${X.bottom(f)}<div class="bt"><button id="fv"></button><button id="wt"></button></div>${X.bottom2(f)}`;
+      + `<div class="cn"><h2>${esc(f.cs)}</h2><small>${esc(sub)}</small></div>${flagHtml(ac.reg || f.reg)}<button id="cx" class="ib" title="${t('Close')}">✕</button></div>${X.top(f)}${photo}${routeHtml(f)}<div id="kvs"></div>${X.bottom(f)}<div class="bt"><button id="fv"></button><button id="wt"></button></div>${X.bottom2(f)}`;
   }
   if (f.route && $('pgb')) { const { org, dst } = f.route, a = km(org.lat, org.lon, f.lat, f.lon), b = km(f.lat, f.lon, dst.lat, dst.lon);
     $('pgb').style.width = Math.min(100, a / (a + b) * 100).toFixed(1) + '%';
