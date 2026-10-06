@@ -191,7 +191,7 @@
     }
     if (cur) cur.open = true; close(); // only the last stretch can still be in the air
     return out.filter(l => l.pts.length >= 3 && pathKm(l.pts) > 15).map(l => { const pts = l.pts, step = Math.max(1, Math.ceil(pts.length / 300));
-      return { t0: pts[0][3], t1: pts[pts.length - 1][3], km: Math.round(pathKm(pts)), maxAlt: Math.max(...pts.map(q => q[2])), open: l.open,
+      return { t0: pts[0][3], t1: pts[pts.length - 1][3], km: Math.round(pathKm(pts)), maxAlt: Math.max(...pts.map(q => q[2])), open: !!l.open,
         from: [pts[0][0], pts[0][1]], to: [pts[pts.length - 1][0], pts[pts.length - 1][1]], pts: pts.filter((_, k) => k % step === 0 || k === pts.length - 1).map(q => [q[0], q[1]]) }; });
   }
   async function legs(hex) {
