@@ -61,7 +61,7 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 #card button{margin-top:12px;width:100%;background:transparent;color:var(--ac);border:1px solid var(--ac);border-radius:3px;padding:7px;cursor:pointer}#card button:hover{background:var(--ac);color:#111}
 #rp{position:absolute;left:14px;right:80px;bottom:14px;z-index:1000;display:flex;gap:12px;align-items:center;background:var(--pn);border:1px solid var(--line);border-radius:4px;padding:8px 12px}
 #rp button{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:5px 10px;cursor:pointer}#rp button.on{color:#111;background:var(--ac);border-color:var(--ac)}
-#rp input{flex:1;accent-color:var(--ac)}#rpT{font:11px ui-monospace,monospace;color:var(--mut);min-width:90px;text-align:right}
+#rp input{flex:1;accent-color:var(--ac)}#rp input:disabled{opacity:.4}#rpTip{position:absolute;bottom:calc(100% + 9px);transform:translateX(-50%);background:var(--ac);color:#111;font:700 12px ui-monospace,monospace;padding:5px 9px;border-radius:3px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s}#rpTip.show{opacity:1}#rpTip::after{content:'';position:absolute;left:50%;top:100%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--ac)}#rpT{font:11px ui-monospace,monospace;color:var(--mut);min-width:90px;text-align:right}
 #toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:1100;display:flex;flex-direction:column;gap:8px;align-items:center}
 .tm{background:var(--ac);color:#111;padding:9px 16px;border-radius:3px;font-weight:600;animation:tin .4s cubic-bezier(.2,.7,.2,1),tout .4s 3.6s forwards}
 @keyframes tin{from{opacity:0;transform:translateY(-16px)}}@keyframes tout{to{opacity:0}}
@@ -126,5 +126,5 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 <main><div id="map"></div>
 <button id="open" class="ib" title="Open menu">☰</button><div class="bar"><span id="clock"></span></div>
 <div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
-<div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span></div></main></div>
+<div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span><div id="rpTip"></div></div></main></div>
 <script src="loader.js"></script></body></html>

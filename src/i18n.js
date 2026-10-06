@@ -10,6 +10,7 @@ const TR = {
   'Turbulence': 'Türbülans', 'Turbulence advisories (SIGMET / G-AIRMET)': 'Türbülans uyarıları (SIGMET / G-AIRMET)', 'Wind arrows': 'Rüzgar okları', 'Wind: FL050': 'Rüzgar: FL050', 'Wind: FL100': 'Rüzgar: FL100', 'Wind: FL180': 'Rüzgar: FL180', 'Wind: FL300': 'Rüzgar: FL300', 'Wind: FL340': 'Rüzgar: FL340', 'Wind: FL390': 'Rüzgar: FL390', 'Night': 'Gece', 'Day / night': 'Gündüz / gece',
   'Wind at {0}': '{0} irtifasında rüzgar', 'Wind data unavailable': 'Rüzgar verisi alınamadı', 'Turbulence data unavailable': 'Türbülans verisi alınamadı', 'Moderate turbulence': 'Orta türbülans', 'Severe turbulence': 'Şiddetli türbülans', 'No turbulence advisories right now': 'Şu an türbülans uyarısı yok',
   'Aircraft': 'Uçaklar',
+  '{0} s ago': '{0} sn önce', '{0} min ago': '{0} dk önce',
   'Standard': 'Standart', 'Light': 'Açık', 'Dark': 'Koyu', 'Filters': 'Filtreler', 'Altitude': 'İrtifa', 'Min speed': 'En düşük hız', 'Airport': 'Havalimanı',
   'Departure': 'Kalkış', 'Arrival': 'Varış', 'Departure ↔ arrival': 'Kalkış ↔ varış', 'Airline': 'Havayolu', 'e.g. THY, Pegasus, Lufthansa': 'ör. THY, Pegasus, Lufthansa',
   'Aircraft type': 'Uçak tipi', 'e.g. B738, A320, boeing 777': 'ör. B738, A320, boeing 777', 'Show aircraft on the ground': 'Yerdeki uçakları göster',

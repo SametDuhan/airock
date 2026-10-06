@@ -163,7 +163,7 @@ function upsert(d) {
   if (!f) { f = { tr: [], gone: replay }; flights.set(d.id, f); } // an aircraft that arrives during replay wasn't in that frame
   Object.assign(f, d); X.event(f); return f;
 }
-function clearAll() { flights.clear(); hist.length = 0; select(null); redraw(); }
+function clearAll() { flights.clear(); hist.length = 0; replay = false; $('rpLive').classList.add('on'); $('rpT').textContent = t('history'); $('rpS').max = 0; $('rpS').value = 0; $('rpS').disabled = true; $('rpTip').classList.remove('show'); select(null); redraw(); }
 
 /* ---------- route (from → to) ---------- */
 // Cache: a found route is valid for 6 hours, a "none" answer for 10 min. Errors (network, 429) aren't cached; the aircraft is retried after 60 s, and all requests wait 30 s in the meantime.
@@ -275,13 +275,13 @@ setInterval(() => {
     if (tick % 5 === 0) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 360) f.tr.shift(); } // each aircraft's last ~30 min trail
   });
   const s = flights.get(selected); if (s && !replay) { drawTrail(s); if (s.route) { const p = routePts(s); setRoute(p.done, p.rest); } if (tick % 30 === 0) loadTrace(s); }
-  if (tick % 5 === 0) { // history recording: every 5 s, at most 720 frames. Recording continues while replaying
+  if (tick % 5 === 0 || !hist.length) { // history recording: every 5 s, at most 720 frames. Recording continues while replaying
     // One Float32Array per frame (lat, lon, hdg triples) + an id list: far less memory than many small arrays with thousands of aircraft
     const ids = [], buf = new Float32Array(flights.size * 3); let i = 0;
     flights.forEach(f => { ids.push(f.id); buf[i++] = f.lat; buf[i++] = f.lon; buf[i++] = f.hdg; });
     hist.push({ t: Date.now(), ids, buf });
     if (hist.length > 720) { hist.shift(); if (replay) $('rpS').value = Math.max(0, +$('rpS').value - 1); } // the oldest frame was dropped: keep the viewed frame the same
-    $('rpS').max = hist.length - 1; if (!replay) $('rpS').value = hist.length - 1;
+    $('rpS').max = hist.length - 1; $('rpS').disabled = hist.length < 2; if (!replay) $('rpS').value = hist.length - 1; else rpTip();
   }
   redraw(); if (selected) renderCard();
 }, 1000);
@@ -391,11 +391,20 @@ drawZone();
 
 /* ---------- replay history ---------- */
 function exitReplay() { if (!replay) return; replay = false; $('rpLive').classList.add('on'); $('rpT').textContent = t('history');
-  flights.forEach(f => { f.gone = false; f.rp = null; }); $('rpS').value = $('rpS').max; const s = flights.get(selected); drawRoute(s); drawTrail(s); redraw(); }
-$('rpS').oninput = function () { const s = hist[+this.value]; if (!s) return; replay = true; $('rpLive').classList.remove('on');
+  flights.forEach(f => { f.gone = false; f.rp = null; }); $('rpS').value = $('rpS').max; $('rpTip').classList.remove('show'); const s = flights.get(selected); drawRoute(s); drawTrail(s); redraw(); }
+// Yellow/black label above the slider thumb: the time of the frame being viewed
+function rpTip() {
+  const tip = $('rpTip'), sl = $('rpS'), s = hist[Math.min(+sl.value, hist.length - 1)]; if (!s || !(replay || dragging)) return tip.classList.remove('show');
+  const max = +sl.max || 1, th = 16, x = sl.offsetLeft + th / 2 + (+sl.value / max) * (sl.offsetWidth - th), ago = Math.round((Date.now() - s.t) / 1000);
+  tip.textContent = new Date(s.t).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · ' + (ago < 60 ? t('{0} s ago', ago) : t('{0} min ago', Math.round(ago / 60)));
+  tip.style.left = Math.max(tip.offsetWidth / 2, Math.min($('rp').clientWidth - tip.offsetWidth / 2, x)) + 'px'; tip.classList.add('show');
+}
+let dragging = false;
+$('rpS').onpointerdown = () => { dragging = true; }; addEventListener('pointerup', () => { if (dragging) { dragging = false; rpTip(); } });
+$('rpS').oninput = function () { const s = hist[Math.min(+this.value, hist.length - 1)]; if (!s) return; replay = true; $('rpLive').classList.remove('on');
   const m = new Map(s.ids.map((id, i) => [id, i * 3])); trail.setLatLngs([]); drawRoute(null);
   flights.forEach(f => { const o = m.get(f.id); f.gone = o === undefined; f.rp = o === undefined ? null : [s.buf[o], s.buf[o + 1], s.buf[o + 2]]; }); redraw();
-  $('rpT').textContent = new Date(s.t).toLocaleTimeString(LOC()); };
+  $('rpT').textContent = new Date(s.t).toLocaleTimeString(LOC()); rpTip(); };
 $('rpLive').onclick = exitReplay;
 
 /* ---------- selection, favorites, panel, list ---------- */
