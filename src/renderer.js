@@ -620,7 +620,8 @@ function flagHtml(reg) {
   return `<img class="flag" src="https://flagcdn.com/w40/${c.toLowerCase()}.png" alt="${c}" title="${c}" onerror="this.remove()">`;
 }
 // Short labels for the three big tiles in the card (the full words do not fit in every language)
-const TILE_L = { en: ['Altitude', 'Speed', 'Vert. speed'], tr: ['İrtifa', 'Hız', 'Dikey hız'], es: ['Altitud', 'Veloc.', 'Vel. vert.'], de: ['Höhe', 'Tempo', 'Steigrate'], fr: ['Altitude', 'Vitesse', 'Vit. vert.'] };
+const TILE_L = { en: ['Altitude', 'Speed', 'Vert. speed'], tr: ['İrtifa', 'Hız', 'Dikey hız'], es: ['Altitud', 'Veloc.', 'Vel. vert.'], de: ['Höhe', 'Tempo', 'Steigrate'], fr: ['Altitude', 'Vitesse', 'Vit. vert.'],
+  ar: ["الارتفاع", "السرعة", "السرعة الرأسية"], zh: ["高度", "速度", "垂直速度"], ja: ["高度", "速度", "垂直速度"], ko: ["고도", "속도", "수직 속도"] };
 function renderCard(full) {
   const f = flights.get(selected); if (!f) return;
   const ac = f.ac || {};

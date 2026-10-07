@@ -149,8 +149,8 @@ const TR = {
   'Could not check for updates: {0}': 'Güncellemeler denetlenemedi: {0}',
   'Version {0} is available: use the bar at the bottom of the menu.': '{0} sürümü mevcut: menünün altındaki çubuğu kullan.'
 };
-// Languages: English (default texts), Turkish (TR below), Spanish / German / French (DICT in langs.js)
-const LANGS = [{ c: 'en', n: 'English', loc: 'en-US' }, { c: 'tr', n: 'Türkçe', loc: 'tr-TR' }, { c: 'es', n: 'Español', loc: 'es-ES' }, { c: 'de', n: 'Deutsch', loc: 'de-DE' }, { c: 'fr', n: 'Français', loc: 'fr-FR' }];
+// Languages: English (default texts), Turkish (TR below), Spanish / German / French (DICT in langs.js), Arabic / Chinese / Japanese / Korean (langs-more.js)
+const LANGS = [{ c: 'en', n: 'English', loc: 'en-US' }, { c: 'tr', n: 'Türkçe', loc: 'tr-TR' }, { c: 'es', n: 'Español', loc: 'es-ES' }, { c: 'de', n: 'Deutsch', loc: 'de-DE' }, { c: 'fr', n: 'Français', loc: 'fr-FR' }, { c: 'ar', n: 'العربية', loc: 'ar-AE-u-nu-latn' }, { c: 'zh', n: '中文', loc: 'zh-CN' }, { c: 'ja', n: '日本語', loc: 'ja-JP' }, { c: 'ko', n: '한국어', loc: 'ko-KR' }];
 const DICT = { tr: TR };
 let LANG = (() => { try { const v = JSON.parse(localStorage.getItem('sky.lang')); if (LANGS.some(l => l.c === v)) return v; } catch {} const b = (navigator.language || '').toLowerCase().slice(0, 2); return LANGS.some(l => l.c === b) ? b : 'en'; })();
 const t = (s, ...a) => ((LANG !== 'en' && DICT[LANG]?.[s]) || s).replace(/\{(\d)\}/g, (_, i) => a[i]);

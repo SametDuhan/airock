@@ -40,7 +40,7 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 - **Harita katmanları**: yağış radarına ek olarak **Türbülans** düğmesi SIGMET / G-AIRMET türbülans alanlarını, **Rüzgar** rüzgar oklarını (açılan seçiciden irtifayı seç), **Gece** ise Dünya'nın gece tarafını çizer.
 - **Katlanan menü**: sol menüdeki bir bölümün başlığına (Veri, Mod, Harita, Filtreler, Uçaklar) tıklayınca o bölüm kapanır. Neyi kapattığını hatırlar.
 - **Uçak gözlemci modu**: **Mod** bölümünden açılır. Defter (uçuş kartında **📓 Gözlemi kaydet**, CSV dışa aktarma), *yeni uçak* / *yeni tip* rozetleri ve ek bilgiler (ICAO24, squawk, kategori) ekler. Normal modda bunların hiçbiri görünmez.
-- **Beş dil**: menünün üstündeki dil düğmesi tüm arayüzü İngilizce, Türkçe, İspanyolca, Almanca ve Fransızca arasında değiştirir. Sistem diliyle açılır. Yeni dil eklemek için `src/langs.js` içine bir tablo ve `src/i18n.js` içindeki `LANGS` listesine bir satır eklemen yeter.
+- **Dokuz dil**: menünün üstündeki dil düğmesi tüm arayüzü İngilizce, Türkçe, İspanyolca, Almanca, Fransızca, Arapça (sağdan sola), Çince, Japonca ve Korece arasında değiştirir. Sistem diliyle açılır. Yeni dil eklemek için `src/langs.js` içine bir tablo ve `src/i18n.js` içindeki `LANGS` listesine bir satır eklemen yeter.
 - **Farklı uçak simgeleri**: helikopterlerin rotorlu simgesi var, dört motorlu yolcu uçakları dört motoruyla daha büyük çizilir; iki motorlu yolcu uçakları, küçük jetler ve diğer uçaklar ayrı şekillerde. Hepsi irtifaya göre renklenir.
 - **İrtifa ve hız grafiği**: canlı uçuş kartında, uçuş boyunca irtifa ve hızı gösteren küçük bir grafik çıkar.
 - **Görsel paylaş**: uçuş kartındaki **📷 Görsel paylaş**, uçuşun rotası, çağrı kodu ve sayılarıyla bir resim kaydeder (panoya da kopyalar).
