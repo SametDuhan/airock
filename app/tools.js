@@ -14,7 +14,7 @@ function renderSettings() {
     + UNIT_ROWS.map(([k, l, o]) => `<div class="sr"><span>${t(l)}</span><div class="btns seg">${o.map(([v, tx]) => `<button data-u="${k}" data-v="${v}" class="${U[k] === v ? 'on' : ''}">${tx}</button>`).join('')}</div></div>`).join('')
     + `<h3>${t('Replay history')}</h3><div class="sr"><span>${t('How far back you can rewind')}</span><div class="btns seg">${[[5, '1 h'], [15, '3 h'], [30, '6 h']].map(([v, tx]) => `<button data-h="${v}" class="${HSTEP === v ? 'on' : ''}">${tx}</button>`).join('')}</div></div>`
     + (window.api?.openskySet ? `<h3>${t('OpenSky account (optional)')}</h3><div class="rtx">${t('A free OpenSky API client gives the wide view a much higher daily limit. Create one in your OpenSky account. It is stored encrypted on this computer.')}</div><div class="rtx">${t('1) Sign up at opensky-network.org (free)  2) Account page → create an API client  3) Paste Client ID and secret here.')} <a href="https://opensky-network.org/my-opensky/account" target="_blank">${t('Open OpenSky account page')}</a></div><div class="os"><input id="osId" placeholder="Client ID" autocomplete="off"><input id="osSec" type="password" placeholder="Client secret" autocomplete="off"><button class="bt2" id="osSave">${t('Save')}</button></div><div class="rtx" id="osSt"></div>` : '')
-    + `<h3>${t('App')}</h3><label class="ck" id="lTray"><input id="sTray" type="checkbox"> ${t('Keep running in the tray')}</label><label class="ck"><input id="sNot" type="checkbox"> ${t('Desktop notifications')}</label><label class="ck"><input id="sThin" type="checkbox"> ${t('Thin out crowded areas when zoomed out')}</label>`
+    + `<h3>${t('App')}</h3><label class="ck" id="lTray"><input id="sTray" type="checkbox"> ${t('Keep running in the tray')}</label><label class="ck"><input id="sNot" type="checkbox"> ${t('Desktop notifications')}</label><label class="ck"><input id="sToast" type="checkbox"> ${t('In-app notifications')}</label><label class="ck"><input id="sThin" type="checkbox"> ${t('Thin out crowded areas when zoomed out')}</label>`
     + (window.api?.checkUpdate ? `<div class="sr"><span>${esc($('ver').textContent)}</span><button class="bt2" id="updCheck">${t('Check for updates')}</button></div><div class="rtx" id="updSt"></div>` : '')
     + `<div style="margin-top:14px"><button class="bt2" id="tourAgain">${t('Show the tour again')}</button></div></div>`;
   if (window.api?.openskyGet) window.api.openskyGet().then(r => { if ($('osSt')) { $('osSt').textContent = r.set ? t('Connected as {0}', r.id) : ''; if (r.set && $('osId')) $('osId').placeholder = r.id; } });
@@ -22,6 +22,7 @@ function renderSettings() {
   if (!window.api?.tray) $('lTray').style.display = 'none';
   tr.onchange = () => { save('sky.tray', tr.checked); try { window.api.tray(tr.checked); } catch {} if (tr.checked) toast(t('SkyTrack keeps running in the tray when you close the window')); };
   nt.onchange = () => save('sky.notif', nt.checked);
+  const tt = $('sToast'); tt.checked = LS('sky.toast', true); tt.onchange = () => { save('sky.toast', tt.checked); if (!tt.checked) $('toast').replaceChildren(); };
   const th = $('sThin'); th.checked = thinOn; th.onchange = () => { thinOn = th.checked; save('sky.thin', thinOn); redraw(); };
 }
 stm.onclick = e => {
@@ -64,7 +65,7 @@ X.event = f => { baseEvent(f);
   if (!rules.length || f.gone) return;
   for (const r of rules) { const k = f.id + '|' + r.id; if (alerted.has(k) || !ruleHit(r, f)) continue; alerted.add(k); pend.push({ f, r }); }
   if (pend.length && !pendT) pendT = setTimeout(() => { const p = pend; pend = []; pendT = null;
-    p.slice(0, 3).forEach(({ f, r }) => toast(`✈ ${f.cs} · ${ruleLabel(r)}`, f.id)); if (p.length > 3) toast(t('{0} more aircraft match your alerts', p.length - 3)); }, 1500); };
+    p.slice(0, 2).forEach(({ f, r }) => toastEv(`✈ ${f.cs} · ${ruleLabel(r)}`, f.id)); if (p.length > 2) toastEv(t('{0} more aircraft match your alerts', p.length - 2)); }, 1500); };
 
 /* ---------- overhead: what is flying above me ---------- */
 const ovp = $('ovp'); let ov = LS('sky.over', null), ovPlacing = false, ovLayer = L.layerGroup().addTo(map), ovRad = LS('sky.overR', 20);
@@ -164,8 +165,13 @@ try { window.api?.onUpdate?.(u => { upd.hidden = false;
   if (u.state === 'downloading') upd.innerHTML = `<span>⬇ ${t('Downloading update {0}…', u.version)}</span><i class="pbar" style="width:0"></i>`;
   else if (u.state === 'progress') { const b = upd.querySelector('.pbar'); if (b) b.style.width = u.percent + '%'; }
   else if (u.state === 'ready') upd.innerHTML = `<span>✓ ${t('Update {0} is ready', u.version)}</span><button id="updGo">${t('Restart')}</button>`;
-  else if (u.state === 'manual') upd.innerHTML = `<span>${t('New version {0} available', u.version)}</span><button id="updGo" data-url="${esc(u.url)}">${t('Download')}</button>`; }); } catch {}
-upd.onclick = e => { if (e.target.id !== 'updGo') return; const u = e.target.dataset.url; if (u) window.open(u); else try { window.api.installUpdate(); } catch {} };
+  else if (u.state === 'downloaded') upd.innerHTML = `<span>✓ ${t('Update {0} downloaded', u.version)}</span><button id="updInst">${t('Install')}</button>`;
+  else if (u.state === 'manualError') upd.innerHTML = `<span title="${esc(u.error || '')}">${t('Update download failed')}</span><button id="updGo" data-url="${esc(u.url)}">${t('Open the download page')}</button>`;
+  else if (u.state === 'manual') upd.innerHTML = `<span>${t('New version {0} available', u.version)}</span>` + (u.canDownload && window.api.downloadUpdate ? `<button id="updDl">${t('Download and install')}</button>` : `<button id="updGo" data-url="${esc(u.url)}">${t('Download')}</button>`); }); } catch {}
+upd.onclick = e => {
+  if (e.target.id === 'updDl') { e.target.disabled = true; try { window.api.downloadUpdate(); } catch {} return; }
+  if (e.target.id === 'updInst') { window.api.installDownloaded().then(x => { if (x?.platform === 'darwin') toast(t('The disk image was opened: drag SkyTrack to Applications')); else if (x?.platform === 'linux') toast(t('The AppImage is in your Downloads folder: make it executable and run it')); }); return; }
+  if (e.target.id !== 'updGo') return; const u = e.target.dataset.url; if (u) window.open(u); else try { window.api.installUpdate(); } catch {} };
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { modal(stm, false); modal(alm, false); modal(stt, false); } });
 

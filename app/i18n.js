@@ -46,7 +46,7 @@ const TR = {
   'NEW AIRCRAFT': 'YENİ UÇAK', 'NEW TYPE': 'YENİ TİP', '✓ Logged': '✓ Kaydedildi', '📓 Log sighting': '📓 Gözlemi kaydet',
   // flight diary, share image, profile, settings, airport board
   'Vert. speed': 'Dikey hız', 'SkyTrack keeps running in the tray when you close the window': 'Pencereyi kapatınca SkyTrack tepside çalışmaya devam eder', '📓 Flight diary': '📓 Uçuş günlüğü',
-  'Keep running in the tray': 'Tepside çalışmaya devam et', 'Desktop notifications': 'Masaüstü bildirimleri', 'Flight diary': 'Uçuş günlüğü', 'Flights': 'Uçuşlar', 'Distance': 'Mesafe', 'Around the Earth': 'Dünya turu',
+  'Keep running in the tray': 'Tepside çalışmaya devam et', 'Desktop notifications': 'Masaüstü bildirimleri', 'In-app notifications': 'Uygulama içi bildirimler',  'Flight diary': 'Uçuş günlüğü', 'Flights': 'Uçuşlar', 'Distance': 'Mesafe', 'Around the Earth': 'Dünya turu',
   '(est.)': '(tahmini)', 'From': 'Nereden', 'To': 'Nereye', 'Flight no.': 'Uçuş no', 'Add': 'Ekle',
   'Your diary is empty. Add a flight above, or open a flight on the map and press “Add to diary”.': 'Günlüğün boş. Yukarıdan uçuş ekle ya da haritada bir uçuş açıp “Günlüğe ekle”ye bas.',
   'Unknown airport: use an IATA or ICAO code, e.g. IST or LTFM': 'Bilinmeyen havalimanı: IATA veya ICAO kodu kullan, örn. IST veya LTFM', 'Share image': 'Görsel paylaş', 'Add to diary': 'Günlüğe ekle', 'Added to your diary': 'Günlüğüne eklendi',
@@ -149,8 +149,8 @@ const TR = {
   'Could not check for updates: {0}': 'Güncellemeler denetlenemedi: {0}',
   'Version {0} is available: use the bar at the bottom of the menu.': '{0} sürümü mevcut: menünün altındaki çubuğu kullan.'
 };
-// Languages: English (default texts), Turkish (TR below), Spanish / German / French (DICT in langs.js)
-const LANGS = [{ c: 'en', n: 'English', loc: 'en-US' }, { c: 'tr', n: 'Türkçe', loc: 'tr-TR' }, { c: 'es', n: 'Español', loc: 'es-ES' }, { c: 'de', n: 'Deutsch', loc: 'de-DE' }, { c: 'fr', n: 'Français', loc: 'fr-FR' }];
+// Languages: English (default texts), Turkish (TR below), Spanish / German / French (DICT in langs.js), Arabic / Chinese / Japanese / Korean (langs-more.js)
+const LANGS = [{ c: 'en', n: 'English', loc: 'en-US' }, { c: 'tr', n: 'Türkçe', loc: 'tr-TR' }, { c: 'es', n: 'Español', loc: 'es-ES' }, { c: 'de', n: 'Deutsch', loc: 'de-DE' }, { c: 'fr', n: 'Français', loc: 'fr-FR' }, { c: 'ar', n: 'العربية', loc: 'ar-AE-u-nu-latn' }, { c: 'zh', n: '中文', loc: 'zh-CN' }, { c: 'ja', n: '日本語', loc: 'ja-JP' }, { c: 'ko', n: '한국어', loc: 'ko-KR' }];
 const DICT = { tr: TR };
 let LANG = (() => { try { const v = JSON.parse(localStorage.getItem('sky.lang')); if (LANGS.some(l => l.c === v)) return v; } catch {} const b = (navigator.language || '').toLowerCase().slice(0, 2); return LANGS.some(l => l.c === b) ? b : 'en'; })();
 const t = (s, ...a) => ((LANG !== 'en' && DICT[LANG]?.[s]) || s).replace(/\{(\d)\}/g, (_, i) => a[i]);

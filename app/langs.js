@@ -38,7 +38,7 @@ DICT.es = {
   'Nothing matches': 'Sin coincidencias', 'The logbook is empty. Open a flight and press “Log sighting”.': 'El cuaderno está vacío. Abre un vuelo y pulsa «Registrar avistamiento».',
   'NEW AIRCRAFT': 'AERONAVE NUEVA', 'NEW TYPE': 'TIPO NUEVO', '✓ Logged': '✓ Registrado', '📓 Log sighting': '📓 Registrar avistamiento',
   'Vert. speed': 'Vel. vertical', 'SkyTrack keeps running in the tray when you close the window': 'SkyTrack sigue funcionando en la bandeja al cerrar la ventana', '📓 Flight diary': '📓 Diario de vuelos',
-  'Keep running in the tray': 'Seguir en la bandeja del sistema', 'Desktop notifications': 'Notificaciones de escritorio', 'Flight diary': 'Diario de vuelos', 'Flights': 'Vuelos', 'Distance': 'Distancia', 'Around the Earth': 'Vueltas al mundo',
+  'Keep running in the tray': 'Seguir en la bandeja del sistema', 'Desktop notifications': 'Notificaciones de escritorio', 'In-app notifications': 'Notificaciones en la aplicación',  'Flight diary': 'Diario de vuelos', 'Flights': 'Vuelos', 'Distance': 'Distancia', 'Around the Earth': 'Vueltas al mundo',
   '(est.)': '(est.)', 'From': 'Origen', 'To': 'Destino', 'Flight no.': 'N.º de vuelo', 'Add': 'Añadir',
   'Your diary is empty. Add a flight above, or open a flight on the map and press “Add to diary”.': 'Tu diario está vacío. Añade un vuelo arriba o abre uno en el mapa y pulsa «Añadir al diario».',
   'Unknown airport: use an IATA or ICAO code, e.g. IST or LTFM': 'Aeropuerto desconocido: usa un código IATA u OACI, p. ej. MAD o LEMD', 'Share image': 'Compartir imagen', 'Add to diary': 'Añadir al diario', 'Added to your diary': 'Añadido a tu diario',
@@ -174,7 +174,7 @@ DICT.de = {
   'Nothing matches': 'Keine Treffer', 'The logbook is empty. Open a flight and press “Log sighting”.': 'Das Logbuch ist leer. Öffne einen Flug und tippe auf „Sichtung eintragen“.',
   'NEW AIRCRAFT': 'NEUES FLUGZEUG', 'NEW TYPE': 'NEUER TYP', '✓ Logged': '✓ Eingetragen', '📓 Log sighting': '📓 Sichtung eintragen',
   'Vert. speed': 'Steigrate', 'SkyTrack keeps running in the tray when you close the window': 'SkyTrack läuft im Hintergrund im Infobereich weiter, wenn du das Fenster schließt', '📓 Flight diary': '📓 Flugtagebuch',
-  'Keep running in the tray': 'Im Infobereich weiterlaufen', 'Desktop notifications': 'Desktop-Benachrichtigungen', 'Flight diary': 'Flugtagebuch', 'Flights': 'Flüge', 'Distance': 'Strecke', 'Around the Earth': 'Erdumrundungen',
+  'Keep running in the tray': 'Im Infobereich weiterlaufen', 'Desktop notifications': 'Desktop-Benachrichtigungen', 'In-app notifications': 'Benachrichtigungen in der App',  'Flight diary': 'Flugtagebuch', 'Flights': 'Flüge', 'Distance': 'Strecke', 'Around the Earth': 'Erdumrundungen',
   '(est.)': '(geschätzt)', 'From': 'Von', 'To': 'Nach', 'Flight no.': 'Flugnr.', 'Add': 'Hinzufügen',
   'Your diary is empty. Add a flight above, or open a flight on the map and press “Add to diary”.': 'Dein Tagebuch ist leer. Füge oben einen Flug hinzu oder öffne einen Flug auf der Karte und tippe auf „Zum Tagebuch“.',
   'Unknown airport: use an IATA or ICAO code, e.g. IST or LTFM': 'Unbekannter Flughafen: IATA- oder ICAO-Code verwenden, z. B. FRA oder EDDF', 'Share image': 'Bild teilen', 'Add to diary': 'Zum Tagebuch', 'Added to your diary': 'Zum Tagebuch hinzugefügt',
@@ -310,7 +310,7 @@ DICT.fr = {
   'Nothing matches': 'Aucun résultat', 'The logbook is empty. Open a flight and press “Log sighting”.': 'Le carnet est vide. Ouvrez un vol et appuyez sur « Noter l\'observation ».',
   'NEW AIRCRAFT': 'NOUVEL AVION', 'NEW TYPE': 'NOUVEAU TYPE', '✓ Logged': '✓ Enregistré', '📓 Log sighting': "📓 Noter l'observation",
   'Vert. speed': 'Vit. verticale', 'SkyTrack keeps running in the tray when you close the window': "SkyTrack continue de tourner dans la zone de notification à la fermeture de la fenêtre", '📓 Flight diary': '📓 Carnet de vols',
-  'Keep running in the tray': 'Rester actif dans la zone de notification', 'Desktop notifications': 'Notifications de bureau', 'Flight diary': 'Carnet de vols', 'Flights': 'Vols', 'Distance': 'Distance', 'Around the Earth': 'Tours du monde',
+  'Keep running in the tray': 'Rester actif dans la zone de notification', 'Desktop notifications': 'Notifications de bureau', 'In-app notifications': 'Notifications dans l\'application',  'Flight diary': 'Carnet de vols', 'Flights': 'Vols', 'Distance': 'Distance', 'Around the Earth': 'Tours du monde',
   '(est.)': '(est.)', 'From': 'De', 'To': 'Vers', 'Flight no.': 'N° de vol', 'Add': 'Ajouter',
   'Your diary is empty. Add a flight above, or open a flight on the map and press “Add to diary”.': 'Votre carnet est vide. Ajoutez un vol ci-dessus ou ouvrez-en un sur la carte et appuyez sur « Ajouter au carnet ».',
   'Unknown airport: use an IATA or ICAO code, e.g. IST or LTFM': 'Aéroport inconnu : utilisez un code IATA ou OACI, p. ex. CDG ou LFPG', 'Share image': "Partager l'image", 'Add to diary': 'Ajouter au carnet', 'Added to your diary': 'Ajouté à votre carnet',
@@ -575,3 +575,41 @@ Object.assign(DICT.tr, { 'Click to switch between the animation and the dashed l
 Object.assign(DICT.es, { 'Click to switch between the animation and the dashed line': 'Haz clic para alternar entre la animación y la línea de puntos' });
 Object.assign(DICT.de, { 'Click to switch between the animation and the dashed line': 'Klicken, um zwischen Animation und gestrichelter Linie zu wechseln' });
 Object.assign(DICT.fr, { 'Click to switch between the animation and the dashed line': 'Cliquez pour passer de l\'animation à la ligne pointillée' });
+
+// In-app update download
+Object.assign(DICT.tr, {
+  'Download and install': 'İndir ve kur',
+  'Install': 'Kur',
+  'Update {0} downloaded': '{0} güncellemesi indirildi',
+  'Update download failed': 'Güncelleme indirilemedi',
+  'Open the download page': 'İndirme sayfasını aç',
+  'The disk image was opened: drag SkyTrack to Applications': 'Disk görüntüsü açıldı: SkyTrack\'i Uygulamalar klasörüne sürükle',
+  'The AppImage is in your Downloads folder: make it executable and run it': 'AppImage İndirilenler klasöründe: çalıştırılabilir yapıp çalıştır'
+});
+Object.assign(DICT.es, {
+  'Download and install': 'Descargar e instalar',
+  'Install': 'Instalar',
+  'Update {0} downloaded': 'Actualización {0} descargada',
+  'Update download failed': 'No se pudo descargar la actualización',
+  'Open the download page': 'Abrir la página de descarga',
+  'The disk image was opened: drag SkyTrack to Applications': 'Se abrió la imagen de disco: arrastra SkyTrack a Aplicaciones',
+  'The AppImage is in your Downloads folder: make it executable and run it': 'El AppImage está en tu carpeta de Descargas: hazlo ejecutable y ejecútalo'
+});
+Object.assign(DICT.de, {
+  'Download and install': 'Herunterladen und installieren',
+  'Install': 'Installieren',
+  'Update {0} downloaded': 'Update {0} heruntergeladen',
+  'Update download failed': 'Update konnte nicht heruntergeladen werden',
+  'Open the download page': 'Download-Seite öffnen',
+  'The disk image was opened: drag SkyTrack to Applications': 'Das Disk-Image wurde geöffnet: Ziehe SkyTrack in „Programme“',
+  'The AppImage is in your Downloads folder: make it executable and run it': 'Das AppImage liegt im Ordner „Downloads“: ausführbar machen und starten'
+});
+Object.assign(DICT.fr, {
+  'Download and install': 'Télécharger et installer',
+  'Install': 'Installer',
+  'Update {0} downloaded': 'Mise à jour {0} téléchargée',
+  'Update download failed': 'Le téléchargement de la mise à jour a échoué',
+  'Open the download page': 'Ouvrir la page de téléchargement',
+  'The disk image was opened: drag SkyTrack to Applications': 'L\'image disque est ouverte : faites glisser SkyTrack dans Applications',
+  'The AppImage is in your Downloads folder: make it executable and run it': 'L\'AppImage est dans votre dossier Téléchargements : rendez-la exécutable et lancez-la'
+});

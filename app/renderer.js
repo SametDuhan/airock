@@ -93,14 +93,22 @@ const airIs = (f, a) => { const c = airCode(f), n = (f.route?.airline || AIRLINE
   return c === a || (f.route?.airlineIata || '').toUpperCase() === a || (a.length > 2 && n.includes(a)); };
 const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (flt.maxSpd >= 600 || f.spd * 1.944 <= flt.maxSpd) && (!flt.fav || fav.has(f.id))
   && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)) && (!flt.type || typeIs(f, flt.type)) && (!flt.air || airIs(f, flt.air)); };
-function toast(msg, id) {
+// toastEv: toasts about events the user didn't ask for (alerts, take-offs, emergencies, turbulence...): Settings → "In-app notifications" turns them off. Plain toast() is feedback for
+// something the user just did and always shows. At most 3 are on screen at once (the oldest goes first), so zooming into a crowded area can't pile them up.
+const toastEv = (msg, id) => toast(msg, id, !LS('sky.toast', true));
+function toast(msg, id, hidden) { // hidden: no pop-up in the app, only the desktop notification (if that is on)
+  if (hidden) return desktopNote(msg, id);
   const emg = msg.startsWith('⚠'), d = document.createElement('div'); d.className = 'tm' + (emg ? ' emg' : '') + (id ? ' go' : ''); d.style.setProperty('--d', emg ? '8s' : '4s');
   d.innerHTML = `<i class="ti">${emg ? '⚠' : '✓'}</i><span></span><button class="tx" aria-label="Close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"/></svg></button>`;
-  d.querySelector('span').textContent = emg ? msg.slice(1).trim() : msg; $('toast').appendChild(d);
+  d.querySelector('span').textContent = emg ? msg.slice(1).trim() : msg; $('toast').appendChild(d); while ($('toast').children.length > 3) $('toast').firstChild.remove();
   d.onclick = e => { if (!e.target.closest('.tx') && id && flights.has(id)) select(id); d.remove(); };
   setTimeout(() => d.remove(), emg ? 8000 : 4000);
-  if (LS('sky.notif', true)) try { const n = new Notification('SkyTrack', { body: msg }); n.onclick = () => { try { window.api?.show?.(); } catch {} if (id && flights.has(id)) select(id); }; } catch {}
+  desktopNote(msg, id);
 }
+
+const desktopNote = (msg, id) => {
+  if (LS('sky.notif', true)) try { const n = new Notification('SkyTrack', { body: msg }); n.onclick = () => { try { window.api?.show?.(); } catch {} if (id && flights.has(id)) select(id); }; } catch {}
+};
 
 /* ---------- aircraft: single canvas layer ---------- */
 // Instead of a separate HTML element per aircraft, all are drawn on one canvas: stays smooth with thousands of aircraft
@@ -343,15 +351,16 @@ async function loadAircraft(f) {
 // Photos: planespotters (448 px, possibly several) first, then the full-size adsbdb photo (or its thumbnail as a last resort)
 async function loadPhotos(f) {
   if (f.pics) return; let e = fresh(picCache, f.id);
-  if (!e) { const res = await DATA.photos(f.id); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok) picCache.set(f.id, e); }
+  if (!e) { const res = await DATA.photos(f.id, f.ac?.reg || f.reg); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok) picCache.set(f.id, e); }
   const ac = f.ac || {}, extra = ac.photo || ac.thumb;
-  f.pics = [...e.v, ...(extra && !e.v.length ? [{ src: extra, link: ac.photo || extra, by: '' }] : [])]; f.pi = 0;
+  f.pics = [...e.v, ...(extra && !e.v.length ? [{ src: extra, big: ac.photo || extra, link: ac.photo || extra, by: '' }] : [])]; f.pi = 0; f._pre = f.pics.map(p => { const im = new Image(); im.src = p.src; return im; }); // every photo is fetched right away, so switching is instant
   if (f.id === selected) renderCard(true);
 }
+const CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; // thin chevron, flipped by CSS for "previous"
 const photoHtml = f => { const ac = f.ac || {}, pics = f.pics || (ac.thumb ? [{ src: ac.thumb, link: ac.photo || ac.thumb, by: '' }] : []); if (!pics.length) return '';
   const i = (f.pi || 0) % pics.length, p = pics[i], nav = pics.length > 1;
   return `<div class="ph"><a href="${esc(p.link || p.src)}" target="_blank" title="${t('Open photo')}"><img src="${esc(p.src)}" alt="" onerror="this.parentNode.parentNode.remove()"></a>`
-    + (nav ? `<button class="pa l" id="pp" title="${t('Previous photo')}">‹</button><button class="pa r" id="pn" title="${t('Next photo')}">›</button><span class="pc">${i + 1} / ${pics.length}</span>` : '')
+    + (nav ? `<button class="pa l" id="pp" title="${t('Previous photo')}">${CHEV}</button><button class="pa r" id="pn" title="${t('Next photo')}">${CHEV}</button><span class="pc">${i + 1} / ${pics.length}</span>` : '')
     + (p.by ? `<span class="by" title="${t('Photo')}: ${esc(p.by)}">© ${esc(p.by)}</span>` : '') + `</div>`; };
 function nearest(f) { let b = null, m = 1e9; AP.forEach(a => { const d = km(f.lat, f.lon, a[2], a[3]); if (d < m) { m = d; b = a; } }); return `${b[0]} · ${fmtDist(m)}`; }
 // Trail: positions recorded every 5 s since the app first saw this aircraft
@@ -367,7 +376,7 @@ setInterval(() => {
     const dist = f.spd * ts, h = f.hdg * R;
     f.lat += Math.cos(h) * dist / 111320; f.lon += Math.sin(h) * dist / (111320 * Math.cos(f.lat * R));
     if (f.lon > 180) f.lon -= 360; else if (f.lon < -180) f.lon += 360;
-    if (zone) { const inn = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); if (inn && (f.in === false || (f.in === undefined && tick > 1))) toast(t('{0} entered the alert zone', f.cs)); f.in = inn; }
+    if (zone) { const inn = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); if (inn && (f.in === false || (f.in === undefined && tick > 1))) toastEv(t('{0} entered the alert zone', f.cs)); f.in = inn; }
     if (tick % 5 === 0) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 360) f.tr.shift(); } // each aircraft's last ~30 min trail
   });
   const s = flights.get(selected); if (s && !replay) { drawTrail(s); if (s.route) { const p = routePts(s); setRoute(p.done, p.rest); } if (tick % 30 === 0) loadTrace(s); }
@@ -487,9 +496,45 @@ $('mDemo').onclick = () => setMode(false); $('mLive').onclick = () => setMode(tr
 
 /* ---------- airports ---------- */
 const apLayer = L.layerGroup().addTo(map);
-APO.forEach(a => L.circleMarker([a.lat, a.lon], { radius: 6, color: '#000', weight: 1, fillColor: '#f2c230', fillOpacity: 1 }).bindTooltip(`${a.code} · ${a.name}`)
-  .on('click', e => { L.DomEvent.stopPropagation(e); openAp(a); }).addTo(apLayer));
-$('bAp').onclick = function () { const on = !map.hasLayer(apLayer); on ? apLayer.addTo(map) : apLayer.remove(); this.classList.toggle('on', on); };
+// Airport marker: a round badge with a small terminal + control tower; big airports (the fixed list) are larger and gold, the rest of the scheduled-service airports (airports.js) appear
+// from zoom 6 and only those in view are drawn (at most AP_MAX), so thousands of airports don't slow the map down. The code label shows from zoom 7.
+const AP_SVG = { heli: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M17 5v14M7 12h10" stroke="#ffe27a" stroke-width="3.2" stroke-linecap="round" fill="none"/></svg>', big: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M0 22h32v10H0z" fill="#2b3038"/><path d="M0 22h32" stroke="#4a5568" stroke-width=".8"/><path d="M2 27.2h28" stroke="#f2c230" stroke-width="1.3" stroke-dasharray="3.2 2.6"/><rect x="3.5" y="15.5" width="13" height="6.5" rx="1" fill="#52698a"/><path d="M3.5 15.5h13" stroke="#8fa8c8" stroke-width="1"/><path d="M5.5 18.8h9" stroke="#ffe27a" stroke-width="1.5" stroke-dasharray="1.3 1.1"/><rect x="20.4" y="12" width="2.4" height="10" fill="#c9d3df"/><path d="M17.8 12l1.1-4.2h5.6L25.6 12z" fill="#8fc0f4"/><path d="M19.3 9.4h4.8" stroke="#fff" stroke-width=".6" opacity=".7"/><rect x="18.2" y="6.6" width="5.6" height="1.5" rx=".5" fill="#f2c230"/><path d="M21 6.6V3.6" stroke="#c9d3df" stroke-width=".7"/><circle cx="21" cy="3.2" r=".9" fill="#ff5a4f"/><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" transform="translate(4.5 1.2) scale(.5) rotate(40 12 12)" fill="#ffe27a"/></svg>', small: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" transform="rotate(45 12 12)" fill="#ffe27a"/></svg>' };
+const AP_MAX = 600, apBig = new Set(APO.map(a => a.code));
+// order = importance: the fixed list, the scheduled-service airports, then the medium ones (zoom 6+) and the small airfields (zoom 8+) from airports-more.js
+const apMore = (window.AIRPORTS_MORE || '').split(';').filter(Boolean).map(a => { const [code, icao, name, lat, lon, sz] = a.split('|'); return { code, icao, name, lat: +lat, lon: +lon, sz }; });
+const apTiny = (window.AIRPORTS_TINY || '').split(';').filter(Boolean).map(a => { const [code, name, lat, lon] = a.split('|'); return { code, icao: code, name, lat: +lat, lon: +lon, sz: 't' }; });
+const apLarge = new Set((window.AIRPORTS_LARGE || '').split(',')), apRest = BIGAP.filter(a => !apBig.has(a.code));
+const apAll = APO.concat(apRest.filter(a => apLarge.has(a.icao)), apRest.filter(a => !apLarge.has(a.icao)), apMore.filter(a => a.sz === 'm'), apMore.filter(a => a.sz === 's'), apTiny);
+// Heliports and seaplane bases (zoom 11+) come from a file that is loaded the first time it is needed
+let heliLoad = false;
+function ensureHeli() { if (heliLoad || map.getZoom() < 11) return; heliLoad = true;
+  loadJs('airports-heli').then(ok => { if (!ok) return; for (const x of (window.AIRPORTS_HELI || '').split(';')) { if (!x) continue; const [code, name, lat, lon, sz] = x.split('|'); apAll.push({ code, icao: code, name, lat: +lat, lon: +lon, sz }); } drawAp(); }); }
+const apMk = new Map();
+function apIcon(a) { const big = apBig.has(a.code), z = map.getZoom(), sz = big ? (z < 5 ? 15 : z < 7 ? 19 : 23) : (z < 8 ? 13 : z < 10 ? 16 : 14);
+  return L.divIcon({ className: 'apm' + (big ? ' big' : ''), iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2], html: `<div class="apb">${big ? AP_SVG.big : a.sz === 'h' ? AP_SVG.heli : AP_SVG.small}</div>${z >= 7 || (big && z >= 5) ? `<span class="apl">${esc(a.code)}</span>` : ''}` }); }
+// Thinning: when the map is zoomed out only the most important airport of each patch of the map is drawn (the fixed list first, then the large ones, then the rest), so a small country gets one
+// airport and a big one several, and zooming in brings more in where you look. The patches are fixed to the world (not the screen), so panning doesn't shuffle the airports around.
+const AP_CELL = z => z <= 5 ? 112 : z <= 6 ? 90 : z <= 7 ? 72 : z <= 8 ? 54 : z <= 9 ? 44 : z <= 10 ? 36 : 28;
+const AP_MINZ = { m: 6, s: 8, t: 10, h: 11, w: 11 };
+function drawAp() {
+  if (!map.hasLayer(apLayer)) return;
+  const z = map.getZoom(), v = map.getBounds().pad(.15), want = new Map(), S = AP_CELL(z), taken = new Map(); ensureHeli();
+  for (const a of apAll) {
+    if (want.size >= AP_MAX) break;
+    if (!(apBig.has(a.code) || z >= (AP_MINZ[a.sz] || 5)) || !v.contains([a.lat, a.lon])) continue;
+    const p = map.project([a.lat, a.lon], z), cx = Math.floor(p.x / S), cy = Math.floor(p.y / S); let near = false;
+    for (let i = -1; i <= 1 && !near; i++) for (let j = -1; j <= 1 && !near; j++) { const q = taken.get((cx + i) + ',' + (cy + j)); if (q && Math.hypot(q.x - p.x, q.y - p.y) < S) near = true; }
+    if (near) continue; taken.set(cx + ',' + cy, p); want.set(a.code, a);
+  }
+  for (const [c, m] of apMk) if (!want.has(c)) { apLayer.removeLayer(m); apMk.delete(c); }
+  for (const [c, a] of want) {
+    const m = apMk.get(c) || L.marker([a.lat, a.lon], { icon: apIcon(a), riseOnHover: true, zIndexOffset: apBig.has(c) ? 100 : 0 }).bindTooltip(`${a.code}${a.icao && a.icao !== a.code ? ' / ' + a.icao : ''} · ${a.name}`)
+      .on('click', e => { L.DomEvent.stopPropagation(e); openAp(a); });
+    if (!apMk.has(c)) { apMk.set(c, m); apLayer.addLayer(m); } else m.setIcon(apIcon(a));
+  }
+}
+map.on('zoomend', () => { for (const m of apMk.values()) apLayer.removeLayer(m); apMk.clear(); drawAp(); }); map.on('moveend', drawAp); drawAp();
+$('bAp').onclick = function () { const on = !map.hasLayer(apLayer); on ? (apLayer.addTo(map), drawAp()) : apLayer.remove(); this.classList.toggle('on', on); };
 
 /* ---------- airport panel: photo, weather, arrivals / departures ---------- */
 // Arrivals / departures come from the aircraft we already see: those within AP_R km whose route (adsbdb / demo) ends or starts at this airport
@@ -498,8 +543,15 @@ const AP_R = 600, WX = { 0: ['Clear sky', '☀️'], 1: ['Mostly clear', '🌤�
   65: ['Heavy rain', '🌧️'], 66: ['Freezing rain', '🌧️'], 67: ['Freezing rain', '🌧️'], 71: ['Light snow', '🌨️'], 73: ['Snow', '🌨️'], 75: ['Heavy snow', '❄️'], 77: ['Snow grains', '🌨️'],
   80: ['Rain showers', '🌦️'], 81: ['Rain showers', '🌧️'], 82: ['Violent showers', '⛈️'], 85: ['Snow showers', '🌨️'], 86: ['Snow showers', '🌨️'], 95: ['Thunderstorm', '⛈️'], 96: ['Thunderstorm, hail', '⛈️'], 99: ['Thunderstorm, hail', '⛈️'] };
 const apCache = new Map(); let apSel = null;
+// The runway data file is loaded the first time an airport card opens
+const jsLoaded = {}, loadJs = n => jsLoaded[n] ||= new Promise(ok => { const s = document.createElement('script'); s.src = n + '.js'; s.onload = () => ok(true); s.onerror = () => ok(false); document.head.appendChild(s); });
+let rwMap = null, apByCode = null;
+const apIcaoOf = s => s.icao || (apByCode || apLookup()).get(s.code)?.icao;
+function apLookup() { apByCode = new Map(); for (const a of apAll.concat(BIGAP)) { const o = apByCode.get(a.code); if (!o) apByCode.set(a.code, a); else if (!o.icao && a.icao) o.icao = a.icao; } return apByCode; } // the fixed list has no ICAO codes: take them from the other lists
+function runwaysOf(s) { if (!rwMap) { if (!window.AP_RUNWAYS) return null; rwMap = new Map(window.AP_RUNWAYS.split(',').map(x => { const [k, n, m] = x.split(':'); return [k, [+n, +m]]; })); } const k = apIcaoOf(s); return k ? rwMap.get(k) || null : null; }
 function openAp(a) {
   select(null); apSel = { ...a, tab: 'arr' }; $('apc').classList.add('show'); renderAp(); loadAp(apSel); pumpAp();
+  const s = apSel; loadJs('airport-runways').then(ok => { if (ok && apSel === s) renderAp(); });
 }
 function closeAp() { apSel = null; $('apc').classList.remove('show'); }
 async function loadAp(s) {
@@ -519,21 +571,24 @@ function apRows(s) {
     const [st, cl] = f.ground ? [arr && d < 25 ? 'landed' : 'on ground', 'g'] : arr ? (d < 40 && ft_ < 5000 ? ['Landing', 'ok'] : d < 150 ? ['Approaching', 'am'] : ['En route', 'mu']) : (d < 60 && ft_ < 12000 ? ['Departed', 'ok'] : ['En route', 'mu']);
     return `<div class="row ar" data-id="${esc(f.id)}"><div class="rm"><b>${esc(f.cs)}</b><small>${esc(f.route[o].code)}${acCode(f) ? ' · ' + esc(acCode(f)) : ''}</small></div><div class="rs"><i class="sp ${cl}">${t(st)}</i><small>${fmtDist(d)}${eta_ ? ' · ' + eta_ : ''}</small></div></div>`; }).join('');
 }
+// Runways: how many open runways the airport has (under Pressure in the weather grid); the longest one is in the tooltip
+function rwHtml(s) { const r = runwaysOf(s); if (!r) return ''; return `<div title="${esc(t('longest {0}', fmtAlt(r[1] / .3048, 10)))}"><span>${t('Runways')}</span><b>${r[0]}</b></div>`; }
 function renderAp() {
   const s = apSel; if (!s) return; const i = s.info, w = i?.weather, p = i?.place, x = w && (WX[w.code] || ['—', '']);
-  const place = p ? [p.city, p.country].filter(Boolean).join(', ') : t(s.err ? 'Couldn\'t load airport info' : 'Loading…');
+  const place = p ? [p.city, p.country].filter(Boolean).join(', ') : t(s.err ? 'Couldn\'t load airport info' : 'Loading…'), flag = p?.cc ? `<img class="flag" src="https://flagcdn.com/w40/${esc(p.cc)}.png" alt="${esc(p.cc.toUpperCase())}" title="${esc(p.country || p.cc.toUpperCase())}" onerror="this.remove()">` : '';
   const ph = i?.photo ? `<div class="ph"><a href="${esc(i.photo.link || i.photo.src)}" target="_blank" title="${t('Open on Wikipedia')}"><img src="${esc(i.photo.src)}" alt="" onerror="this.parentNode.parentNode.remove()"></a><span class="by">Wikipedia</span></div>` : '';
   const wx = w ? `<div class="wx"><span class="i">${x[1]}</span><div class="d">${t(x[0])}<br><small>${t('Feels like')} ${fmtTemp(w.feels)}</small></div><span class="t">${fmtTemp(w.temp)}</span></div>`
     + `<div class="wg"><div><span>${t('Wind')}</span><b>${fmtSpd(w.wind)} ${Math.round(w.dir)}°</b></div><div><span>${t('Gusts')}</span><b>${fmtSpd(w.gust)}</b></div>`
     + `<div><span>${t('Humidity')}</span><b>${Math.round(w.hum)}%</b></div><div><span>${t('Pressure')}</span><b>${Math.round(w.pres)} hPa</b></div>`
-    + `<div><span>${t('Visibility')}</span><b>${w.vis == null ? '—' : fmtDist(w.vis / 1000, w.vis >= 10000 ? 0 : 1)}</b></div></div>`
+    + `<div><span>${t('Visibility')}</span><b>${w.vis == null ? '—' : fmtDist(w.vis / 1000, w.vis >= 10000 ? 0 : 1)}</b></div>${rwHtml(s)}</div>`
     : `<div class="rtx" style="margin-top:12px">${t(s.err ? 'Weather unavailable' : 'Loading weather…')}</div>`;
   const mt = i?.metar?.metar, metar = mt ? `<div class="mt"><span class="fc ${esc(mt.cat)}">${esc(mt.cat || 'METAR')}</span>${esc(mt.icao)}${mt.dist > 15 ? ' · ' + fmtDist(mt.dist) : ''}<code>${esc(mt.raw)}</code>`
     + (i.metar.taf ? `<details><summary>TAF</summary><code>${esc(i.metar.taf)}</code></details>` : '') + `</div>` : '';
-  $('apc').innerHTML = `<div class="ch"><div class="cn"><h2>${esc(s.code)}</h2><small>${esc(s.name)}</small><br><small>${esc(place)}</small></div><button id="ax" class="ib" title="${t('Close')}">✕</button></div>`
+  $('apc').innerHTML = `<div class="ch"><div class="cn"><h2>${esc(s.code)}</h2><small>${esc(s.name)}</small><br><small>${esc(place)}</small></div>${flag}<button id="ax" class="ib" title="${t('Close')}">✕</button></div>`
     + `${ph}${wx}${metar}<div class="tabs"><button data-t="arr" class="${s.tab === 'arr' ? 'on' : ''}">${t('Arrivals')} <em>${apFlights(s, 'dst').length}</em></button><button data-t="dep" class="${s.tab === 'dep' ? 'on' : ''}">${t('Departures')} <em>${apFlights(s, 'org').length}</em></button></div><div id="apr">${apRows(s)}</div>`;
 }
 $('apc').onclick = e => {
+  { const a = e.target.closest('.ph a'); if (a && apSel?.info?.photo) { e.preventDefault(); const p = apSel.info.photo; openLightbox([{ src: p.src, link: p.link || p.src, by: '' }], 0); return; } }
   if (e.target.id === 'ax') return closeAp();
   const t = e.target.closest('.tabs button'); if (t && apSel) { apSel.tab = t.dataset.t; return renderAp(); }
   const r = e.target.closest('.row'); if (r) select(r.dataset.id);
@@ -591,7 +646,8 @@ function flagHtml(reg) {
   return `<img class="flag" src="https://flagcdn.com/w40/${c.toLowerCase()}.png" alt="${c}" title="${c}" onerror="this.remove()">`;
 }
 // Short labels for the three big tiles in the card (the full words do not fit in every language)
-const TILE_L = { en: ['Altitude', 'Speed', 'Vert. speed'], tr: ['İrtifa', 'Hız', 'Dikey hız'], es: ['Altitud', 'Veloc.', 'Vel. vert.'], de: ['Höhe', 'Tempo', 'Steigrate'], fr: ['Altitude', 'Vitesse', 'Vit. vert.'] };
+const TILE_L = { en: ['Altitude', 'Speed', 'Vert. speed'], tr: ['İrtifa', 'Hız', 'Dikey hız'], es: ['Altitud', 'Veloc.', 'Vel. vert.'], de: ['Höhe', 'Tempo', 'Steigrate'], fr: ['Altitude', 'Vitesse', 'Vit. vert.'],
+  ar: ["الارتفاع", "السرعة", "السرعة الرأسية"], zh: ["高度", "速度", "垂直速度"], ja: ["高度", "速度", "垂直速度"], ko: ["고도", "속도", "수직 속도"] };
 function renderCard(full) {
   const f = flights.get(selected); if (!f) return;
   const ac = f.ac || {};
@@ -608,9 +664,9 @@ function renderCard(full) {
       + (landed ? ' · ' + landedText(f) : f.ground ? ' · ' + t('on ground') : ''); // on the ground within 25 km of its destination: landed, and how long ago
     // on the ground the scene takes the place of the flying plane on the dashed line
     const fl = $('fl');
-    // the scene is eligible until 5500 ft and again only below 5200 ft (no flicker around the limit); the user can switch it off (flPref); the change itself is a cross-fade (CSS): the scene fades out as the dashed line fades in
+    // the scene is available at every altitude; the user picks the scene or the dashed line (flPref); the change itself is a cross-fade (CSS)
     if (fl && !fl._init) { fl._init = 1; fl.classList.add('nt'); requestAnimationFrame(() => requestAnimationFrame(() => fl.classList.remove('nt'))); } // a card that has just opened shows its state at once, without fading in from the other one
-    if (fl) { const kt = f.spd * 1.944, pose = SkyGeo.scenePose(f.alt * 3.281, f.vr * 196.85, kt, f.ground, !landed); const eligible = f.ground || f.alt * 3.281 < (fl._el ? 5500 : 5200), show = eligible && flPref === 'scene'; fl._el = eligible; fl.classList.toggle('sw', eligible); fl.classList.toggle('g', show); gsMotion(f, fl, kt, show); if (show) gsPose(f, fl, pose); }
+    if (fl) { const kt = f.spd * 1.944, pose = SkyGeo.scenePose(f.alt * 3.281, f.vr * 196.85, kt, f.ground, !landed); const eligible = true, show = eligible && flPref === 'scene'; fl._el = eligible; fl.classList.toggle('sw', eligible); fl.classList.toggle('g', show); gsMotion(f, fl, kt, show); if (show) gsPose(f, fl, pose); }
   }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
@@ -715,17 +771,65 @@ function routeHtml(f) {
   return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(short10(org.name))}</small></div><span class="fl" id="fl" role="button" title="${esc(t('Click to switch between the animation and the dashed line'))}"><i>✈</i>${GS_HTML}</span>`
     + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(short10(dst.name))}</small></div></div><div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
 }
-// The user picks what the strip between the airport codes shows: the animated scene or the dashed line with the flying plane (click it to switch; remembered). Above ~5500 ft there is only the line.
+// The user picks what the strip between the airport codes shows: the animated scene or the dashed line with the flying plane (click it to switch; remembered).
 let flPref = LS('sky.fl', 'scene');
 $('card').onclick = e => {
   if (e.target.id === 'cx') return select(null);
+  { const a = e.target.closest('.ph a'); if (a) { e.preventDefault(); const f = flights.get(selected), pics = f?.pics || (f?.ac?.thumb ? [{ src: f.ac.thumb, big: f.ac.photo, link: f.ac.photo || f.ac.thumb, by: '' }] : []); if (pics.length) openLightbox(pics, f.pi || 0, i => { f.pi = i; renderCard(true); }); return; } }
   { const fl = e.target.closest('#fl'); if (fl && fl.classList.contains('sw')) { flPref = flPref === 'scene' ? 'line' : 'scene'; save('sky.fl', flPref); renderCard(); return; } }
   if (X.click(e)) return;
-  if (e.target.id === 'pp' || e.target.id === 'pn') { const f = flights.get(selected), n = f?.pics?.length; if (!n) return;
-    f.pi = ((f.pi || 0) + (e.target.id === 'pn' ? 1 : n - 1)) % n; return renderCard(true); }
+  if (e.target.closest('#pp, #pn')) { const f = flights.get(selected), n = f?.pics?.length; if (!n) return;
+    f.pi = ((f.pi || 0) + (e.target.closest('#pn') ? 1 : n - 1)) % n; return swapPhoto(f); }
   if (e.target.id !== 'fv') return;
   fav.has(selected) ? fav.delete(selected) : fav.add(selected); save('sky.fav', [...fav]); renderCard(); renderList(); redraw();
 };
+// In-app photo viewer: opens over the app instead of the browser; arrows / ← → switch photos, Esc or a click outside closes it; the source page can still be opened from the viewer.
+// Zoom: mouse wheel (towards the pointer), double-click, pinch, the + / − / fit buttons or the + − 0 keys; drag to move a zoomed photo.
+let lbx = null;
+function openLightbox(pics, i = 0, onChange) {
+  closeLightbox(); let k = i % pics.length;
+  const d = document.createElement('div'); d.id = 'lbx'; lbx = d;
+  const ic = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${p}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  d.innerHTML = `<img alt="" draggable="false"><button class="lx" title="${t('Close')}">✕</button><div class="lz"><button data-z="out" title="−">${ic('M5 12h14')}</button><button data-z="fit" title="1:1">${ic('M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5')}</button><button data-z="in" title="+">${ic('M12 5v14M5 12h14')}</button></div>`
+    + (pics.length > 1 ? `<button class="ln l" title="${t('Previous photo')}">${CHEV}</button><button class="ln r" title="${t('Next photo')}">${CHEV}</button>` : '') + `<div class="lf"><span class="lc2"></span><span class="lb2"></span><a class="lo" target="_blank"></a></div>`;
+  const im = d.querySelector('img'), Z = { z: 1, x: 0, y: 0, base: 1, moved: false }, MAXZ = 8;
+  // the photo is fitted into the free area (small photos are enlarged at most 2.5x); Z.z is the zoom on top of that
+  const fit = () => { const nw = im.naturalWidth, nh = im.naturalHeight; if (!nw) return; const aw = d.clientWidth - 128, ah = d.clientHeight - 96; Z.base = Math.min(aw / nw, ah / nh, 2.5); im.style.width = nw * Z.base + 'px'; im.style.height = nh * Z.base + 'px'; };
+  const apply = (smooth) => { const w = im.offsetWidth * Z.z / 2, h = im.offsetHeight * Z.z / 2; Z.x = Math.max(-w, Math.min(w, Z.x)); Z.y = Math.max(-h, Math.min(h, Z.y));
+    im.style.transition = smooth ? 'transform .15s ease-out' : 'none'; im.style.transform = `translate(${Z.x}px, ${Z.y}px) scale(${Z.z})`; d.classList.toggle('zm', Z.z > 1.001); };
+  const zoomAt = (nz, px, py, smooth = true) => { nz = Math.max(1, Math.min(MAXZ, nz)); const r = d.getBoundingClientRect(), cx = px - (r.left + r.width / 2), cy = py - (r.top + r.height / 2), f = nz / Z.z;
+    Z.x = nz === 1 ? 0 : cx - (cx - Z.x) * f; Z.y = nz === 1 ? 0 : cy - (cy - Z.y) * f; Z.z = nz; apply(smooth); };
+  const mid = () => { const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+  const show = () => { const p = pics[k]; Z.z = 1; Z.x = Z.y = 0; im.style.transform = ''; im.onload = () => { fit(); apply(false); }; im.src = p.big || p.src; if (im.complete) im.onload();
+    for (const o of [1, -1]) { const q = pics[(k + o + pics.length) % pics.length]; if (q) new Image().src = q.big || q.src; } d.querySelector('.lc2').textContent = pics.length > 1 ? `${k + 1} / ${pics.length}` : '';
+    d.querySelector('.lb2').textContent = p.by ? '© ' + p.by : ''; const a = d.querySelector('.lo'); a.href = p.link || p.big || p.src; a.textContent = t('Open the source page') + ' ↗'; a.style.display = /^https:/.test(a.href) ? '' : 'none'; onChange?.(k); };
+  const go = n => { k = (k + n + pics.length) % pics.length; show(); };
+  d.addEventListener('wheel', e => { e.preventDefault(); zoomAt(Z.z * Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0015)), e.clientX, e.clientY, false); }, { passive: false });
+  const ptr = new Map(); let pinch = 0, drag = null;
+  d.addEventListener('pointerdown', e => { if (e.target.closest('button, a')) return; ptr.set(e.pointerId, [e.clientX, e.clientY]); Z.moved = false; d.setPointerCapture(e.pointerId);
+    if (ptr.size === 2) { const [a, b] = [...ptr.values()]; pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); drag = null; } else drag = { x: e.clientX, y: e.clientY, ox: Z.x, oy: Z.y }; });
+  d.addEventListener('pointermove', e => { if (!ptr.has(e.pointerId)) return; ptr.set(e.pointerId, [e.clientX, e.clientY]);
+    if (ptr.size === 2) { const [a, b] = [...ptr.values()], dist = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) zoomAt(Z.z * dist / pinch, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, false); pinch = dist; Z.moved = true; }
+    else if (drag && Z.z > 1) { if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 3) Z.moved = true; Z.x = drag.ox + e.clientX - drag.x; Z.y = drag.oy + e.clientY - drag.y; apply(false); } });
+  const up = e => { ptr.delete(e.pointerId); pinch = 0; drag = null; };
+  d.addEventListener('pointerup', up); d.addEventListener('pointercancel', up);
+  im.addEventListener('dblclick', e => { e.preventDefault(); zoomAt(Z.z > 1.001 ? 1 : 2.5, e.clientX, e.clientY); });
+  d.onclick = e => { const zb = e.target.closest('[data-z]');
+    if (zb) { const [mx, my] = mid(), m = zb.dataset.z; zoomAt(m === 'fit' ? 1 : Z.z * (m === 'in' ? 1.6 : 1 / 1.6), mx, my); }
+    else if (e.target.closest('.lx') || (e.target === d && !Z.moved)) closeLightbox(); else if (e.target.closest('.ln')) go(e.target.closest('.ln').classList.contains('r') ? 1 : -1); };
+  d._key = e => { const [mx, my] = mid();
+    if (e.key === 'Escape') closeLightbox(); else if (pics.length > 1 && e.key === 'ArrowRight') go(1); else if (pics.length > 1 && e.key === 'ArrowLeft') go(-1);
+    else if (e.key === '+' || e.key === '=') zoomAt(Z.z * 1.4, mx, my); else if (e.key === '-' || e.key === '_') zoomAt(Z.z / 1.4, mx, my); else if (e.key === '0') zoomAt(1, mx, my); else return; e.preventDefault(); e.stopPropagation(); };
+  d._resize = () => { fit(); apply(false); }; window.addEventListener('resize', d._resize);
+  document.addEventListener('keydown', d._key, true); document.body.appendChild(d); show();
+}
+function closeLightbox() { if (!lbx) return; document.removeEventListener('keydown', lbx._key, true); window.removeEventListener('resize', lbx._resize); lbx.remove(); lbx = null; }
+// Switching photos only changes the picture in place (the card is not rebuilt, so nothing blinks); the other photos are already loaded
+function swapPhoto(f) {
+  const ph = $('card').querySelector('.ph'), p = f.pics?.[f.pi || 0], im = ph?.querySelector('img'), by = ph?.querySelector('.by'); if (!p || !im || (p.by && !by) || (!p.by && by)) return renderCard(true);
+  im.src = p.src; ph.querySelector('a').href = p.link || p.src; ph.querySelector('.pc').textContent = `${(f.pi || 0) + 1} / ${f.pics.length}`;
+  if (by) { by.textContent = '© ' + p.by; by.title = `${t('Photo')}: ${p.by}`; }
+}
 function renderList() {
   const q = $('q').value.trim().toLowerCase();
   const arr = [...flights.values()].filter(f => vis(f) && (f.cs.toLowerCase().includes(q) || (f.reg || '').toLowerCase().includes(q))).sort((a, b) => (a.ground - b.ground) || (/^[A-Z]{2,3}\d/.test(b.cs) - /^[A-Z]{2,3}\d/.test(a.cs)) || a.cs.localeCompare(b.cs)).slice(0, 200); // airborne flights with callsigns first

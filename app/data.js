@@ -225,14 +225,30 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  /* ---------- planespotters.net: photos of an aircraft (larger than the adsbdb thumbnail; there can be several) ---------- */
-  async function photos(hex) {
+  /* ---------- photos of an aircraft: planespotters.net (by ICAO24, 448 px) and Wikimedia Commons (found by registration, up to 1280 px) ---------- */
+  async function spotterPhotos(hex) {
+    const r = await get('https://api.planespotters.net/pub/photos/hex/' + hex.toLowerCase(), 10000);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return ((await r.json()).photos || []).filter(p => p.thumbnail_large?.src).map(p => ({ src: p.thumbnail_large.src, link: p.link || '', by: p.photographer || '' }));
+  }
+  // Commons files whose title contains the registration (a search for "TC-JNA" also finds unrelated files, so each title is checked)
+  async function commonsPhotos(reg) {
+    const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, ''), key = norm(reg);
+    if (key.length < 3) return [];
+    const r = await get('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=12&gsrsearch=' + encodeURIComponent('"' + reg + '"')
+      + '&prop=imageinfo&iiprop=url|mime|extmetadata&iiurlwidth=1280', 10000);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const pages = Object.values((await r.json()).query?.pages || {}).sort((a, b) => a.index - b.index);
+    return pages.filter(p => norm(p.title).includes(key)).map(p => ({ p, i: p.imageinfo?.[0] })).filter(({ i }) => i?.thumburl && /^image\/(jpeg|png)$/.test(i.mime))
+      .map(({ p, i }) => ({ src: i.thumburl, big: i.thumburl, link: i.descriptionurl || '', by: String(i.extmetadata?.Artist?.value || '').replace(/<[^>]*>/g, '').trim().slice(0, 60) }));
+  }
+  async function photos(hex, reg = '') {
     if (typeof hex !== 'string' || !/^[0-9a-fA-F]{6}$/.test(hex)) return { ok: false, error: 'invalid ICAO24' };
-    try {
-      const r = await get('https://api.planespotters.net/pub/photos/hex/' + hex.toLowerCase(), 10000);
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return { ok: true, photos: ((await r.json()).photos || []).filter(p => p.thumbnail_large?.src).map(p => ({ src: p.thumbnail_large.src, link: p.link || '', by: p.photographer || '' })) };
-    } catch (e) { return { ok: false, error: e.message }; }
+    const [a, c] = await Promise.allSettled([spotterPhotos(hex), /^[A-Za-z0-9-]{3,10}$/.test(reg) ? commonsPhotos(reg) : []]);
+    if (a.status === 'rejected' && c.status === 'rejected') return { ok: false, error: a.reason?.message || 'no response' };
+    const out = [], seen = new Set();
+    for (const p of [...(a.value || []), ...(c.value || [])]) { if (seen.has(p.src)) continue; seen.add(p.src); out.push(p); if (out.length >= 8) break; }
+    return { ok: true, photos: out };
   }
 
   /* ---------- adsb.lol trace: positions the aircraft actually flew today ---------- */
@@ -303,7 +319,7 @@
     return { ok: true,
       weather: c ? { temp: c.temperature_2m, feels: c.apparent_temperature, hum: c.relative_humidity_2m, code: c.weather_code, day: !!c.is_day, pres: c.surface_pressure,
         wind: c.wind_speed_10m, dir: c.wind_direction_10m, gust: c.wind_gusts_10m, vis: c.visibility } : null,
-      place: { city: ad.province || ad.city || ad.town || ad.village || ad.municipality || ad.county || ad.state || '', region: ad.state || '', country: ad.country || '' },
+      place: { city: ad.province || ad.city || ad.town || ad.village || ad.municipality || ad.county || ad.state || '', region: ad.state || '', country: ad.country || '', cc: /^[a-z]{2}$/i.test(ad.country_code || '') ? ad.country_code.toLowerCase() : '' },
       photo: pg ? { src: pg.thumbnail.source, link: pg.fullurl || '', title: pg.title } : null };
   }
 
