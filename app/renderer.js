@@ -351,9 +351,12 @@ async function loadAircraft(f) {
 // Photos: planespotters (448 px, possibly several) first, then the full-size adsbdb photo (or its thumbnail as a last resort)
 async function loadPhotos(f) {
   if (f.pics) return; let e = fresh(picCache, f.id);
-  if (!e) { const res = await DATA.photos(f.id, f.ac?.reg || f.reg); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok) picCache.set(f.id, e); }
+  if (!e) { const res = await DATA.photos(f.id, f.ac?.reg || f.reg); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok && !res.partial) picCache.set(f.id, e); }
   const ac = f.ac || {}, extra = ac.photo || ac.thumb;
-  f.pics = [...e.v, ...(extra && !e.v.length ? [{ src: extra, big: ac.photo || extra, link: ac.photo || extra, by: '' }] : [])]; f.pi = 0; f._pre = f.pics.map(p => { const im = new Image(); im.src = p.src; return im; }); // every photo is fetched right away, so switching is instant
+  // 3 photos at most (quicker to load and to flip through). The first one comes from planespotters when there is one: its CDN is fast, Commons makes big thumbnails slowly. Then the sharper
+  // Commons photos, then the adsbdb photo, then more planespotters ones to fill up.
+  const ps = e.v.filter(p => !p.big), cm = e.v.filter(p => p.big), ad = extra ? [{ src: extra, big: ac.photo || extra, link: ac.photo || extra, by: '' }] : [];
+  f.pics = [...ps.slice(0, 1), ...cm.slice(0, 2), ...ad, ...ps.slice(1)].slice(0, 3); f.pi = 0; f._pre = f.pics.map(p => { const im = new Image(); im.src = p.src; return im; }); // every photo is fetched right away, so switching is instant
   if (f.id === selected) renderCard(true);
 }
 const CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; // thin chevron, flipped by CSS for "previous"
@@ -775,7 +778,7 @@ function routeHtml(f) {
 let flPref = LS('sky.fl', 'scene');
 $('card').onclick = e => {
   if (e.target.id === 'cx') return select(null);
-  { const a = e.target.closest('.ph a'); if (a) { e.preventDefault(); const f = flights.get(selected), pics = f?.pics || (f?.ac?.thumb ? [{ src: f.ac.thumb, big: f.ac.photo, link: f.ac.photo || f.ac.thumb, by: '' }] : []); if (pics.length) openLightbox(pics, f.pi || 0, i => { f.pi = i; renderCard(true); }); return; } }
+  { const a = e.target.closest('.ph a'); if (a) { e.preventDefault(); const f = flights.get(selected), pics = f?.pics || (f?.ac?.thumb ? [{ src: f.ac.thumb, big: f.ac.photo, link: f.ac.photo || f.ac.thumb, by: '' }] : []); if (pics.length) openLightbox(pics, f.pi || 0, i => { f.pi = i; swapPhoto(f); }); return; } }
   { const fl = e.target.closest('#fl'); if (fl && fl.classList.contains('sw')) { flPref = flPref === 'scene' ? 'line' : 'scene'; save('sky.fl', flPref); renderCard(); return; } }
   if (X.click(e)) return;
   if (e.target.closest('#pp, #pn')) { const f = flights.get(selected), n = f?.pics?.length; if (!n) return;
@@ -793,15 +796,22 @@ function openLightbox(pics, i = 0, onChange) {
   d.innerHTML = `<img alt="" draggable="false"><button class="lx" title="${t('Close')}">✕</button><div class="lz"><button data-z="out" title="−">${ic('M5 12h14')}</button><button data-z="fit" title="1:1">${ic('M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5')}</button><button data-z="in" title="+">${ic('M12 5v14M5 12h14')}</button></div>`
     + (pics.length > 1 ? `<button class="ln l" title="${t('Previous photo')}">${CHEV}</button><button class="ln r" title="${t('Next photo')}">${CHEV}</button>` : '') + `<div class="lf"><span class="lc2"></span><span class="lb2"></span><a class="lo" target="_blank"></a></div>`;
   const im = d.querySelector('img'), Z = { z: 1, x: 0, y: 0, base: 1, moved: false }, MAXZ = 8;
-  // the photo is fitted into the free area (small photos are enlarged at most 2.5x); Z.z is the zoom on top of that
-  const fit = () => { const nw = im.naturalWidth, nh = im.naturalHeight; if (!nw) return; const aw = d.clientWidth - 128, ah = d.clientHeight - 96; Z.base = Math.min(aw / nw, ah / nh, 2.5); im.style.width = nw * Z.base + 'px'; im.style.height = nh * Z.base + 'px'; };
+  // the photo is fitted into the free area (a small photo is enlarged at most 1.4x); Z.z is the zoom on top of that
+  const fit = () => { const nw = im.naturalWidth, nh = im.naturalHeight; if (!nw) return; const aw = d.clientWidth - 128, ah = d.clientHeight - 96; Z.base = Math.min(aw / nw, ah / nh, nw >= 1200 ? 2.5 : 1.4); im.style.width = nw * Z.base + 'px'; im.style.height = nh * Z.base + 'px'; };
   const apply = (smooth) => { const w = im.offsetWidth * Z.z / 2, h = im.offsetHeight * Z.z / 2; Z.x = Math.max(-w, Math.min(w, Z.x)); Z.y = Math.max(-h, Math.min(h, Z.y));
     im.style.transition = smooth ? 'transform .15s ease-out' : 'none'; im.style.transform = `translate(${Z.x}px, ${Z.y}px) scale(${Z.z})`; d.classList.toggle('zm', Z.z > 1.001); };
   const zoomAt = (nz, px, py, smooth = true) => { nz = Math.max(1, Math.min(MAXZ, nz)); const r = d.getBoundingClientRect(), cx = px - (r.left + r.width / 2), cy = py - (r.top + r.height / 2), f = nz / Z.z;
     Z.x = nz === 1 ? 0 : cx - (cx - Z.x) * f; Z.y = nz === 1 ? 0 : cy - (cy - Z.y) * f; Z.z = nz; apply(smooth); };
   const mid = () => { const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
-  const show = () => { const p = pics[k]; Z.z = 1; Z.x = Z.y = 0; im.style.transform = ''; im.onload = () => { fit(); apply(false); }; im.src = p.big || p.src; if (im.complete) im.onload();
-    for (const o of [1, -1]) { const q = pics[(k + o + pics.length) % pics.length]; if (q) new Image().src = q.big || q.src; } d.querySelector('.lc2').textContent = pics.length > 1 ? `${k + 1} / ${pics.length}` : '';
+  // The viewer opens at once with the version the card already has (it is in the cache); the big version loads behind it and replaces it when it is ready, keeping the zoom.
+  // The photos next to the shown one are loaded ahead (and kept in d._hold, so the browser doesn't drop them), so flipping is instant too.
+  d._hold = [];
+  const warm = q => { if (!q) return; for (const u of new Set([q.src, q.big])) if (u) { const h = new Image(); h.src = u; d._hold.push(h); } };
+  const show = () => { const p = pics[k]; Z.z = 1; Z.x = Z.y = 0; im.style.transform = ''; im.onload = () => { fit(); apply(false); }; im.src = p.src; if (im.complete && im.naturalWidth) im.onload();
+    if (p.big && p.big !== p.src) { const hi = new Image(); hi.src = p.big; d._hold.push(hi);
+      (hi.decode ? hi.decode() : Promise.resolve()).then(() => { if (lbx === d && pics[k] === p && hi.naturalWidth) { im.onload = null; im.src = p.big; fit(); apply(false); } }).catch(() => {}); }
+    for (const o of [1, -1]) if (pics.length > 2 || o === 1) warm(pics[(k + o + pics.length) % pics.length]);
+    d.querySelector('.lc2').textContent = pics.length > 1 ? `${k + 1} / ${pics.length}` : '';
     d.querySelector('.lb2').textContent = p.by ? '© ' + p.by : ''; const a = d.querySelector('.lo'); a.href = p.link || p.big || p.src; a.textContent = t('Open the source page') + ' ↗'; a.style.display = /^https:/.test(a.href) ? '' : 'none'; onChange?.(k); };
   const go = n => { k = (k + n + pics.length) % pics.length; show(); };
   d.addEventListener('wheel', e => { e.preventDefault(); zoomAt(Z.z * Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0015)), e.clientX, e.clientY, false); }, { passive: false });
