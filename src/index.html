@@ -217,7 +217,10 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
    The scene is drawn 60 px high and scaled down; the motion is done in renderer.js (gsMotion) and follows the ground speed */
 .rt>.fl.g{height:32px;margin:2px 0 0;border-radius:7px;background:linear-gradient(#18222d,#2a3a4e 62%,#3a4f68);border:1px solid #ffffff14}.fl.g::before,.fl.g>i{display:none}
 .fl .gsi{display:none}.fl.g .gsi{display:block;position:absolute;left:0;top:0;width:192%;height:60px;transform:scale(.52);transform-origin:0 0}
-.gsi .gl{position:absolute;left:0;display:block;will-change:transform}.gsi .far{top:0}.gsi .mid{bottom:12px}
+.gsi .gl{position:absolute;left:0;display:block;will-change:transform}
+.gsi .sky{position:absolute;inset:0;opacity:0;background:linear-gradient(#2e5d99,#6aa3d9 68%,#a9cdea);transition:opacity .9s linear}.gsi .sky .gl{top:0}
+.gsi .gnd{position:absolute;inset:0;transition:transform .9s linear}
+.gsi .plane{transition:transform .9s ease;transform-origin:50% 60%}.gsi .gear{transition:opacity .5s,transform .5s;transform-box:fill-box;transform-origin:50% 0}.gsi .gear.up{opacity:0;transform:scaleY(.15)}.gsi .far{top:0}.gsi .mid{bottom:12px}
 .gsi .near{position:absolute;left:0;right:0;bottom:0;height:13px;background:linear-gradient(#262629,#18181a);border-top:1px solid #55555c;overflow:hidden}
 .gsi .nl{position:absolute;left:0;top:5px;width:700px;height:2px;background:repeating-linear-gradient(90deg,#f2c230 0 12px,transparent 12px 28px);will-change:transform}
 .gsi .plane{position:absolute;left:50%;margin-left:-52px;bottom:5px;width:104px;height:auto;filter:drop-shadow(0 2px 2px #0008)}.gsi .wheel{transform-box:fill-box;transform-origin:center}

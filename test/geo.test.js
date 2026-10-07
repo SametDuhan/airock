@@ -41,3 +41,17 @@ test('sunSide: sun to the right when flying north at noon-west of the sun, none 
   assert.equal(G.sunSide(s.lat, s.lon - 20, 90, date).side, null); // flying straight at the sun
   assert.equal(G.sunSide(-s.lat, s.lon + 180, 0, date).side, null); // night side
 });
+
+test('scenePose: from the airport on the ground to the open sky at 5000 ft, and back', () => {
+  const { scenePose: P } = require('../src/geo.js');
+  const g = P(0, 0, 0, true); assert.deepEqual([g.show, g.t, g.rise, g.pitch, g.gear], [true, 0, 0, 0, true]);
+  assert.equal(P(0, 0, 130, true).pitch, 5); // rolling fast: nose up for rotation
+  const lo = P(200, 2500, 150, false); assert.ok(lo.t > .15 && lo.t < .25 && lo.pitch === 12 && lo.gear); // just lifted off
+  assert.equal(P(400, 2500, 160, false).gear, false); // gear up after 250 ft
+  const mid = P(1250, 1800, 200, false); assert.ok(Math.abs(mid.t - .5) < .01 && mid.rise > 6 && mid.rise < 8);
+  assert.equal(P(6000, 0, 250, false).show, false); // cruise-ish: the dashed line again
+  assert.equal(P(5000, 0, 250, false).t, 1);
+  const app = P(2500, -700, 160, false); assert.ok(app.gear && app.pitch < 0 && app.pitch >= -6); // on approach: gear down, nose slightly down
+  assert.equal(P(2500, 0, 160, false).gear, false);
+  assert.equal(P(-50, 0, 0, false).t, 0); // bad input stays inside the range
+});

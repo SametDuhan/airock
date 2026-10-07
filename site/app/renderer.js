@@ -608,7 +608,8 @@ function renderCard(full) {
     $('pgt').textContent = t('{0} flown · {1} to go', fmtDist(a), fmtDist(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) + ' · ' + t('arrives {0}', new Date(Date.now() + b / (f.spd * 3.6) * 3600e3).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' })) : '')
       + (landed ? ' · ' + landedText(f) : f.ground ? ' · ' + t('on ground') : ''); // on the ground within 25 km of its destination: landed, and how long ago
     // on the ground the scene takes the place of the flying plane on the dashed line
-    const fl = $('fl'); if (fl) { fl.classList.toggle('g', f.ground); gsMotion(f, fl, f.ground ? f.spd * 1.944 : 0); }
+    const fl = $('fl');
+    if (fl) { const kt = f.spd * 1.944, pose = SkyGeo.scenePose(f.alt * 3.281, f.vr * 196.85, kt, f.ground); fl.classList.toggle('g', pose.show); gsMotion(f, fl, kt, pose.show); if (pose.show) gsPose(f, fl, pose); }
   }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
@@ -653,19 +654,30 @@ const GS_PLANE = `<svg class="plane" viewBox="0 0 120 44" aria-hidden="true"><de
   + `<rect x="38" y="22.8" width="4.6" height="8.2" rx="1" fill="none" stroke="#b3bbc5" stroke-width=".6"/><rect x="88" y="22.8" width="4.6" height="8.2" rx="1" fill="none" stroke="#b3bbc5" stroke-width=".6"/>`
   + `<path d="M50 32 L84 32 L69 39 L55 39Z" fill="#c3cad3"/><path d="M50 32 L84 32" stroke="#8d97a3" stroke-width=".7"/>`
   + `<rect x="66" y="35" width="7" height="3" fill="#9aa4af"/><ellipse cx="70" cy="40" rx="10" ry="4.4" fill="url(#gsE)"/><ellipse cx="78.2" cy="40" rx="2" ry="3.8" fill="#1d2228"/><ellipse cx="78.2" cy="40" rx=".9" ry="1.6" fill="#6f7a86"/>`
-  + `<path d="M58 33.5 V38.6 M100 33.5 V38.6" stroke="#8b95a1" stroke-width="1.7"/>`
+  + `<g class="gear"><path d="M58 33.5 V38.6 M100 33.5 V38.6" stroke="#8b95a1" stroke-width="1.7"/>`
   + `<g class="wheel"><circle cx="58" cy="40.6" r="3.4" fill="#1e2125"/><circle cx="58" cy="40.6" r="1.3" fill="#a3acb6"/><path d="M58 37.3 V43.9 M54.7 40.6 H61.3" stroke="#a3acb6" stroke-width=".6"/></g>`
-  + `<g class="wheel"><circle cx="100" cy="40.6" r="3" fill="#1e2125"/><circle cx="100" cy="40.6" r="1.1" fill="#a3acb6"/><path d="M100 37.6 V43.6 M97 40.6 H103" stroke="#a3acb6" stroke-width=".6"/></g></svg>`;
-const GS_HTML = `<div class="gsi">${gsLayer('far', 320, 44, GS_FAR)}${gsLayer('mid', 320, 26, GS_MID)}<div class="near"><b class="nl"></b></div>${GS_PLANE}</div>`;
+  + `<g class="wheel"><circle cx="100" cy="40.6" r="3" fill="#1e2125"/><circle cx="100" cy="40.6" r="1.1" fill="#a3acb6"/><path d="M100 37.6 V43.6 M97 40.6 H103" stroke="#a3acb6" stroke-width=".6"/></g></g></svg>`;
+// Clouds for the climb (soft overlapping ellipses): small pale ones far away, bigger white ones nearer
+const cloud = (x, y, k, f, o) => `<g transform="translate(${x} ${y}) scale(${k})" fill="${f}" opacity="${o}"><ellipse cx="0" cy="0" rx="19" ry="6"/><ellipse cx="-11" cy="-3" rx="9" ry="6"/><ellipse cx="3" cy="-6" rx="11" ry="8"/><ellipse cx="14" cy="-2" rx="8" ry="5"/></g>`;
+const GS_C1 = cloud(35, 20, .55, '#dbe8f5', .75) + cloud(120, 12, .45, '#dbe8f5', .7) + cloud(205, 26, .6, '#dbe8f5', .75) + cloud(280, 15, .5, '#dbe8f5', .7);
+const GS_C2 = cloud(70, 40, 1, '#ffffff', .94) + cloud(190, 33, 1.25, '#ffffff', .95) + cloud(285, 47, .9, '#ffffff', .92);
+// layers: sky (gradient + clouds, fades in with altitude) / ground (the airport and the taxi line, sinks out of the scene with altitude) / plane (rises and pitches, gear folds up)
+const GS_HTML = `<div class="gsi"><div class="sky">${gsLayer('c1', 320, 60, GS_C1)}${gsLayer('c2', 320, 60, GS_C2)}</div><div class="gnd">${gsLayer('far', 320, 44, GS_FAR)}${gsLayer('mid', 320, 26, GS_MID)}<div class="near"><b class="nl"></b></div></div>${GS_PLANE}</div>`;
 // The scene loops while the plane moves and its speed follows the plane's: slow like a taxiing plane (15 knots = one pass of the nearest layer in 2 s), faster while rolling out after
 // touchdown, paused when the plane stands still. Playback rate changes keep the position, and the position is kept on the flight when the card is rebuilt.
 const NO_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
-function gsMotion(f, el, kt) {
+// Where things are in the scene for this moment of the flight (SkyGeo.scenePose): the ground sinks out, the sky and clouds fade in, the plane rises and pitches, the gear folds up.
+// CSS transitions (about a second) smooth the once-a-second updates.
+function gsPose(f, el, p) {
+  el.querySelector('.gnd').style.transform = `translateY(${(p.t * 72).toFixed(1)}px)`; el.querySelector('.sky').style.opacity = p.t.toFixed(2);
+  el.querySelector('.plane').style.transform = `translateY(${(-p.rise).toFixed(1)}px) rotate(${(-p.pitch).toFixed(1)}deg)`; el.querySelector('.gear').classList.toggle('up', !p.gear);
+}
+function gsMotion(f, el, kt, scene) {
   if (!el._an) {
-    el._an = NO_MOTION ? [] : [['.far', 320, 128000], ['.mid', 320, 53000], ['.nl', 28, 2000]].map(([sel, px, ms]) => { const a = el.querySelector(sel).animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-px}px)` }], { duration: ms, iterations: Infinity }); a.currentTime = f._gsT || 0; a.pause(); return a; });
+    el._an = NO_MOTION ? [] : [['.far', 320, 128000], ['.mid', 320, 53000], ['.nl', 28, 2000], ['.c1', 320, 160000], ['.c2', 320, 64000]].map(([sel, px, ms]) => { const a = el.querySelector(sel).animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-px}px)` }], { duration: ms, iterations: Infinity }); a.currentTime = f._gsT || 0; a.pause(); return a; });
     el._wh = NO_MOTION ? [] : [...el.querySelectorAll('.wheel')].map(w => { const a = w.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(-360deg)' }], { duration: 650, iterations: Infinity }); a.pause(); return a; });
   }
-  const k = Math.round(Math.max(.35, Math.min(5, kt / 15)) * 20) / 20, on = f.ground && kt > 1; // follows the ground speed; a plane that stands still (1 knot or less) stands still in the scene too
+  const k = Math.round(Math.max(.35, Math.min(5, kt / 15)) * 20) / 20, on = scene && kt > 1; // follows the ground speed; a plane that stands still (1 knot or less) stands still in the scene too
   // touch the animations only when something changed: re-applying the same rate or state every second made the lines stutter once a second
   if (el._k !== k || el._on !== on) { for (const a of [...el._an, ...el._wh]) { if (el._k !== k) a.updatePlaybackRate(k); if (el._on !== on) { if (on) a.play(); else a.pause(); } } el._k = k; el._on = on; }
   if (el._an[0]) f._gsT = el._an[0].currentTime;
