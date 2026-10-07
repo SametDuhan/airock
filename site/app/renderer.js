@@ -633,7 +633,7 @@ function landedText(f) {
 }
 const eta = h => h < 1 ? Math.round(h * 60) + t(' min') : Math.floor(h) + t(' h ') + Math.round(h % 1 * 60) + t(' min');
 // Planes on the ground get a scene in the slot of the flying plane (between the two airport codes): a side view of the plane (nose to the right) in front of an airport that scrolls from
-// right to left, at a speed that follows the plane's ground speed (see gsMotion)
+// right to left, at a speed that follows the plane's ground speed (see gsMotion); it plays as long as the plane is on the ground
 const GS_WIN = (x0, n, step, y, w, h, op) => Array.from({ length: n }, (_, i) => `<rect x="${x0 + i * step}" y="${y}" width="${w}" height="${h}" fill="#f2c230" opacity="${op}"/>`).join('');
 const GS_FAR = `<g><rect x="57" y="14" width="6" height="30" fill="#34445a"/><path d="M49 14 L71 14 L66 5 L54 5Z" fill="#41546d"/><rect x="53" y="7.5" width="14" height="3" fill="#f2c230" opacity=".9"/><rect x="59.2" y="-1" width="1.6" height="7" fill="#4a5d78"/><circle cx="60" cy="0" r="1.5" fill="#ff5a4f"/>`
   + `<rect x="147" y="30" width="6" height="14" fill="#34445a"/><circle cx="150" cy="29" r="6.5" fill="#41546d"/><rect x="141" y="27.5" width="18" height="1.6" fill="#55708f"/>`
@@ -657,15 +657,15 @@ const GS_PLANE = `<svg class="plane" viewBox="0 0 120 44" aria-hidden="true"><de
   + `<g class="wheel"><circle cx="58" cy="40.6" r="3.4" fill="#1e2125"/><circle cx="58" cy="40.6" r="1.3" fill="#a3acb6"/><path d="M58 37.3 V43.9 M54.7 40.6 H61.3" stroke="#a3acb6" stroke-width=".6"/></g>`
   + `<g class="wheel"><circle cx="100" cy="40.6" r="3" fill="#1e2125"/><circle cx="100" cy="40.6" r="1.1" fill="#a3acb6"/><path d="M100 37.6 V43.6 M97 40.6 H103" stroke="#a3acb6" stroke-width=".6"/></g></svg>`;
 const GS_HTML = `<div class="gsi">${gsLayer('far', 320, 44, GS_FAR)}${gsLayer('mid', 320, 26, GS_MID)}<div class="near"><b class="nl"></b></div>${GS_PLANE}</div>`;
-// The scene never stops looping while the plane moves, only its speed changes: slow like a taxiing plane (15 knots = one pass of the nearest layer in 2 s), faster while rolling out after
-// touchdown. It stands still (paused) when the plane does. Playback rate changes keep the position, and the position is kept on the flight when the card is rebuilt.
+// The scene never stops looping while the plane is on the ground, only its speed changes: slow like a taxiing plane (15 knots = one pass of the nearest layer in 2 s), faster while rolling out after
+// touchdown, and at the slowest speed when the plane stands still. Playback rate changes keep the position, and the position is kept on the flight when the card is rebuilt.
 const NO_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function gsMotion(f, el, kt) {
   if (!el._an) {
     el._an = NO_MOTION ? [] : [['.far', 320, 128000], ['.mid', 320, 53000], ['.nl', 28, 2000]].map(([sel, px, ms]) => { const a = el.querySelector(sel).animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-px}px)` }], { duration: ms, iterations: Infinity }); a.currentTime = f._gsT || 0; a.pause(); return a; });
     el._wh = NO_MOTION ? [] : [...el.querySelectorAll('.wheel')].map(w => { const a = w.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(-360deg)' }], { duration: 650, iterations: Infinity }); a.pause(); return a; });
   }
-  const k = Math.max(.35, Math.min(5, kt / 15)), on = f.ground && kt > 1;
+  const k = Math.max(.35, Math.min(5, kt / 15)), on = f.ground; // always playing while on the ground: a plane that stands still moves at the slowest speed
   for (const a of [...el._an, ...el._wh]) { a.updatePlaybackRate(k); if (on) a.play(); else a.pause(); }
   if (el._an[0]) f._gsT = el._an[0].currentTime;
 }
