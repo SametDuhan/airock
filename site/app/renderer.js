@@ -584,7 +584,10 @@ function renderCard(full) {
     $('pgb').style.width = Math.min(100, a / (a + b) * 100).toFixed(1) + '%';
     $('pgt').textContent = t('{0} flown · {1} to go', fmtDist(a), fmtDist(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) + ' · ' + t('arrives {0}', new Date(Date.now() + b / (f.spd * 3.6) * 3600e3).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' })) : '')
       + (landed ? ' · ' + landedText(f) : ''); // on the ground within 25 km of its destination: landed, and how long ago
-    const fl = $('card').querySelector('.rt .fl'); if (fl) fl.classList.toggle('rw', landed); } // landed: a runway instead of the dashed line
+    // landed: a runway instead of the dashed line, and the plane rolls out along it once (a rebuilt card continues the same roll-out instead of restarting or jumping to the end)
+    const fl = $('card').querySelector('.rt .fl');
+    if (fl) { fl.classList.toggle('rw', landed); if (landed) { f._rolled = f._rolled || Date.now(); const el = Date.now() - f._rolled; if (el < 2600) { fl.classList.add('roll'); fl.style.setProperty('--rd', -el + 'ms'); } } }
+    if (!landed) f._rolled = 0; }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
     ['Altitude', f.ground ? t('on ground') : ft(f.alt)], ['Speed', fmtSpd(f.spd * 1.944)], ['Heading', Math.round(f.hdg) + '°'],
