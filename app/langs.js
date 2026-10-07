@@ -563,3 +563,9 @@ Object.assign(DICT.tr, { 'landed {0} ago': '{0} önce indi', 'just landed': 'az 
 Object.assign(DICT.es, { 'landed {0} ago': 'aterrizó hace {0}', 'just landed': 'acaba de aterrizar' });
 Object.assign(DICT.de, { 'landed {0} ago': 'vor {0} gelandet', 'just landed': 'gerade gelandet' });
 Object.assign(DICT.fr, { 'landed {0} ago': 'a atterri il y a {0}', 'just landed': 'vient d\'atterrir' });
+
+// Overhead: remove the spot
+Object.assign(DICT.tr, { '✕ Remove overhead spot': '✕ Tepemdeki konumu kaldır', 'Remove my spot': 'Konumumu kaldır', 'Your spot': 'Konumun', 'Overhead spot removed': 'Tepemdeki konum kaldırıldı' });
+Object.assign(DICT.es, { '✕ Remove overhead spot': '✕ Quitar el punto de «Sobre mí»', 'Remove my spot': 'Quitar mi punto', 'Your spot': 'Tu punto', 'Overhead spot removed': 'Punto de «Sobre mí» quitado' });
+Object.assign(DICT.de, { '✕ Remove overhead spot': '✕ Standort von „Über mir“ entfernen', 'Remove my spot': 'Meinen Standort entfernen', 'Your spot': 'Dein Standort', 'Overhead spot removed': 'Standort von „Über mir“ entfernt' });
+Object.assign(DICT.fr, { '✕ Remove overhead spot': '✕ Retirer le point « Au-dessus de moi »', 'Remove my spot': 'Retirer mon point', 'Your spot': 'Votre point', 'Overhead spot removed': 'Point « Au-dessus de moi » retiré' });
