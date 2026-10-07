@@ -42,16 +42,28 @@ test('sunSide: sun to the right when flying north at noon-west of the sun, none 
   assert.equal(G.sunSide(-s.lat, s.lon + 180, 0, date).side, null); // night side
 });
 
-test('scenePose: from the airport on the ground to the open sky at 5000 ft, and back', () => {
+test('scenePose: from the airport on the ground to the open sky, and back', () => {
   const { scenePose: P } = require('../src/geo.js');
-  const g = P(0, 0, 0, true); assert.deepEqual([g.show, g.t, g.rise, g.pitch, g.gear], [true, 0, 0, 0, true]);
-  assert.equal(P(0, 0, 130, true).pitch, 5); // rolling fast: nose up for rotation
-  const lo = P(200, 2500, 150, false); assert.ok(lo.t > .15 && lo.t < .25 && lo.pitch === 12 && lo.gear); // just lifted off
+  const g = P(0, 0, 0, true); assert.deepEqual([g.show, g.g, g.cl, g.rise, g.pitch, g.gear], [true, 0, 0, 0, 0, true]);
+  assert.equal(P(0, 0, 130, true).pitch, 10); // rolling fast: the nose comes up for rotation
+  assert.equal(P(0, 0, 130, true, false).pitch, 0); // ...but not while rolling out after a landing
+  const lo = P(120, 2800, 150, false); assert.ok(lo.pitch >= 8 && lo.pitch <= 14 && lo.gear && lo.cl === .1); // just lifted off: nose up
+  assert.ok(P(120, 0, 150, false).pitch >= 8); // just lifted off, the vertical rate not there yet: still nose up
   assert.equal(P(400, 2500, 160, false).gear, false); // gear up after 250 ft
-  const mid = P(1250, 1800, 200, false); assert.ok(Math.abs(mid.t - .5) < .01 && mid.rise > 6 && mid.rise < 8);
+  assert.equal(P(700, 2000, 200, false).g, 1); // at 700 ft nothing of the airport is left
+  assert.ok(P(350, 2000, 190, false).g > .4 && P(350, 2000, 190, false).g < .6);
+  assert.equal(P(1500, 2000, 220, false).g, 1); assert.equal(P(1500, 2000, 220, false).cl, 1); // 1500 ft: only sky and clouds
   assert.equal(P(6000, 0, 250, false).show, false); // cruise-ish: the dashed line again
-  assert.equal(P(5000, 0, 250, false).t, 1);
-  const app = P(2500, -700, 160, false); assert.ok(app.gear && app.pitch < 0 && app.pitch >= -6); // on approach: gear down, nose slightly down
-  assert.equal(P(2500, 0, 160, false).gear, false);
-  assert.equal(P(-50, 0, 0, false).t, 0); // bad input stays inside the range
+  const app = P(2500, -700, 160, false); assert.ok(app.gear && app.pitch <= -4 && app.pitch >= -8); // descending: nose down, gear down
+  assert.equal(P(2500, 0, 160, false).pitch, 0); assert.equal(P(2500, 0, 160, false).gear, false); // level: flat, gear up
+  assert.equal(P(-50, 0, 0, false).g, 0); // bad input stays inside the range
+});
+
+test('sunElevation / solarHour: under the sun, opposite it, and the hour of the day', () => {
+  const G = require('../src/geo.js'), date = new Date(Date.UTC(2026, 5, 21, 12, 0, 0)), s = G.sun(date);
+  assert.ok(G.sunElevation(s.lat, s.lon, date) > 89.9); assert.ok(G.sunElevation(-s.lat, s.lon + 180, date) < -89.9);
+  assert.ok(Math.abs(G.solarHour(s.lon, date) - 12) < .01);
+  assert.ok(Math.abs(G.solarHour(s.lon + 45, date) - 15) < .01); // 45 degrees east of the sun: three hours later in the day
+  assert.ok(Math.abs(G.solarHour(s.lon - 90, date) - 6) < .01); // 90 degrees west: morning
+  assert.ok(G.sunElevation(41, 29, new Date(Date.UTC(2026, 5, 21, 2, 0, 0))) < 0); // Istanbul at 05:00 local mean time in June: before sunrise there... (sun below the horizon)
 });
