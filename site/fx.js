@@ -7,12 +7,13 @@
 
   /* ---- scroll progress, sticky header state, active nav link ---- */
   const prog = $('#prog'), hdr = $('header');
-  const onScroll = () => {
-    const h = document.documentElement, max = h.scrollHeight - innerHeight;
-    if (prog) prog.style.transform = `scaleX(${max > 0 ? Math.min(1, scrollY / max) : 0})`;
-    if (hdr) hdr.classList.toggle('stuck', scrollY > 30);
-  };
-  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+  let maxS = 1, tick0 = false, stuck = false;
+  const calc = () => { maxS = Math.max(1, document.documentElement.scrollHeight - innerHeight); };
+  const onScroll = () => { tick0 = false;
+    if (prog) prog.style.transform = `scaleX(${Math.min(1, scrollY / maxS).toFixed(4)})`;
+    const s = scrollY > 30; if (hdr && s !== stuck) { stuck = s; hdr.classList.toggle('stuck', s); } };
+  addEventListener('scroll', () => { if (!tick0) { tick0 = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  addEventListener('resize', () => { calc(); onScroll(); }); addEventListener('load', () => { calc(); onScroll(); }); calc(); onScroll();
   const links = $$('nav a.l[href^="#"]'), secs = links.map(a => $(a.getAttribute('href'))).filter(Boolean);
   if ('IntersectionObserver' in window && secs.length) {
     const so = new IntersectionObserver(es => es.forEach(e => {
@@ -51,10 +52,10 @@
   }
 
   /* ---- card spotlight follows the pointer ---- */
-  if (fine) document.addEventListener('pointermove', e => {
-    const t = e.target.closest && e.target.closest('.card,.box,.nw,.stats div'); if (!t) return;
-    const r = t.getBoundingClientRect(); t.style.setProperty('--mx', (e.clientX - r.left) + 'px'); t.style.setProperty('--my', (e.clientY - r.top) + 'px');
-  }, { passive: true });
+  if (fine) { let pe = null, pq = false;
+    document.addEventListener('pointermove', e => { pe = e; if (pq) return; pq = true; requestAnimationFrame(() => { pq = false;
+      const t = pe.target.closest && pe.target.closest('.card,.box,.nw,.stats div'); if (!t) return;
+      const r = t.getBoundingClientRect(); t.style.setProperty('--mx', (pe.clientX - r.left) + 'px'); t.style.setProperty('--my', (pe.clientY - r.top) + 'px'); }); }, { passive: true }); }
 
   /* ---- soft light that follows the cursor ---- */
   const cg = $('#cg');
@@ -83,8 +84,8 @@
   if (radar) {
     const path = $('#rPath'), plane = $('#rPlane'), trail = $('#rTrail'), led = $('#rLed'), info = $('#rInfo'), look = $('#rLook');
     const cards = $$('#turbulence .grid .card'), cols = ['#4ade80', '#facc15', '#f87171'];
-    const L = path.getTotalLength(), KM = 1850, ZONES = [{ c: .43, w: .075, lvl: 1 }, { c: .72, w: .06, lvl: 2 }];
-    const dots = []; for (let i = 0; i < 16; i++) { const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); trail.appendChild(c); dots.push(c); }
+    const L = path.getTotalLength(), NP = 480, TAB = Array.from({ length: NP + 1 }, (_, i) => { const q = path.getPointAtLength(L * i / NP); return [q.x, q.y]; }), at = d => { const f = Math.max(0, Math.min(1, d / L)) * NP, i = Math.min(NP - 1, Math.floor(f)), k = f - i, a = TAB[i], b = TAB[i + 1]; return { x: a[0] + (b[0] - a[0]) * k, y: a[1] + (b[1] - a[1]) * k }; }, KM = 1850, ZONES = [{ c: .43, w: .075, lvl: 1 }, { c: .72, w: .06, lvl: 2 }];
+    const dots = []; for (let i = 0; i < 10; i++) { const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); trail.appendChild(c); dots.push(c); }
     let last = -1;
     const status = t => {
       let lvl = 0, dist = null;
@@ -92,11 +93,11 @@
       return { lvl, dist };
     };
     const draw = t => {
-      const p = path.getPointAtLength(t * L), q = path.getPointAtLength(Math.min(L, t * L + 2)), a = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
+      const p = at(t * L), q = at(Math.min(L, t * L + 6)), a = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
       plane.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${a.toFixed(1)})`);
-      dots.forEach((d, i) => { const k = 1 - i / dots.length, pt = path.getPointAtLength(Math.max(0, t * L - (i + 1) * 15));
+      dots.forEach((d, i) => { const k = 1 - i / dots.length, pt = at(Math.max(0, t * L - (i + 1) * 24));
         d.setAttribute('cx', pt.x.toFixed(1)); d.setAttribute('cy', pt.y.toFixed(1)); d.setAttribute('r', (1 + 2.4 * k).toFixed(2)); d.setAttribute('opacity', (.08 + .8 * k * k).toFixed(2)); });
-      const s = status(t); const aheadEnd = path.getPointAtLength(Math.min(L, (t + .34) * L));
+      const s = status(t); const aheadEnd = at(Math.min(L, (t + .34) * L));
       look.setAttribute('d', `M${p.x.toFixed(1)} ${p.y.toFixed(1)}L${aheadEnd.x.toFixed(1)} ${aheadEnd.y.toFixed(1)}`);
       look.setAttribute('stroke', cols[s.lvl]);
       if (s.lvl !== last) { last = s.lvl; led.style.background = cols[s.lvl]; led.style.color = cols[s.lvl] + '88';
@@ -111,6 +112,9 @@
     if (RM) { last = -1; draw(.3); } else requestAnimationFrame(tick);
   }
 
+  const hv = $('#heroVid');
+  if (hv && 'IntersectionObserver' in window && !RM) new IntersectionObserver(es => { es[0].isIntersecting ? hv.play().catch(() => {}) : hv.pause(); }, { threshold: .05 }).observe(hv);
+
   /* ---- flight network canvas ---- */
   const cv = $('#net'); if (!cv) return;
   const ctx = cv.getContext('2d'); let W = 0, H = 0, dpr = 1, accent = '245,196,49', mx = 0, my = 0, smx = 0, smy = 0;
@@ -120,8 +124,8 @@
   let flights = [];
   const mk = () => { const a = Math.floor(Math.random() * AP.length); let b = Math.floor(Math.random() * AP.length); if (b === a) b = (a + 3) % AP.length;
     return { a, b, t: Math.random(), v: .018 + Math.random() * .02, bend: (Math.random() < .5 ? -1 : 1) * (.12 + Math.random() * .12) }; };
-  const resize = () => { dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const n = W < 700 ? 6 : 11; flights = Array.from({ length: n }, mk); };
+  const resize = () => { dpr = Math.min(1.25, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = W < 700 ? 4 : 8; flights = Array.from({ length: n }, mk); };
   const pos = (f, t) => { const A = AP[f.a], B = AP[f.b], ax = A[0] * W, ay = A[1] * H, bx = B[0] * W, by = B[1] * H, dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy) || 1;
     const cx = (ax + bx) / 2 + (-dy / len) * len * f.bend, cy = (ay + by) / 2 + (dx / len) * len * f.bend - len * .08, u = 1 - t;
     return [u * u * ax + 2 * u * t * cx + t * t * bx, u * u * ay + 2 * u * t * cy + t * t * by]; };
@@ -131,10 +135,10 @@
     for (const f of flights) {
       if (!still) { f.t += f.v * dt; if (f.t >= 1) Object.assign(f, mk(), { t: 0 }); }
       const t = f.t, fade = Math.min(1, t * 6, (1 - t) * 6);
-      ctx.lineWidth = 1; ctx.strokeStyle = `rgba(${accent},${.05 * fade})`; ctx.beginPath(); for (let k = 0; k <= 24; k++) { const q = pos(f, k / 24); k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); } ctx.stroke();
-      for (let i = 14; i >= 1; i--) { const tt = t - i * .012; if (tt < 0) continue; const q = pos(f, tt), k = 1 - i / 14; ctx.fillStyle = `rgba(${accent},${(.06 + .5 * k * k) * fade})`; ctx.beginPath(); ctx.arc(q[0], q[1], .8 + 1.8 * k, 0, 6.3); ctx.fill(); }
+      ctx.lineWidth = 1; ctx.strokeStyle = `rgba(${accent},${.05 * fade})`; ctx.beginPath(); for (let k = 0; k <= 12; k++) { const q = pos(f, k / 12); k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); } ctx.stroke();
+      for (let i = 8; i >= 1; i--) { const tt = t - i * .02; if (tt < 0) continue; const q = pos(f, tt), k = 1 - i / 8; ctx.fillStyle = `rgba(${accent},${(.06 + .5 * k * k) * fade})`; ctx.beginPath(); ctx.arc(q[0], q[1], .8 + 1.8 * k, 0, 6.3); ctx.fill(); }
       const p = pos(f, t), n = pos(f, Math.min(1, t + .004)), ang = Math.atan2(n[1] - p[1], n[0] - p[0]);
-      ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(ang); ctx.fillStyle = `rgba(${accent},${.75 * fade})`; ctx.shadowColor = `rgba(${accent},.8)`; ctx.shadowBlur = 10;
+      ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(ang); ctx.fillStyle = `rgba(${accent},${.75 * fade})`;
       ctx.beginPath(); ctx.moveTo(9, 0); ctx.lineTo(-7, -6.5); ctx.lineTo(-7, -2.2); ctx.lineTo(-1, 0); ctx.lineTo(-7, 2.2); ctx.lineTo(-7, 6.5); ctx.closePath(); ctx.fill(); ctx.restore();
     }
     ctx.restore();
@@ -145,6 +149,6 @@
   if (fine) addEventListener('pointermove', e => { mx = e.clientX / W - .5; my = e.clientY / H - .5; }, { passive: true });
   if (RM) { frameDraw(0, true); return; }
   let prev = performance.now(), on = true; document.addEventListener('visibilitychange', () => { on = !document.hidden; prev = performance.now(); if (on) requestAnimationFrame(loop); });
-  const loop = now => { if (!on) return; const dt = Math.min(.05, (now - prev) / 1000); prev = now; frameDraw(dt); requestAnimationFrame(loop); };
+  const loop = now => { if (!on) return; requestAnimationFrame(loop); if (now - prev < 33) return; const dt = Math.min(.08, (now - prev) / 1000); prev = now; frameDraw(dt); };
   requestAnimationFrame(loop);
 })();

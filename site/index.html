@@ -224,7 +224,7 @@ header{position:sticky;top:0;z-index:20}
 #lmenu button{display:flex;align-items:center;gap:8px;white-space:nowrap;background:transparent;border:0;border-radius:8px;padding:7px 9px;color:var(--text);cursor:pointer;font:600 14px system-ui,sans-serif;text-align:left}#lmenu button:hover{background:var(--panel2)}
 #lmenu button i{font:700 11px ui-monospace,Consolas,monospace;font-style:normal;letter-spacing:.08em;width:36px;height:24px;line-height:24px;text-align:center;border-radius:12px;background:var(--panel2);color:var(--muted);flex:none}#lmenu button.on i{background:linear-gradient(135deg,var(--g1),var(--accent));color:var(--accent-ink)}#lmenu button.on{color:var(--accent)}
 </style>
-<link rel="stylesheet" href="fx.css?v=1">
+<link rel="stylesheet" href="fx.css?v=2">
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
 </head>
 <body>
@@ -347,7 +347,7 @@ header{position:sticky;top:0;z-index:20}
         <li data-i18n="a.l5">An altitude and speed chart, and a button that saves a picture of the flight to share</li>
       </ul>
     </div>
-    <div class="shotbox narrow"><img src="feature-card.png?v=7" alt="A SkyTrack flight card with route, wind, fuel estimate and a green turbulence line" width="395" height="969" loading="lazy"></div>
+    <div class="shotbox narrow"><img src="feature-card.png?v=7" alt="A SkyTrack flight card with route, wind, fuel estimate and a green turbulence line" width="395" height="969" loading="lazy" decoding="async"></div>
   </div>
 
   <div class="grid c3 reveal" style="margin-bottom:8px">
@@ -374,7 +374,7 @@ header{position:sticky;top:0;z-index:20}
       </ul>
       <p class="note" data-i18n="b.note">Based on advisories and recent pilot reports. Green means nothing is reported, not a guarantee.</p>
     </div>
-    <div class="shotbox"><img src="feature-turb.jpg?v=7" alt="Map with yellow and red turbulence areas over North America" width="1600" height="820" loading="lazy"></div>
+    <div class="shotbox"><img src="feature-turb.jpg?v=7" alt="Map with yellow and red turbulence areas over North America" width="1600" height="820" loading="lazy" decoding="async"></div>
   </div>
 
   <div class="feat rev reveal">
@@ -388,7 +388,7 @@ header{position:sticky;top:0;z-index:20}
         <li data-i18n="c.l3">Estimated arrival time based on the current ground speed</li>
       </ul>
     </div>
-    <div class="shotbox"><img src="feature-wind.jpg?v=7" alt="Map covered with colored wind arrows over Europe" width="1600" height="820" loading="lazy"></div>
+    <div class="shotbox"><img src="feature-wind.jpg?v=7" alt="Map covered with colored wind arrows over Europe" width="1600" height="820" loading="lazy" decoding="async"></div>
   </div>
 
   <div class="feat reveal">
@@ -402,7 +402,7 @@ header{position:sticky;top:0;z-index:20}
         <li data-i18n="d.l3">City and country, and a rain radar layer on the map</li>
       </ul>
     </div>
-    <div class="shotbox narrow"><img src="feature-airport.png?v=7" alt="Airport panel for Istanbul with weather, METAR and arrivals" width="390" height="750" loading="lazy"></div>
+    <div class="shotbox narrow"><img src="feature-airport.png?v=7" alt="Airport panel for Istanbul with weather, METAR and arrivals" width="390" height="750" loading="lazy" decoding="async"></div>
   </div>
 
   <div class="group-title" data-i18n="g.tools">Make it yours</div>
@@ -418,7 +418,7 @@ header{position:sticky;top:0;z-index:20}
         <li data-i18n="o.l3">Your own radius, from 5 km up, drawn on the map</li>
       </ul>
     </div>
-    <div class="shotbox"><img src="feature-overhead.jpg?v=7" alt="The Overhead panel listing aircraft around Frankfurt with direction and height in the sky" width="1600" height="820" loading="lazy"></div>
+    <div class="shotbox"><img src="feature-overhead.jpg?v=7" alt="The Overhead panel listing aircraft around Frankfurt with direction and height in the sky" width="1600" height="820" loading="lazy" decoding="async"></div>
   </div>
 
   <div class="feat rev reveal">
@@ -432,7 +432,7 @@ header{position:sticky;top:0;z-index:20}
         <li data-i18n="p.l3">CSV export, and “Add to diary” right from a flight card</li>
       </ul>
     </div>
-    <div class="shotbox"><img src="feature-share.png?v=7" alt="A shareable picture of a flight with its route, callsign, altitude and speed" width="1200" height="630" loading="lazy"></div>
+    <div class="shotbox"><img src="feature-share.png?v=7" alt="A shareable picture of a flight with its route, callsign, altitude and speed" width="1200" height="630" loading="lazy" decoding="async"></div>
   </div>
 
   <div class="grid c3 reveal" style="margin-bottom:8px">
@@ -463,7 +463,7 @@ header{position:sticky;top:0;z-index:20}
         <li data-i18n="e.l3">Fold any menu section, even the aircraft list. SkyTrack remembers what you folded.</li>
       </ul>
     </div>
-    <div class="shotbox"><img src="feature-night.jpg?v=7" alt="World map with the night side of the Earth shaded" width="1600" height="820" loading="lazy"></div>
+    <div class="shotbox"><img src="feature-night.jpg?v=7" alt="World map with the night side of the Earth shaded" width="1600" height="820" loading="lazy" decoding="async"></div>
   </div>
 
   <div class="grid reveal">
@@ -708,6 +708,6 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   { const sv = ls.get('st.lang'), b = (navigator.language || '').slice(0, 2).toLowerCase(); setLang(LANGS.some(x => x[0] === sv) ? sv : LANGS.some(x => x[0] === b) ? b : 'en'); }
 })();
 </script>
-<script src="fx.js?v=1"></script>
+<script src="fx.js?v=2"></script>
 </body>
 </html>
