@@ -3,22 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SkyTrack — Free Live Flight Tracker for Desktop</title>
-<meta name="description" content="SkyTrack is a free desktop flight tracker built on open ADS-B data. Live flights, turbulence ahead, wind and day/night layers, airport weather. No account or API key.">
+<title>SkyTrack — Know the Turbulence Before You Fly</title>
+<meta name="description" content="SkyTrack checks the route ahead of any flight for turbulence and tells you in plain words: green, yellow or red. Free and open source. Try the web demo or get the desktop app. No account, no API key.">
 <link rel="canonical" href="https://sametduhan.github.io/airock/">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <meta name="theme-color" content="#141414">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SkyTrack">
-<meta property="og:title" content="SkyTrack — Watch the sky live">
-<meta property="og:description" content="Free desktop flight tracker. Live flights, turbulence ahead, wind and day/night layers, airport weather. No account, no API key.">
+<meta property="og:title" content="SkyTrack — Know the turbulence before you fly">
+<meta property="og:description" content="Click a flight, see if there is turbulence ahead: green, yellow or red. Free, open source, no account. Try the web demo.">
 <meta property="og:url" content="https://sametduhan.github.io/airock/">
 <meta property="og:image" content="https://sametduhan.github.io/airock/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="SkyTrack — Watch the sky live">
-<meta name="twitter:description" content="Free desktop flight tracker. No account, no API key.">
+<meta name="twitter:title" content="SkyTrack — Know the turbulence before you fly">
+<meta name="twitter:description" content="Is there turbulence ahead? Green, yellow or red. Free and open source. Try the web demo.">
 <meta name="twitter:image" content="https://sametduhan.github.io/airock/og-image.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"SkyTrack","applicationCategory":"UtilitiesApplication","operatingSystem":"Windows, macOS, Linux","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://sametduhan.github.io/airock/","downloadUrl":"https://github.com/SametDuhan/airock/releases/latest/download/SkyTrack-Setup.exe","license":"https://opensource.org/licenses/MIT"}</script>
 <style>
@@ -251,6 +251,7 @@ header{position:sticky;top:0;z-index:20}
 <header><div class="wrap">
   <a class="logo" href="#top" aria-label="SkyTrack"><img src="favicon.svg" alt="" width="30" height="30">SKYTRACK</a>
   <nav>
+    <a class="l" href="app/index.html" data-i18n="nav.demo">Web demo</a>
     <a class="l" href="#features" data-i18n="nav.features">Features</a>
     <a class="l" href="#download" data-i18n="nav.download">Download</a>
     <a class="l" href="#faq" data-i18n="nav.faq">FAQ</a>
@@ -263,10 +264,11 @@ header{position:sticky;top:0;z-index:20}
 <main id="top">
 <div class="wrap hero">
   <span class="badge"><i></i><span id="badgeTxt" data-i18n="hero.badge">Free &amp; open source · v0.7.3</span></span>
-  <h1><span class="p" data-i18n="hero.h1a">Watch the sky</span> <span class="g" data-i18n="hero.h1b">live.</span></h1>
-  <p class="lead" data-i18n="hero.lead">SkyTrack is a free desktop flight tracker, similar to Flightradar24. See every flight on the map, with turbulence ahead, wind, weather and more. No account or API key needed.</p>
+  <h1><span class="p" data-i18n="hero.h1a">Know the turbulence</span> <span class="g" data-i18n="hero.h1b">before you fly.</span></h1>
+  <p class="lead" data-i18n="hero.lead">Click any flight and SkyTrack checks the route ahead, at its altitude, then tells you in plain words: green, yellow or red. Free, open source, no account, no API key.</p>
   <div class="btns">
     <div class="dlsplit"><a class="btn primary" id="dlMain" href="https://github.com/SametDuhan/airock/releases/latest/download/SkyTrack-Setup.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 20h16"/></svg><span id="dlLabel">Download for Windows</span></a><button class="btn primary dd" id="dlArrow" aria-haspopup="true" aria-expanded="false" aria-label="Other downloads" title="Other downloads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><div class="dmenu" id="dlMenu" hidden></div></div>
+    <a class="btn" href="app/index.html" data-i18n="hero.try">Try the web demo</a>
     <a class="btn ghost" href="#download" data-i18n="hero.console">Install from console</a>
     <a class="btn ghost" href="https://github.com/SametDuhan/airock">GitHub</a>
   </div>
@@ -286,6 +288,19 @@ header{position:sticky;top:0;z-index:20}
     <div><b>5</b><span data-i18n="st.lang">interface languages</span></div>
   </div>
 </div>
+
+<section id="turbulence"><div class="wrap">
+  <p class="eyebrow reveal" data-i18n="t.eyebrow">Turbulence ahead</p>
+  <h2 class="reveal" data-i18n="t.h2">Green, yellow or red. In plain words.</h2>
+  <p class="sub reveal" data-i18n="t.sub">SkyTrack looks at the route ahead of the aircraft, at its altitude, using official SIGMET and G-AIRMET advisories and recent pilot reports.</p>
+  <div class="grid c3 reveal" style="margin-bottom:22px">
+    <div class="card"><h3><span class="dots"><i class="g"></i></span><span data-i18n="t.g">Green</span></h3><p data-i18n="t.gp">Nothing reported or forecast on the route ahead.</p></div>
+    <div class="card"><h3><span class="dots"><i class="y"></i></span><span data-i18n="t.y">Yellow</span></h3><p data-i18n="t.yp">Moderate turbulence is possible. The card shows roughly how far ahead.</p></div>
+    <div class="card"><h3><span class="dots"><i class="r"></i></span><span data-i18n="t.r">Red</span></h3><p data-i18n="t.rp">High risk of turbulence ahead, with the distance to it.</p></div>
+  </div>
+  <div class="btns reveal"><a class="btn primary" href="app/index.html" data-i18n="t.try">Try it in your browser</a><a class="btn ghost" href="#download" data-i18n="t.dl">Get the desktop app</a></div>
+  <p class="note reveal" style="text-align:center;margin-top:14px" data-i18n="t.note">The web demo uses simulated flights. The desktop app shows real, live flights.</p>
+</div></section>
 
 <section id="features"><div class="wrap">
   <p class="eyebrow reveal" data-i18n="f.eyebrow">Features</p>
@@ -476,6 +491,7 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   <details><summary data-i18n="q6">What does a green turbulence line mean?</summary><p data-i18n="q6a">It means no turbulence is reported or forecast on the route ahead, at that altitude. It is not a guarantee: clear-air turbulence often cannot be predicted.</p></details>
   <details><summary data-i18n="q7">How accurate are the fuel and CO₂ numbers?</summary><p data-i18n="q7a">They are rough estimates from typical cruise fuel burn per aircraft type. The real fuel load of a flight is not public, so treat the bar as an illustration.</p></details>
   <details><summary data-i18n="q9">How do I update SkyTrack?</summary><p data-i18n="q9a">From version 0.7.0 the Windows and Linux apps update themselves: a bar appears at the bottom of the menu when a new version is ready. On macOS the bar links to the download. Older versions need one manual update to 0.7.0 first.</p></details>
+  <details><summary data-i18n="q10">Is there a web version?</summary><p data-i18n="q10a">There is a web demo with simulated flights and turbulence areas, so you can try SkyTrack without installing anything. Live data needs the desktop app, because the free data sources do not allow requests from web pages.</p></details>
   <details><summary data-i18n="q8">Can I help or report a bug?</summary><p><span data-i18n="q8a">Yes, please. Open an issue or a pull request on</span> <a href="https://github.com/SametDuhan/airock">GitHub</a>.</p></details>
   </div>
 </div></section>
@@ -525,6 +541,13 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
     'hero.dl':'Windows için indir','hero.console':'Konsoldan kur','hero.trust':'macOS ve Linux için de var',
     'hero.mobile':'SkyTrack bir masaüstü uygulamasıdır. İndirmek için bu sayfayı bilgisayarında aç.','hero.copylink':'Sayfa bağlantısını kopyala',
     'hero.cap':'Gerçek uçuşlar ve canlı veri, doğrudan uygulamadan.',
+    'nav.demo':'Web demosu','hero.try':'Web demosunu dene',
+    'hero.h1a':'Türbülansı','hero.h1b':'uçmadan önce bil.',
+    'hero.lead':'Herhangi bir uçuşa tıkla; SkyTrack önündeki yolu uçağın irtifasında kontrol eder ve sana sade bir dille söyler: yeşil, sarı ya da kırmızı. Ücretsiz, açık kaynak, hesap yok, API anahtarı yok.',
+    't.eyebrow':'Önündeki türbülans','t.h2':'Yeşil, sarı ya da kırmızı. Sade bir dille.','t.sub':'SkyTrack, uçağın önündeki yola uçağın irtifasında bakar; resmi SIGMET ve G-AIRMET uyarılarını ve son pilot raporlarını kullanır.',
+    't.g':'Yeşil','t.gp':'Önündeki yolda bildirilen ya da tahmin edilen bir şey yok.','t.y':'Sarı','t.yp':'Orta şiddette türbülans mümkün. Kart, yaklaşık ne kadar ileride olduğunu gösterir.','t.r':'Kırmızı','t.rp':'Önünde yüksek türbülans riski var; uzaklığı da gösterilir.',
+    't.try':'Tarayıcında dene','t.dl':'Masaüstü uygulamasını indir','t.note':'Web demosu sanal uçuşlar kullanır. Masaüstü uygulaması gerçek, canlı uçuşları gösterir.',
+    'q10':'Web sürümü var mı?','q10a':'Sanal uçuşlar ve türbülans alanlarıyla bir web demosu var; hiçbir şey kurmadan SkyTrack\'i deneyebilirsin. Canlı veri için masaüstü uygulaması gerekir, çünkü ücretsiz veri kaynakları web sayfalarından gelen isteklere izin vermiyor.',
     'st.freeb':'Ücretsiz','st.free':'Açık kaynak, MIT lisansı','st.nokey':'Anahtarsız','st.nokeyd':'Hesap yok, API anahtarı yok','st.planes':'uçak yaklaşık 8 ms\'de çizilir',
     'f.eyebrow':'Özellikler','f.h2':'Bir uçuşu takip etmek için gereken her şey','f.sub':'Evinizin üstünden kimin uçtuğuna hızlıca bakmaktan türbülansa göre plan yapmaya kadar, sakin ve hızlı tek bir pencerede.',
     'g.track':'Her uçuşu takip et','g.safe':'Hava ve güvenlik','g.explore':'Keşfet ve gözle',
@@ -571,7 +594,7 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   // language
   $$('[data-i18n]').forEach(e => { e._en = e.innerHTML; });
   const meta = { title: document.title, desc: $('meta[name=description]').content };
-  const TRM = { title: 'SkyTrack — Ücretsiz Canlı Uçuş Takip Uygulaması', desc: 'SkyTrack, açık ADS-B verisiyle çalışan ücretsiz bir masaüstü uçuş takip uygulamasıdır. Canlı uçuşlar, önündeki türbülans, rüzgar ve gece-gündüz katmanları, havalimanı hava durumu. Hesap ya da API anahtarı gerekmez.' };
+  const TRM = { title: 'SkyTrack — Türbülansı Uçmadan Önce Bil', desc: 'SkyTrack, herhangi bir uçuşun önündeki yolda türbülans olup olmadığını sade bir dille söyler: yeşil, sarı ya da kırmızı. Ücretsiz ve açık kaynak. Web demosunu dene ya da masaüstü uygulamasını indir. Hesap ya da API anahtarı gerekmez.' };
   let lang = 'en';
   const LANGS = [['en', 'English', 'en-US'], ['tr', 'Türkçe', 'tr-TR'], ['es', 'Español', 'es-ES'], ['de', 'Deutsch', 'de-DE'], ['fr', 'Français', 'fr-FR']];
   const I18 = window.SKY_I18N || { dicts: {}, meta: {}, words: {} };
