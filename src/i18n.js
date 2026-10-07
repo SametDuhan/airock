@@ -137,13 +137,17 @@ const TR = {
   '{0} aircraft with an emergency code': '{0} uçak acil durum kodu veriyor',
   '📊 Stats': '📊 İstatistikler',
   'OpenSky account saved': 'OpenSky hesabı kaydedildi',
+  '1) Sign up at opensky-network.org (free)  2) Account page → create an API client  3) Paste Client ID and secret here.': '1) opensky-network.org\'a ücretsiz üye ol  2) Hesap sayfasında bir API istemcisi oluştur  3) Client ID ve secret\'ı buraya yapıştır.',
+  'Open OpenSky account page': 'OpenSky hesap sayfasını aç',
+  'Tip: add a free OpenSky account in Settings to fill the wide view': 'İpucu: geniş görünümün dolması için Ayarlar\'dan ücretsiz OpenSky hesabı ekle',
   'OpenSky account removed': 'OpenSky hesabı kaldırıldı',
   // update check
   'Check for updates': 'Güncellemeleri denetle',
   'Checking…': 'Denetleniyor…',
   'You are up to date.': 'Güncelsin.',
   'Version {0} found, downloading…': '{0} sürümü bulundu, indiriliyor…',
-  'Could not check for updates: {0}': 'Güncellemeler denetlenemedi: {0}'
+  'Could not check for updates: {0}': 'Güncellemeler denetlenemedi: {0}',
+  'Version {0} is available: use the bar at the bottom of the menu.': '{0} sürümü mevcut: menünün altındaki çubuğu kullan.'
 };
 // Languages: English (default texts), Turkish (TR below), Spanish / German / French (DICT in langs.js)
 const LANGS = [{ c: 'en', n: 'English', loc: 'en-US' }, { c: 'tr', n: 'Türkçe', loc: 'tr-TR' }, { c: 'es', n: 'Español', loc: 'es-ES' }, { c: 'de', n: 'Deutsch', loc: 'de-DE' }, { c: 'fr', n: 'Français', loc: 'fr-FR' }];

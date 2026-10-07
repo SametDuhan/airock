@@ -12,7 +12,7 @@
   // We split the visible area into ~600 km cells and cover each cell with a circle. The rate limit is tight (~10 requests/min),
   // so at most 2 circles (the central ones) are queried; wider views try OpenSky instead.
   const MAX_NM = 250, CELL_KM = 600, MAX_CIRCLES = 2;
-  function cover(b, maxCircles = MAX_CIRCLES) {
+  function cover(b, maxCircles = MAX_CIRCLES, sweep = -1) {
     const s = +b.s, n = +b.n, w = +b.w, e = +b.e, mLat = (s + n) / 2, mLon = (w + e) / 2;
     const ny = Math.max(1, Math.ceil((n - s) * 111.2 / CELL_KM)), nx = Math.max(1, Math.ceil((e - w) * 111.2 * Math.cos(Math.min(Math.abs(s), Math.abs(n)) * Math.PI / 180) / CELL_KM));
     const cells = [];
@@ -22,7 +22,11 @@
       cells.push({ lat, lon, r: Math.max(5, Math.min(MAX_NM, Math.ceil(far / 1.852 * 1.05))), d: (lat - mLat) ** 2 + (lon - mLon) ** 2 });
     }
     cells.sort((a, b) => a.d - b.d);
-    const circles = cells.slice(0, maxCircles);
+    // Wide view (sweep >= 0): the 2 central circles are asked every time, the other slots walk through the surrounding cells (nearest 40) a few per
+    // refresh, so after a few refreshes the whole screen is filled. Aircraft outside the circles answered this time are kept by the client (see poll()).
+    let circles = cells.slice(0, maxCircles);
+    if (sweep >= 0 && cells.length > maxCircles) { const keep = Math.min(2, maxCircles), rest = cells.slice(keep, 40), n = maxCircles - keep, o = (sweep * n) % rest.length;
+      circles = cells.slice(0, keep).concat(Array.from({ length: Math.min(n, rest.length) }, (_, i) => rest[(o + i) % rest.length])); }
     // Rectangle covered by the chosen circles together (on partial coverage the client counts only this as "fetched")
     const covered = circles.reduce((o, c) => { const dLat = c.r * 1.852 / 111.2, dLon = dLat / Math.max(.05, Math.cos(c.lat * Math.PI / 180));
       return { s: Math.min(o.s, c.lat - dLat), n: Math.max(o.n, c.lat + dLat), w: Math.min(o.w, c.lon - dLon), e: Math.max(o.e, c.lon + dLon) }; }, { s: 90, n: -90, w: 360, e: -360 });
@@ -40,23 +44,37 @@
     { name: 'adsb.fi', point: (la, lo, r) => `https://opendata.adsb.fi/api/v2/lat/${la}/lon/${lo}/dist/${r}`, hex: h => `https://opendata.adsb.fi/api/v2/hex/${h}`, by: (k, v) => `https://opendata.adsb.fi/api/v2/${k}/${v}` },
     // airplanes.live: free for projects, but access has to be requested (contact@airplanes.live), otherwise it answers 403. Set on: true once you have it.
     { name: 'airplanes.live', on: false, point: (la, lo, r) => `https://api.airplanes.live/v2/point/${la}/${lo}/${r}`, hex: h => `https://api.airplanes.live/v2/hex/${h}`, by: (k, v) => `https://api.airplanes.live/v2/${k}/${v}` }];
+  // Own cache proxy (proxy/worker.js on Cloudflare Workers). Empty = off. Tried first: it is shared by all users, so it is faster and avoids rate limits.
+  const PROXY_URL = '';
+  if (PROXY_URL) ALL_FEEDS.unshift({ name: 'proxy', point: (la, lo, r) => `${PROXY_URL}/v2/point/${la}/${lo}/${r}`, hex: h => `${PROXY_URL}/v2/hex/${h}`, by: (k, v) => `${PROXY_URL}/v2/${k}/${v}` });
   const FEEDS = ALL_FEEDS.filter(f => f.on !== false);
   const feedPause = {}; // feed name → time until which we skip it (after a 429 or an error)
+  // Hedged request: the preferred feed gets HEDGE_MS to answer; if it is slow, the next feed is asked as well and the first good answer wins.
+  // A 429 pauses that feed for as long as it asks (Retry-After), otherwise 8 s.
+  const HEDGE_MS = 2500, GAP_MS = 1100; let rot = 0;
+  // Per-feed gate: requests to one feed are spaced GAP_MS apart (they used to go out almost together and the feeds answered 429 to most of them)
+  const gate = {}; const slot = name => { const at = Math.max(Date.now(), gate[name] || 0); gate[name] = at + GAP_MS; return sleep(at - Date.now()); };
   async function fromFeeds(first, fetchUrl, delayMs) {
-    await sleep(delayMs); const errs = [];
-    for (let k = 0; k < FEEDS.length; k++) {
-      const f = FEEDS[(first + k) % FEEDS.length]; if (Date.now() < (feedPause[f.name] || 0)) { errs.push(f.name + ': paused'); continue; }
-      try { const r = await get(fetchUrl(f)); if (r.status === 429) { feedPause[f.name] = Date.now() + 60000; throw new Error('rate limited (429)'); }
-        if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); return { name: f.name, ac: j.ac || j.aircraft || [] }; }
-      catch (e) { errs.push(f.name + ': ' + e.message); }
-    }
-    throw new Error(errs.join(', '));
+    await sleep(delayMs); const errs = [], live = FEEDS.map((_, k) => FEEDS[(first + k) % FEEDS.length]).filter(f => Date.now() >= (feedPause[f.name] || 0));
+    FEEDS.forEach(f => { if (!live.includes(f)) errs.push(f.name + ': paused'); });
+    if (!live.length) throw new Error(errs.join(', '));
+    const ask = async f => { await slot(f.name); const r = await get(fetchUrl(f), 7000);
+      if (r.status === 429) { feedPause[f.name] = Date.now() + Math.min(120, Math.max(5, +r.headers.get('retry-after') || 8)) * 1000; throw new Error(f.name + ': rate limited (429)'); }
+      if (!r.ok) throw new Error(f.name + ': HTTP ' + r.status); const j = await r.json(); return { name: f.name, ac: j.ac || j.aircraft || [] }; };
+    return new Promise((resolve, reject) => {
+      let next = 0, pending = 0, done = false, timer = null;
+      const fail = e => { errs.push(e.message); pending--; if (!done) { if (next < live.length) start(); else if (!pending) { done = true; reject(new Error(errs.join(', '))); } } };
+      const start = () => { clearTimeout(timer); const f = live[next++]; pending++;
+        if (next < live.length) timer = setTimeout(() => { if (!done) start(); }, HEDGE_MS);
+        ask(f).then(r => { pending--; if (!done) { done = true; clearTimeout(timer); resolve(r); } }, fail); };
+      start();
+    });
   }
   async function adsbLol(b) {
-    const { circles, partial, covered } = cover(b, MAX_CIRCLES * FEEDS.length), seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
+    rot++; const { circles, partial, covered } = cover(b, MAX_CIRCLES * FEEDS.length * 3 / 2 | 0, rot), seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
     await Promise.all(circles.map(async (c, i) => {
       try {
-        const r = await fromFeeds(i % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 350);
+        const r = await fromFeeds((i + rot) % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 150);
         r.ac.forEach(a => a.lat != null && a.lon != null && seen.set(a.hex, a)); used.add(r.name); okN++; good.push(c);
       } catch (e) { lastErr = e.message; }
     }));

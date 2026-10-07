@@ -132,7 +132,8 @@ DICT.es = {
   'Checking…': 'Comprobando…',
   'You are up to date.': 'Estás al día.',
   'Version {0} found, downloading…': 'Versión {0} encontrada, descargando…',
-  'Could not check for updates: {0}': 'No se pudo buscar actualizaciones: {0}'
+  'Could not check for updates: {0}': 'No se pudo buscar actualizaciones: {0}',
+  'Version {0} is available: use the bar at the bottom of the menu.': 'La versión {0} está disponible: usa la barra de la parte inferior del menú.'
 };
 DICT.de = {
   'Close menu': 'Menü schließen', 'Open menu': 'Menü öffnen', 'Mode': 'Modus', 'Normal': 'Normal', 'Plane spotter': 'Planespotter', 'Data': 'Daten', 'Demo': 'Demo', 'Live': 'Live',
@@ -267,7 +268,8 @@ DICT.de = {
   'Checking…': 'Wird geprüft…',
   'You are up to date.': 'Du bist auf dem neuesten Stand.',
   'Version {0} found, downloading…': 'Version {0} gefunden, wird geladen…',
-  'Could not check for updates: {0}': 'Updates konnten nicht geprüft werden: {0}'
+  'Could not check for updates: {0}': 'Updates konnten nicht geprüft werden: {0}',
+  'Version {0} is available: use the bar at the bottom of the menu.': 'Version {0} ist verfügbar: nutze die Leiste unten im Menü.'
 };
 DICT.fr = {
   'Close menu': 'Fermer le menu', 'Open menu': 'Ouvrir le menu', 'Mode': 'Mode', 'Normal': 'Normal', 'Plane spotter': 'Spotter', 'Data': 'Données', 'Demo': 'Démo', 'Live': 'En direct',
@@ -402,5 +404,6 @@ DICT.fr = {
   'Checking…': 'Vérification…',
   'You are up to date.': 'Vous êtes à jour.',
   'Version {0} found, downloading…': 'Version {0} trouvée, téléchargement…',
-  'Could not check for updates: {0}': 'Impossible de rechercher les mises à jour : {0}'
+  'Could not check for updates: {0}': 'Impossible de rechercher les mises à jour : {0}',
+  'Version {0} is available: use the bar at the bottom of the menu.': 'La version {0} est disponible : utilisez la barre en bas du menu.'
 };

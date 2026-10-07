@@ -29,11 +29,11 @@ const newerVer = (a, b) => { const x = String(a).split('.').map(Number), y = Str
 let checkNow = async () => ({ state: 'none' });
 function setupUpdates() {
   ipcMain.handle('checkUpdate', () => checkNow());
-  if (!app.isPackaged) { checkNow = async () => ({ state: 'error', error: 'development build' }); return; }
-  if (process.platform === 'darwin') {
+  // macOS (unsigned) and builds run from source (npm start) cannot install updates by themselves: they only look for a newer release and link to it
+  if (process.platform === 'darwin' || !app.isPackaged) {
     checkNow = async () => { try { const r = await fetch('https://api.github.com/repos/SametDuhan/airock/releases/latest', { headers: { 'User-Agent': 'SkyTrack' } }); if (!r.ok) throw new Error('HTTP ' + r.status);
-      const j = await r.json(), v = String(j.tag_name || '').replace(/^v/, ''); if (newerVer(v, app.getVersion())) { sendUpdate('manual', { version: v, url: j.html_url }); return { state: 'available', version: v }; } return { state: 'none' };
-    } catch (e) { updLog('mac check failed: ' + e.message); return { state: 'error', error: String(e.message).slice(0, 160) }; } };
+      const j = await r.json(), v = String(j.tag_name || '').replace(/^v/, ''); if (newerVer(v, app.getVersion())) { sendUpdate('manual', { version: v, url: j.html_url }); return { state: 'available', version: v, manual: true }; } return { state: 'none' };
+    } catch (e) { updLog('check failed: ' + e.message); return { state: 'error', error: String(e.message).slice(0, 160) }; } };
   } else {
     const { autoUpdater } = require('electron-updater');
     autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = true;
