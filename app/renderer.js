@@ -650,7 +650,8 @@ function flagHtml(reg) {
 }
 // Short labels for the three big tiles in the card (the full words do not fit in every language)
 const TILE_L = { en: ['Altitude', 'Speed', 'Vert. speed'], tr: ['İrtifa', 'Hız', 'Dikey hız'], es: ['Altitud', 'Veloc.', 'Vel. vert.'], de: ['Höhe', 'Tempo', 'Steigrate'], fr: ['Altitude', 'Vitesse', 'Vit. vert.'],
-  ar: ["الارتفاع", "السرعة", "السرعة الرأسية"], zh: ["高度", "速度", "垂直速度"], ja: ["高度", "速度", "垂直速度"], ko: ["고도", "속도", "수직 속도"] };
+  ar: ["الارتفاع", "السرعة", "السرعة الرأسية"], zh: ["高度", "速度", "垂直速度"], ja: ["高度", "速度", "垂直速度"], ko: ["고도", "속도", "수직 속도"] ,
+  it: ["Altitudine", "Velocità", "Vel. vert."], ru: ["Высота", "Скорость", "Верт. скорость"], pt: ["Altitude", "Velocidade", "Vel. vert."], pl: ["Wysokość", "Prędkość", "Prędk. pion."], fa: ["ارتفاع", "سرعت", "سرعت عمودی"], sw: ["Mwinuko", "Kasi", "Kasi wima"] };
 function renderCard(full) {
   const f = flights.get(selected); if (!f) return;
   const ac = f.ac || {};
@@ -856,7 +857,7 @@ function renderList() {
     + `<div class="rm"><b>${isEmg(f) ? '<em>⚠</em>' : ''}${fav.has(f.id) ? '<u>★</u>' : ''}${esc(f.cs)}</b><small>${f.route ? esc(f.route.org.code + ' → ' + f.route.dst.code) : esc(acCode(f) || f.reg || '')}</small></div>`
     + `<span>${f.ground ? t('on ground') : fmtAlt(f.alt * 3.281, 100)}</span></div>`; }).join('');
 }
-$('list').onpointerdown = e => { const r = e.target.closest('.row'); if (r) select(r.dataset.id); };
+$('list').onpointerdown = e => { const r = e.target.closest('.row'); if (r) { select(r.dataset.id); if (matchMedia('(max-width:760px)').matches) setMenu(false); } };
 $('q').oninput = renderList; setInterval(renderList, 2000);
 const knownTypes = new Set(), knownAir = new Set();
 const addAir = (c, n) => { if (knownAir.has(c)) return; knownAir.add(c); const o = document.createElement('option'); o.value = c; if (n) o.label = n; $('alList').appendChild(o); };
@@ -909,9 +910,12 @@ function pumpRoutes() {
 
 /* ---------- collapsible menu + clock ---------- */
 const setMenu = open => { $('side').classList.toggle('hide', !open); document.body.classList.toggle('closed', !open); save('sky.menu', open); const o = $('open'); o.dataset.otitle = open ? 'Close menu' : 'Open menu'; o.title = t(o.dataset.otitle); };
+$('sx').onclick = () => setMenu(false);
+map.on('click', () => { if (matchMedia('(max-width:760px)').matches && !document.body.classList.contains('closed')) setMenu(false); }); // on a phone a tap on the map closes the menu drawer
 $('open').onclick = () => setMenu(document.body.classList.contains('closed'));
 $('side').addEventListener('transitionend', () => { map.invalidateSize(); redraw(); });
-setMenu(LS('sky.menu', true)); map.invalidateSize();
+const PHONE = matchMedia('(max-width:760px)'); // on a phone the menu starts closed: it covers the map
+setMenu(PHONE.matches ? false : LS('sky.menu', true)); map.invalidateSize();
 const clock = () => { const d = new Date(), o = TF({ hour: '2-digit', minute: '2-digit' });
   $('clock').innerHTML = d.toLocaleTimeString(LOC(), o) + '<i>:' + String(d.getSeconds()).padStart(2, '0') + '</i>';
   $('cdate').textContent = d.toLocaleDateString(LOC(), { weekday: 'short', day: 'numeric', month: 'short' }); }; clock(); setInterval(clock, 1000);
