@@ -497,22 +497,37 @@ $('mDemo').onclick = () => setMode(false); $('mLive').onclick = () => setMode(tr
 const apLayer = L.layerGroup().addTo(map);
 // Airport marker: a round badge with a small terminal + control tower; big airports (the fixed list) are larger and gold, the rest of the scheduled-service airports (airports.js) appear
 // from zoom 6 and only those in view are drawn (at most AP_MAX), so thousands of airports don't slow the map down. The code label shows from zoom 7.
-const AP_SVG = { big: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M0 22h32v10H0z" fill="#2b3038"/><path d="M0 22h32" stroke="#4a5568" stroke-width=".8"/><path d="M2 27.2h28" stroke="#f2c230" stroke-width="1.3" stroke-dasharray="3.2 2.6"/><rect x="3.5" y="15.5" width="13" height="6.5" rx="1" fill="#52698a"/><path d="M3.5 15.5h13" stroke="#8fa8c8" stroke-width="1"/><path d="M5.5 18.8h9" stroke="#ffe27a" stroke-width="1.5" stroke-dasharray="1.3 1.1"/><rect x="20.4" y="12" width="2.4" height="10" fill="#c9d3df"/><path d="M17.8 12l1.1-4.2h5.6L25.6 12z" fill="#8fc0f4"/><path d="M19.3 9.4h4.8" stroke="#fff" stroke-width=".6" opacity=".7"/><rect x="18.2" y="6.6" width="5.6" height="1.5" rx=".5" fill="#f2c230"/><path d="M21 6.6V3.6" stroke="#c9d3df" stroke-width=".7"/><circle cx="21" cy="3.2" r=".9" fill="#ff5a4f"/><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" transform="translate(4.5 1.2) scale(.5) rotate(40 12 12)" fill="#ffe27a"/></svg>', small: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" transform="rotate(45 12 12)" fill="#ffe27a"/></svg>' };
+const AP_SVG = { heli: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M17 5v14M7 12h10" stroke="#ffe27a" stroke-width="3.2" stroke-linecap="round" fill="none"/></svg>', big: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M0 22h32v10H0z" fill="#2b3038"/><path d="M0 22h32" stroke="#4a5568" stroke-width=".8"/><path d="M2 27.2h28" stroke="#f2c230" stroke-width="1.3" stroke-dasharray="3.2 2.6"/><rect x="3.5" y="15.5" width="13" height="6.5" rx="1" fill="#52698a"/><path d="M3.5 15.5h13" stroke="#8fa8c8" stroke-width="1"/><path d="M5.5 18.8h9" stroke="#ffe27a" stroke-width="1.5" stroke-dasharray="1.3 1.1"/><rect x="20.4" y="12" width="2.4" height="10" fill="#c9d3df"/><path d="M17.8 12l1.1-4.2h5.6L25.6 12z" fill="#8fc0f4"/><path d="M19.3 9.4h4.8" stroke="#fff" stroke-width=".6" opacity=".7"/><rect x="18.2" y="6.6" width="5.6" height="1.5" rx=".5" fill="#f2c230"/><path d="M21 6.6V3.6" stroke="#c9d3df" stroke-width=".7"/><circle cx="21" cy="3.2" r=".9" fill="#ff5a4f"/><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" transform="translate(4.5 1.2) scale(.5) rotate(40 12 12)" fill="#ffe27a"/></svg>', small: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" transform="rotate(45 12 12)" fill="#ffe27a"/></svg>' };
 const AP_MAX = 600, apBig = new Set(APO.map(a => a.code));
 // order = importance: the fixed list, the scheduled-service airports, then the medium ones (zoom 6+) and the small airfields (zoom 8+) from airports-more.js
 const apMore = (window.AIRPORTS_MORE || '').split(';').filter(Boolean).map(a => { const [code, icao, name, lat, lon, sz] = a.split('|'); return { code, icao, name, lat: +lat, lon: +lon, sz }; });
 const apTiny = (window.AIRPORTS_TINY || '').split(';').filter(Boolean).map(a => { const [code, name, lat, lon] = a.split('|'); return { code, icao: code, name, lat: +lat, lon: +lon, sz: 't' }; });
-const apAll = APO.concat(BIGAP.filter(a => !apBig.has(a.code))).concat(apMore.filter(a => a.sz === 'm'), apMore.filter(a => a.sz === 's'), apTiny);
+const apLarge = new Set((window.AIRPORTS_LARGE || '').split(',')), apRest = BIGAP.filter(a => !apBig.has(a.code));
+const apAll = APO.concat(apRest.filter(a => apLarge.has(a.icao)), apRest.filter(a => !apLarge.has(a.icao)), apMore.filter(a => a.sz === 'm'), apMore.filter(a => a.sz === 's'), apTiny);
+// Heliports and seaplane bases (zoom 11+) come from a file that is loaded the first time it is needed
+let heliLoad = false;
+function ensureHeli() { if (heliLoad || map.getZoom() < 11) return; heliLoad = true;
+  loadJs('airports-heli').then(ok => { if (!ok) return; for (const x of (window.AIRPORTS_HELI || '').split(';')) { if (!x) continue; const [code, name, lat, lon, sz] = x.split('|'); apAll.push({ code, icao: code, name, lat: +lat, lon: +lon, sz }); } drawAp(); }); }
 const apMk = new Map();
 function apIcon(a) { const big = apBig.has(a.code), z = map.getZoom(), sz = big ? (z < 5 ? 15 : z < 7 ? 19 : 23) : (z < 8 ? 13 : z < 10 ? 16 : 14);
-  return L.divIcon({ className: 'apm' + (big ? ' big' : ''), iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2], html: `<div class="apb">${big ? AP_SVG.big : AP_SVG.small}</div>${z >= 7 || (big && z >= 5) ? `<span class="apl">${esc(a.code)}</span>` : ''}` }); }
+  return L.divIcon({ className: 'apm' + (big ? ' big' : ''), iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2], html: `<div class="apb">${big ? AP_SVG.big : a.sz === 'h' ? AP_SVG.heli : AP_SVG.small}</div>${z >= 7 || (big && z >= 5) ? `<span class="apl">${esc(a.code)}</span>` : ''}` }); }
+// Thinning: when the map is zoomed out only the most important airport of each patch of the map is drawn (the fixed list first, then the large ones, then the rest), so a small country gets one
+// airport and a big one several, and zooming in brings more in where you look. The patches are fixed to the world (not the screen), so panning doesn't shuffle the airports around.
+const AP_CELL = z => z <= 5 ? 112 : z <= 6 ? 90 : z <= 7 ? 72 : z <= 8 ? 54 : z <= 9 ? 44 : z <= 10 ? 36 : 28;
+const AP_MINZ = { m: 6, s: 8, t: 10, h: 11, w: 11 };
 function drawAp() {
   if (!map.hasLayer(apLayer)) return;
-  const z = map.getZoom(), v = map.getBounds().pad(.15), want = new Map();
-  for (const a of apAll) { if (want.size >= AP_MAX) break; if ((apBig.has(a.code) || z >= (a.sz === 't' ? 10 : a.sz === 's' ? 8 : a.sz === 'm' ? 6 : 5)) && v.contains([a.lat, a.lon])) want.set(a.code, a); }
+  const z = map.getZoom(), v = map.getBounds().pad(.15), want = new Map(), S = AP_CELL(z), taken = new Map(); ensureHeli();
+  for (const a of apAll) {
+    if (want.size >= AP_MAX) break;
+    if (!(apBig.has(a.code) || z >= (AP_MINZ[a.sz] || 5)) || !v.contains([a.lat, a.lon])) continue;
+    const p = map.project([a.lat, a.lon], z), cx = Math.floor(p.x / S), cy = Math.floor(p.y / S); let near = false;
+    for (let i = -1; i <= 1 && !near; i++) for (let j = -1; j <= 1 && !near; j++) { const q = taken.get((cx + i) + ',' + (cy + j)); if (q && Math.hypot(q.x - p.x, q.y - p.y) < S) near = true; }
+    if (near) continue; taken.set(cx + ',' + cy, p); want.set(a.code, a);
+  }
   for (const [c, m] of apMk) if (!want.has(c)) { apLayer.removeLayer(m); apMk.delete(c); }
   for (const [c, a] of want) {
-    const m = apMk.get(c) || L.marker([a.lat, a.lon], { icon: apIcon(a), riseOnHover: true, zIndexOffset: apBig.has(c) ? 100 : 0 }).bindTooltip(`${a.code}${a.icao ? ' / ' + a.icao : ''} · ${a.name}`)
+    const m = apMk.get(c) || L.marker([a.lat, a.lon], { icon: apIcon(a), riseOnHover: true, zIndexOffset: apBig.has(c) ? 100 : 0 }).bindTooltip(`${a.code}${a.icao && a.icao !== a.code ? ' / ' + a.icao : ''} · ${a.name}`)
       .on('click', e => { L.DomEvent.stopPropagation(e); openAp(a); });
     if (!apMk.has(c)) { apMk.set(c, m); apLayer.addLayer(m); } else m.setIcon(apIcon(a));
   }
