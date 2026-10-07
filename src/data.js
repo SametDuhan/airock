@@ -12,7 +12,7 @@
   // We split the visible area into ~600 km cells and cover each cell with a circle. The rate limit is tight (~10 requests/min),
   // so at most 2 circles (the central ones) are queried; wider views try OpenSky instead.
   const MAX_NM = 250, CELL_KM = 600, MAX_CIRCLES = 2;
-  function cover(b, maxCircles = MAX_CIRCLES) {
+  function cover(b, maxCircles = MAX_CIRCLES, sweep = -1) {
     const s = +b.s, n = +b.n, w = +b.w, e = +b.e, mLat = (s + n) / 2, mLon = (w + e) / 2;
     const ny = Math.max(1, Math.ceil((n - s) * 111.2 / CELL_KM)), nx = Math.max(1, Math.ceil((e - w) * 111.2 * Math.cos(Math.min(Math.abs(s), Math.abs(n)) * Math.PI / 180) / CELL_KM));
     const cells = [];
@@ -22,7 +22,11 @@
       cells.push({ lat, lon, r: Math.max(5, Math.min(MAX_NM, Math.ceil(far / 1.852 * 1.05))), d: (lat - mLat) ** 2 + (lon - mLon) ** 2 });
     }
     cells.sort((a, b) => a.d - b.d);
-    const circles = cells.slice(0, maxCircles);
+    // Wide view (sweep >= 0): the 2 central circles are asked every time, the other slots walk through the surrounding cells (nearest 40) a few per
+    // refresh, so after a few refreshes the whole screen is filled. Aircraft outside the circles answered this time are kept by the client (see poll()).
+    let circles = cells.slice(0, maxCircles);
+    if (sweep >= 0 && cells.length > maxCircles) { const keep = Math.min(2, maxCircles), rest = cells.slice(keep, 40), n = maxCircles - keep, o = (sweep * n) % rest.length;
+      circles = cells.slice(0, keep).concat(Array.from({ length: Math.min(n, rest.length) }, (_, i) => rest[(o + i) % rest.length])); }
     // Rectangle covered by the chosen circles together (on partial coverage the client counts only this as "fetched")
     const covered = circles.reduce((o, c) => { const dLat = c.r * 1.852 / 111.2, dLon = dLat / Math.max(.05, Math.cos(c.lat * Math.PI / 180));
       return { s: Math.min(o.s, c.lat - dLat), n: Math.max(o.n, c.lat + dLat), w: Math.min(o.w, c.lon - dLon), e: Math.max(o.e, c.lon + dLon) }; }, { s: 90, n: -90, w: 360, e: -360 });
@@ -67,7 +71,7 @@
     });
   }
   async function adsbLol(b) {
-    rot++; const { circles, partial, covered } = cover(b, MAX_CIRCLES * FEEDS.length), seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
+    rot++; const { circles, partial, covered } = cover(b, MAX_CIRCLES * FEEDS.length * 3 / 2 | 0, rot), seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
     await Promise.all(circles.map(async (c, i) => {
       try {
         const r = await fromFeeds((i + rot) % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 150);
