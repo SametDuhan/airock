@@ -642,7 +642,7 @@ const GS_FAR = `<g><rect x="57" y="14" width="6" height="30" fill="#34445a"/><pa
   + `<rect x="147" y="30" width="6" height="14" fill="#34445a"/><circle cx="150" cy="29" r="6.5" fill="#41546d"/><rect x="141" y="27.5" width="18" height="1.6" fill="#55708f"/>`
   + `<rect x="203" y="24" width="2" height="20" fill="#34445a"/><rect x="198" y="22" width="12" height="3" fill="#f2c230" opacity=".75"/><rect x="273" y="24" width="2" height="20" fill="#34445a"/><rect x="268" y="22" width="12" height="3" fill="#f2c230" opacity=".75"/></g>`;
 const GS_MID = `<g><rect x="14" y="6" width="136" height="20" fill="#202b3a"/>${GS_WIN(21, 12, 11, 12, 6, 4, .6)}<path d="M150 14 h22 v5 h-22z" fill="#2c3a4f"/><rect x="170" y="10" width="3" height="16" fill="#2c3a4f"/>`
-  + `<path d="M205 26 V13 Q235 -4 265 13 V26Z" fill="#1c2633"/><rect x="226" y="15" width="18" height="11" fill="#141c26"/><rect x="288" y="16" width="14" height="10" fill="#202b3a"/></g>`;
+  + `<path d="M205 26 V17 Q235 5 265 17 V26Z" fill="#1c2633"/><rect x="226" y="15" width="18" height="11" fill="#141c26"/><rect x="288" y="16" width="14" height="10" fill="#202b3a"/></g>`;
 const gsLayer = (cls, w, h, g) => `<svg class="gl ${cls}" width="${w * 2}" height="${h}" viewBox="0 0 ${w * 2} ${h}" aria-hidden="true">${g}<g transform="translate(${w})">${g}</g></svg>`;
 // The plane from the side (an A320-like airliner, nose to the right): gradient fuselage with a yellow cheat line and tail, cockpit and cabin windows, doors, wing, engine with its fan, landing gear
 const GS_PLANE = `<svg class="plane" viewBox="0 0 120 44" aria-hidden="true"><defs><linearGradient id="gsB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e4e8ed"/><stop offset="1" stop-color="#a9b2bd"/></linearGradient>`
@@ -684,8 +684,8 @@ function gsPose(f, el, p) {
   const elev = SkyGeo.sunElevation(ap.lat, ap.lon), hr = SkyGeo.solarHour(ap.lon), day = Math.max(0, Math.min(1, (elev + 2) / 10));
   const df = Math.max(0, Math.min(1, (hr - 6) / 12)), nf = (hr >= 18 ? hr - 18 : hr + 6) / 12; // how far through the day / the night: the sun and the moon cross the sky from left to right
   $q('.bgd').style.opacity = day.toFixed(2); $q('.stars').style.opacity = (Math.max(0, 1 - day * 1.6) * .9).toFixed(2); el.querySelector('.gsi').classList.toggle('day', day > .5);
-  const sun = $q('.sun'), moon = $q('.moon'); sun.style.opacity = day.toFixed(2); sun.style.left = (12 + 76 * df).toFixed(1) + '%'; sun.style.top = (40 - 30 * Math.sin(Math.PI * df)).toFixed(1) + 'px';
-  moon.style.opacity = (1 - day).toFixed(2); moon.style.left = (12 + 76 * nf).toFixed(1) + '%'; moon.style.top = (36 - 26 * Math.sin(Math.PI * nf)).toFixed(1) + 'px';
+  const sun = $q('.sun'), moon = $q('.moon'); sun.style.opacity = day.toFixed(2); sun.style.left = (12 + 76 * df).toFixed(1) + '%'; sun.style.top = (21 - 13 * Math.sin(Math.PI * df)).toFixed(1) + 'px';
+  moon.style.opacity = (1 - day).toFixed(2); moon.style.left = (12 + 76 * nf).toFixed(1) + '%'; moon.style.top = (20 - 12 * Math.sin(Math.PI * nf)).toFixed(1) + 'px';
 }
 function gsMotion(f, el, kt, scene) {
   if (!el._an) {
