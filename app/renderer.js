@@ -236,7 +236,9 @@ function seedDemo() {
 function upsert(d) {
   let f = flights.get(d.id);
   if (!f) { f = { tr: [], gone: replay }; flights.set(d.id, f); } // an aircraft that arrives during replay wasn't in that frame
-  Object.assign(f, d); f.seen = d.stale ? Date.now() - 60000 : Date.now(); X.event(f); return f;
+  const was = f.ground; Object.assign(f, d); f.seen = d.stale ? Date.now() - 60000 : Date.now();
+  if (was === false && f.ground) f.gAt = Date.now(); else if (!f.ground) { f.gAt = 0; f.landedAt = 0; } // gAt: we saw it touch down (used when the trace does not say when)
+  X.event(f); return f;
 }
 function clearAll() { flights.clear(); hist.length = 0; replay = false; $('rpLive').classList.add('on'); $('rpT').textContent = t('history'); $('rpS').max = 0; $('rpS').value = 0; $('rpS').disabled = true; $('rpTip').classList.remove('show'); select(null); redraw(); }
 
@@ -269,7 +271,7 @@ const routePts = f => { const { org, dst } = f.route, p = [f.lat, f.lon], fl = f
 async function loadTrace(f) {
   if (!live || f.trAt && Date.now() - f.trAt < 60000) return; f.trAt = Date.now();
   const res = await DATA.trace(f.id); if (!res.ok) return;
-  f.flown = res.points; f.prof = res.prof; if (f.id === selected && $('prf')) X.sync(f); if (f.id === selected && !replay && f.route) { const p = routePts(f); setRoute(p.done, p.rest); }
+  f.flown = res.points; f.prof = res.prof; f.landedAt = res.landedAt || 0; if (f.id === selected && $('prf')) X.sync(f); if (f.id === selected && !replay && f.route) { const p = routePts(f); setRoute(p.done, p.rest); }
 }
 function drawRoute(f) {
   routeEnds.clearLayers();
@@ -578,8 +580,11 @@ function renderCard(full) {
   }
   if (full) { const h = $('card').querySelector('h2'); if (h) for (let px = 26; px > 14 && h.scrollWidth > h.clientWidth; px--) h.style.fontSize = px + 'px'; } // long callsigns: shrink the font until the whole name fits
   if (f.route && $('pgb')) { const { org, dst } = f.route, a = km(org.lat, org.lon, f.lat, f.lon), b = km(f.lat, f.lon, dst.lat, dst.lon);
+    const landed = f.ground && b < 25;
     $('pgb').style.width = Math.min(100, a / (a + b) * 100).toFixed(1) + '%';
-    $('pgt').textContent = t('{0} flown · {1} to go', fmtDist(a), fmtDist(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) + ' · ' + t('arrives {0}', new Date(Date.now() + b / (f.spd * 3.6) * 3600e3).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' })) : ''); }
+    $('pgt').textContent = t('{0} flown · {1} to go', fmtDist(a), fmtDist(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) + ' · ' + t('arrives {0}', new Date(Date.now() + b / (f.spd * 3.6) * 3600e3).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' })) : '')
+      + (landed ? ' · ' + landedText(f) : ''); // on the ground within 25 km of its destination: landed, and how long ago
+    const fl = $('card').querySelector('.rt .fl'); if (fl) fl.classList.toggle('rw', landed); } // landed: a runway instead of the dashed line
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
     ['Altitude', f.ground ? t('on ground') : ft(f.alt)], ['Speed', fmtSpd(f.spd * 1.944)], ['Heading', Math.round(f.hdg) + '°'],
@@ -595,6 +600,11 @@ function renderCard(full) {
   for (const n of ['Altitude', 'Speed', 'Vertical speed']) { const k = rows.findIndex(r => r[0] === n); if (k >= 0) rows.splice(k, 1); }
   $('kvs').innerHTML = tl + rows.map(r => r[2] ? `<div class="kv tbr ${r[2]}"><b>${esc(r[1])}</b></div>` : `<div class="kv${r[3] ? ' xr' : ''}"><span>${t(r[0])}</span><b>${esc(r[1])}</b>${r[3] || ''}</div>`).join('');
   $('fv').textContent = fav.has(f.id) ? t('★ Favorited') : t('☆ Favorite'); X.sync(f);
+}
+// "landed 12 min ago": from the trace when it has the touchdown time, else from when we saw it touch down; otherwise just "landed"
+function landedText(f) {
+  const t0 = f.landedAt ? f.landedAt * 1000 : f.gAt || 0; if (!t0) return t('landed');
+  const min = (Date.now() - t0) / 60000; return min < 1 ? t('just landed') : t('landed {0} ago', eta(min / 60));
 }
 const eta = h => h < 1 ? Math.round(h * 60) + t(' min') : Math.floor(h) + t(' h ') + Math.round(h % 1 * 60) + t(' min');
 function routeHtml(f) {
