@@ -13,7 +13,7 @@ contextBridge.exposeInMainWorld('api', {
   flights: (bounds, o) => ipcRenderer.invoke('flights', bounds, o),
   route: cs => ipcRenderer.invoke('route', cs),
   aircraft: hex => ipcRenderer.invoke('aircraft', hex),
-  photos: hex => ipcRenderer.invoke('photos', hex),
+  photos: (hex, reg) => ipcRenderer.invoke('photos', hex, reg),
   trace: hex => ipcRenderer.invoke('trace', hex),
   airport: (lat, lon) => ipcRenderer.invoke('airport', lat, lon),
   find: q => ipcRenderer.invoke('find', q),

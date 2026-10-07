@@ -351,9 +351,9 @@ async function loadAircraft(f) {
 // Photos: planespotters (448 px, possibly several) first, then the full-size adsbdb photo (or its thumbnail as a last resort)
 async function loadPhotos(f) {
   if (f.pics) return; let e = fresh(picCache, f.id);
-  if (!e) { const res = await DATA.photos(f.id); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok) picCache.set(f.id, e); }
+  if (!e) { const res = await DATA.photos(f.id, f.ac?.reg || f.reg); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok) picCache.set(f.id, e); }
   const ac = f.ac || {}, extra = ac.photo || ac.thumb;
-  f.pics = [...e.v, ...(extra && !e.v.length ? [{ src: extra, link: ac.photo || extra, by: '' }] : [])]; f.pi = 0;
+  f.pics = [...e.v, ...(extra && !e.v.length ? [{ src: extra, big: ac.photo || extra, link: ac.photo || extra, by: '' }] : [])]; f.pi = 0;
   if (f.id === selected) renderCard(true);
 }
 const photoHtml = f => { const ac = f.ac || {}, pics = f.pics || (ac.thumb ? [{ src: ac.thumb, link: ac.photo || ac.thumb, by: '' }] : []); if (!pics.length) return '';
@@ -587,6 +587,7 @@ function renderAp() {
     + `${ph}${wx}${metar}<div class="tabs"><button data-t="arr" class="${s.tab === 'arr' ? 'on' : ''}">${t('Arrivals')} <em>${apFlights(s, 'dst').length}</em></button><button data-t="dep" class="${s.tab === 'dep' ? 'on' : ''}">${t('Departures')} <em>${apFlights(s, 'org').length}</em></button></div><div id="apr">${apRows(s)}</div>`;
 }
 $('apc').onclick = e => {
+  { const a = e.target.closest('.ph a'); if (a && apSel?.info?.photo) { e.preventDefault(); const p = apSel.info.photo; openLightbox([{ src: p.src, link: p.link || p.src, by: '' }], 0); return; } }
   if (e.target.id === 'ax') return closeAp();
   const t = e.target.closest('.tabs button'); if (t && apSel) { apSel.tab = t.dataset.t; return renderAp(); }
   const r = e.target.closest('.row'); if (r) select(r.dataset.id);
@@ -773,6 +774,7 @@ function routeHtml(f) {
 let flPref = LS('sky.fl', 'scene');
 $('card').onclick = e => {
   if (e.target.id === 'cx') return select(null);
+  { const a = e.target.closest('.ph a'); if (a) { e.preventDefault(); const f = flights.get(selected), pics = f?.pics || (f?.ac?.thumb ? [{ src: f.ac.thumb, big: f.ac.photo, link: f.ac.photo || f.ac.thumb, by: '' }] : []); if (pics.length) openLightbox(pics, f.pi || 0, i => { f.pi = i; renderCard(true); }); return; } }
   { const fl = e.target.closest('#fl'); if (fl && fl.classList.contains('sw')) { flPref = flPref === 'scene' ? 'line' : 'scene'; save('sky.fl', flPref); renderCard(); return; } }
   if (X.click(e)) return;
   if (e.target.id === 'pp' || e.target.id === 'pn') { const f = flights.get(selected), n = f?.pics?.length; if (!n) return;
@@ -780,6 +782,20 @@ $('card').onclick = e => {
   if (e.target.id !== 'fv') return;
   fav.has(selected) ? fav.delete(selected) : fav.add(selected); save('sky.fav', [...fav]); renderCard(); renderList(); redraw();
 };
+// In-app photo viewer: opens over the app instead of the browser; arrows / ← → switch photos, Esc or a click outside closes it; the source page can still be opened from the viewer
+let lbx = null;
+function openLightbox(pics, i = 0, onChange) {
+  closeLightbox(); let k = i % pics.length;
+  const d = document.createElement('div'); d.id = 'lbx'; lbx = d;
+  d.innerHTML = `<img alt=""><button class="lx" title="${t('Close')}">✕</button>${pics.length > 1 ? `<button class="ln l" title="${t('Previous photo')}">‹</button><button class="ln r" title="${t('Next photo')}">›</button>` : ''}<div class="lf"><span class="lc2"></span><span class="lb2"></span><a class="lo" target="_blank"></a></div>`;
+  const show = () => { const p = pics[k], im = d.querySelector('img'); im.src = p.big || p.src; d.querySelector('.lc2').textContent = pics.length > 1 ? `${k + 1} / ${pics.length}` : '';
+    d.querySelector('.lb2').textContent = p.by ? '© ' + p.by : ''; const a = d.querySelector('.lo'); a.href = p.link || p.big || p.src; a.textContent = t('Open the source page') + ' ↗'; a.style.display = /^https:/.test(a.href) ? '' : 'none'; onChange?.(k); };
+  const go = n => { k = (k + n + pics.length) % pics.length; show(); };
+  d.onclick = e => { if (e.target.closest('.lx') || e.target === d) closeLightbox(); else if (e.target.closest('.ln')) go(e.target.closest('.ln').classList.contains('r') ? 1 : -1); };
+  d._key = e => { if (e.key === 'Escape') closeLightbox(); else if (pics.length > 1 && e.key === 'ArrowRight') go(1); else if (pics.length > 1 && e.key === 'ArrowLeft') go(-1); else return; e.preventDefault(); e.stopPropagation(); };
+  document.addEventListener('keydown', d._key, true); document.body.appendChild(d); show();
+}
+function closeLightbox() { if (!lbx) return; document.removeEventListener('keydown', lbx._key, true); lbx.remove(); lbx = null; }
 function renderList() {
   const q = $('q').value.trim().toLowerCase();
   const arr = [...flights.values()].filter(f => vis(f) && (f.cs.toLowerCase().includes(q) || (f.reg || '').toLowerCase().includes(q))).sort((a, b) => (a.ground - b.ground) || (/^[A-Z]{2,3}\d/.test(b.cs) - /^[A-Z]{2,3}\d/.test(a.cs)) || a.cs.localeCompare(b.cs)).slice(0, 200); // airborne flights with callsigns first

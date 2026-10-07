@@ -1435,3 +1435,11 @@ Object.assign(DICT.ko, {
   "Runways": "활주로",
   "longest {0}": "가장 긴 활주로 {0}"
 });
+Object.assign(DICT.tr, { "Open the source page": "Kaynak sayfayı aç" });
+Object.assign(DICT.es, { "Open the source page": "Abrir la página de origen" });
+Object.assign(DICT.de, { "Open the source page": "Quellseite öffnen" });
+Object.assign(DICT.fr, { "Open the source page": "Ouvrir la page source" });
+Object.assign(DICT.ar, { "Open the source page": "فتح صفحة المصدر" });
+Object.assign(DICT.zh, { "Open the source page": "打开来源页面" });
+Object.assign(DICT.ja, { "Open the source page": "ソースページを開く" });
+Object.assign(DICT.ko, { "Open the source page": "원본 페이지 열기" });
