@@ -12,7 +12,7 @@
   // We split the visible area into ~600 km cells and cover each cell with a circle. The rate limit is tight (~10 requests/min),
   // so at most 2 circles (the central ones) are queried; wider views try OpenSky instead.
   const MAX_NM = 250, CELL_KM = 600, MAX_CIRCLES = 2;
-  function cover(b, maxCircles = MAX_CIRCLES, sweep = -1) {
+  function cover(b, maxCircles = MAX_CIRCLES, sweep = -1, spread = false) {
     const s = +b.s, n = +b.n, w = +b.w, e = +b.e, mLat = (s + n) / 2, mLon = (w + e) / 2;
     // Fewest cells (= requests) such that a circle of at most MAX_NM around a cell's center still reaches its corners: half the cell diagonal <= REACH km.
     // Cells are not forced to be square (a fixed 600 km grid needed 12 circles for a Dubai-sized view, this needs about 8). Very wide views fall back to the fixed grid.
@@ -26,6 +26,13 @@
       cells.push({ lat, lon, r: Math.max(5, Math.min(MAX_NM, Math.ceil(far / 1.852 * 1.05))), d: (lat - mLat) ** 2 + (lon - mLon) ** 2 });
     }
     cells.sort((a, b) => a.d - b.d);
+    // spread = true: for a view too big to fetch completely (continent scale) the order matters, because the first circles asked are the ones that get drawn. Nearest-the-center-first
+    // would spend them all around the center (Europe) and never reach Africa or Asia; instead each next circle is the one farthest from all chosen so far, so the first dozens are spread
+    // evenly over the whole view and the gaps are filled in afterwards. Small views keep the nearest-first order.
+    if (spread && cells.length > 16) { const out = [cells[0]], rest = cells.slice(1), dist = rest.map(c => km(c.lat, c.lon, cells[0].lat, cells[0].lon));
+      while (rest.length) { let k = 0; for (let i = 1; i < rest.length; i++) if (dist[i] > dist[k]) k = i; const c = rest.splice(k, 1)[0]; dist.splice(k, 1); out.push(c);
+        for (let i = 0; i < rest.length; i++) dist[i] = Math.min(dist[i], km(rest[i].lat, rest[i].lon, c.lat, c.lon)); }
+      cells.splice(0, cells.length, ...out); }
     // Wide view (sweep >= 0): the 2 central circles are asked every time, the other slots walk through the surrounding cells (nearest 40) a few per
     // refresh, so after a few refreshes the whole screen is filled. Aircraft outside the circles answered this time are kept by the client (see poll()).
     let circles = cells.slice(0, maxCircles);
@@ -97,7 +104,7 @@
   async function adsbLol(b, o = { from: 0, count: 0, fresh: [], gen: Infinity }) {
     // o.count = n: a batch of n circles starting at the o.from-th nearest the center, leaving out circles that o.fresh already covers
     // (the renderer asks batch by batch after the map moved, so aircraft appear as they come); o.gen: see flights()
-    rot++; const budget = MAX_CIRCLES * FEEDS.length * 3 / 2 | 0, cv = o.count ? cover(b, 200) : cover(b, budget, rot), { partial, covered } = cv,
+    rot++; const budget = MAX_CIRCLES * FEEDS.length * 3 / 2 | 0, cv = o.count ? cover(b, 200, -1, true) : cover(b, budget, rot), { partial, covered } = cv,
       all = o.count && o.fresh?.length ? cv.circles.filter(c => !mostlyCovered(c, o.fresh)) : cv.circles, circles = o.count ? all.slice(o.from, o.from + o.count) : all,
       total = o.count ? all.length : cv.total, seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
     if (!circles.length) return { src: '', flights: [], partial, covered, cov: [], total };

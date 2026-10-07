@@ -551,3 +551,9 @@ Object.assign(DICT.tr, { 'Showing {0} of {1} aircraft · zoom in for all': '{1} 
 Object.assign(DICT.es, { 'Showing {0} of {1} aircraft · zoom in for all': 'Mostrando {0} de {1} aviones · acércate para ver todos', 'Thin out crowded areas when zoomed out': 'Reducir aviones en zonas concurridas al alejar' });
 Object.assign(DICT.de, { 'Showing {0} of {1} aircraft · zoom in for all': '{0} von {1} Flugzeugen werden angezeigt · zoome hinein für alle', 'Thin out crowded areas when zoomed out': 'Beim Herauszoomen volle Gebiete ausdünnen' });
 Object.assign(DICT.fr, { 'Showing {0} of {1} aircraft · zoom in for all': '{0} avions sur {1} affichés · zoomez pour tous les voir', 'Thin out crowded areas when zoomed out': 'Réduire les avions dans les zones denses en dézoomant' });
+
+// Wide view status while the fill is still going
+Object.assign(DICT.tr, { 'Wide view: filling in, zoom in for all': 'Geniş görünüm: dolduruluyor, hepsi için yakınlaştır' });
+Object.assign(DICT.es, { 'Wide view: filling in, zoom in for all': 'Vista amplia: rellenando, acércate para ver todos' });
+Object.assign(DICT.de, { 'Wide view: filling in, zoom in for all': 'Weite Ansicht: wird aufgefüllt, zoome hinein für alle' });
+Object.assign(DICT.fr, { 'Wide view: filling in, zoom in for all': 'Vue large : remplissage en cours, zoomez pour tous les voir' });

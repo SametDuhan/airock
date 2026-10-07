@@ -135,7 +135,9 @@ map.createPane('planes').style.zIndex = 450;
 // screen, so they all come back by themselves. Favorites, watched aircraft, emergencies and the selected one are never hidden. Only the drawing is thinned: the data,
 // the list, the search and the alerts still see every aircraft.
 const THIN_FROM = 250; let thinOn = LS('sky.thin', true), thinCell = 16;
-const thinTarget = n => n <= THIN_FROM ? n : Math.min(900, Math.round(THIN_FROM + (n - THIN_FROM) * .3));
+// The farther out, the fewer: at most 900 aircraft from zoom 6 on, about 390 at zoom 4 (continent scale), 225 at the very widest, growing smoothly as you zoom in
+const thinCap = () => Math.round(900 * Math.max(.25, Math.min(1, (map.getZoom() - 2.5) / 3.5)));
+const thinTarget = n => n <= THIN_FROM ? n : Math.min(thinCap(), Math.round(THIN_FROM + (n - THIN_FROM) * .3));
 const hash01 = id => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0; return (h >>> 0) % 997 / 997; };
 const thinScore = f => (f.ground ? 0 : 4) + (/^[A-Z]{3}\d/.test(f.cs) ? 1.5 : 0) + Math.min(1, f.alt / 12000) + ({ air4: 1, air2: .6, heli: .4 }[kindOf(f)] || 0) + (f._kept ? .6 : 0) + (f._h01 ??= hash01(f.id)) * .3; // _kept: a little stickiness, so icons do not flicker
 const mustShow = f => fav.has(f.id) || watch.has(f.id) || isEmg(f);
@@ -409,6 +411,9 @@ async function poll(force) {
   if (!live) return; const v = map.getBounds(), need = uncovered(v) >= 3; // need: part of the visible map has no fresh answer (a search, a far jump, a long drag, a zoom out)
   if (!force && !need && Date.now() - fetchedAt < LIVE_MS) return;
   { const gap = Date.now() - lastReq; if (!force && gap < 1200) { clearTimeout(moveTimer); moveTimer = setTimeout(() => poll(), 1250 - gap); return; } } lastReq = Date.now(); // at least 1.2 s between pan-triggered requests (the data layer spreads the load over several servers)
+  // Zoomed far in while a wide fill is still running: that fill is now about an area the user left, so cancel it (the new view gets its own fill, or a regular refresh)
+  const area = x => (x.getNorth() - x.getSouth()) * (x.getEast() - x.getWest());
+  if (filling && fillBox && area(v) < .4 * area(fillBox)) { filling = 0; fillBox = null; reqId++; }
   if (filling && (!need || (fillBox && fillBox.contains(v)))) return; // a fill is running for this view: starting another one (or a regular refresh) would cancel it
   const b = v.pad(.25), id = ++reqId, cl = (x, m) => Math.max(-m, Math.min(m, x)).toFixed(2), bb = { s: cl(b.getSouth(), 85), n: cl(b.getNorth(), 85), w: cl(b.getWest(), 180), e: cl(b.getEast(), 180) };
   fetchedAt = Date.now(); $('st').textContent = t('loading…');
@@ -416,8 +421,9 @@ async function poll(force) {
   if (need) { filling = id; const vb = v.pad(.08); fillBox = vb; // only just beyond the screen: no circles wasted off-screen
     const fv = await fillView({ s: cl(vb.getSouth(), 85), n: cl(vb.getNorth(), 85), w: cl(vb.getWest(), 180), e: cl(vb.getEast(), 180) }, id).finally(() => { if (filling === id) { filling = 0; fillBox = null; } });
     if (!live || id !== reqId) return;
-    if (fv.n) { pollMs = LIVE_MS; $('st').title = ''; lastSrc = fv.src;
-      $('st').textContent = `${fv.src} · ${t('last updated')} ${new Date().toLocaleTimeString(LOC(), TF())}${fv.done ? thin() : ' · ' + t('wide view: center only, zoom in')}`; saveCache(); pumpRoutes(); return; } }
+    // not done = the view is bigger than one fill: the next fill continues with the gaps, but not back to back
+    if (fv.n) { pollMs = fv.done ? LIVE_MS : 15000; $('st').title = ''; lastSrc = fv.src;
+      $('st').textContent = `${fv.src} · ${t('last updated')} ${new Date().toLocaleTimeString(LOC(), TF())}${fv.done ? thin() : ' · ' + t('Wide view: filling in, zoom in for all')}`; saveCache(); pumpRoutes(); return; } }
   const r = await DATA.flights(bb);
   if (!live) return;
   if (id !== reqId) { if (r.ok) { r.flights.forEach(upsert); redraw(); } return; } // the map moved again meanwhile: the aircraft are still valid, so keep them, but do not touch the "fetched" area

@@ -98,3 +98,14 @@ test('cover: every point of the area is inside some circle, and no circle is big
 test('cover: a Dubai-sized view needs far fewer circles than a fixed 600 km grid did', () => {
   assert.ok(D.cover({ s: 21, n: 29.5, w: 49, e: 63 }, 99).circles.length <= 4);
 });
+
+test('cover: a continent-sized view with spread = true reaches all of it early; nearest-first stays around the center', () => {
+  const geo = require('../src/geo.js'), b = { s: 0, n: 65, w: -25, e: 85 }; // Europe + Africa + Asia, like the zoomed-out screenshot
+  const near = D.cover(b, 200).circles, spread = D.cover(b, 200, -1, true).circles;
+  assert.equal(spread.length, near.length); assert.ok(near.length > 40);
+  assert.deepEqual(spread[0], near[0]); // the first one is the center in both
+  const span = list => { const k = list.slice(0, 12); return Math.max(...k.map(c => Math.max(...k.map(d => geo.km(c.lat, c.lon, d.lat, d.lon))))); };
+  assert.ok(span(spread) > span(near) * 1.3, `spread ${span(spread)} vs nearest ${span(near)}`);
+  const a = D.cover({ s: 40, n: 42, w: 28, e: 30 }, 200, -1, true).circles, b2 = D.cover({ s: 40, n: 42, w: 28, e: 30 }, 200).circles;
+  assert.deepEqual(a, b2); // a small view is unchanged
+});
