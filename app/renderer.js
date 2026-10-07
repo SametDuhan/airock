@@ -665,8 +665,9 @@ function gsMotion(f, el, kt) {
     el._an = NO_MOTION ? [] : [['.far', 320, 128000], ['.mid', 320, 53000], ['.nl', 28, 2000]].map(([sel, px, ms]) => { const a = el.querySelector(sel).animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-px}px)` }], { duration: ms, iterations: Infinity }); a.currentTime = f._gsT || 0; a.pause(); return a; });
     el._wh = NO_MOTION ? [] : [...el.querySelectorAll('.wheel')].map(w => { const a = w.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(-360deg)' }], { duration: 650, iterations: Infinity }); a.pause(); return a; });
   }
-  const k = Math.max(.35, Math.min(5, kt / 15)), on = f.ground; // always playing while on the ground: a plane that stands still moves at the slowest speed
-  for (const a of [...el._an, ...el._wh]) { a.updatePlaybackRate(k); if (on) a.play(); else a.pause(); }
+  const k = Math.round(Math.max(.35, Math.min(5, kt / 15)) * 20) / 20, on = f.ground; // always playing while on the ground: a plane that stands still moves at the slowest speed
+  // touch the animations only when something changed: re-applying the same rate or state every second made the lines stutter once a second
+  if (el._k !== k || el._on !== on) { for (const a of [...el._an, ...el._wh]) { if (el._k !== k) a.updatePlaybackRate(k); if (el._on !== on) { if (on) a.play(); else a.pause(); } } el._k = k; el._on = on; }
   if (el._an[0]) f._gsT = el._an[0].currentTime;
 }
 function routeHtml(f) {
