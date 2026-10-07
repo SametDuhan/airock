@@ -202,10 +202,15 @@ footer::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;back
 }
 @media (max-width:640px){section{padding:72px 0}.hero{padding-top:56px}.group-title{margin:64px 0 32px}#net{opacity:.6}}
 
-section{content-visibility:auto;contain-intrinsic-size:auto 900px}
-#turbulence,#features{content-visibility:visible}
 .card,.shotbox,.box{contain:layout paint}
 .shotbox,.stage .frame{backface-visibility:hidden}
-.chip3d,.led{will-change:auto}
 
 header,header .wrap,.badge,.btn,.card,.box,.chip3d,details,.stats div,.radar .hud{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+
+/* pings: ring that scales + fades (compositor only) instead of animating box-shadow */
+.badge i,.led,.chip3d .led,.radar .hud .led{animation:none!important;box-shadow:none!important;position:relative}
+.badge i::after,.led::after,.radar .hud .led::after{content:"";position:absolute;inset:0;border-radius:50%;background:inherit;animation:ringp 2s ease-out infinite;will-change:transform,opacity}
+@keyframes ringp{from{transform:scale(1);opacity:.55}to{transform:scale(2.7);opacity:0}}
+.chip3d{will-change:transform}
+.btn.primary::after{will-change:transform}
+@media (prefers-reduced-motion:reduce){.badge i::after,.led::after{animation:none}}
