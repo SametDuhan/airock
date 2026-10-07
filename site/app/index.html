@@ -215,18 +215,18 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 .dots{display:inline-flex;flex:none}.dots i{width:12px;height:12px;border-radius:50%;background:#888}.dots .g{background:#4ade80}.dots .y{background:#facc15}.dots .r{background:#f87171}
 #thn{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1000;pointer-events:none;display:none;background:var(--pn);border:1px solid var(--line);border-radius:999px;padding:5px 14px;font-size:12px;color:var(--mut);box-shadow:0 4px 16px #0006;white-space:nowrap}
 .mdl .rcf{grid-template-columns:1fr 1fr auto}.mdl .wff{grid-template-columns:1fr auto}.mdl .rcr{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}.mdl .rcr b{width:54px;flex:none;font:700 12px ui-monospace,monospace}.mdl .ch2 button{margin:6px 6px 0 0}
-.fl.rw::before{border:0;opacity:1;top:50%;height:16px;transform:translateY(-50%);border-radius:2px;box-shadow:0 0 0 1px #000a;
-  background:linear-gradient(90deg,#fff 0 7px,transparent 7px 14px) 10px 50%/14px 2px repeat-x, /* center line */
-    repeating-linear-gradient(180deg,#fff 0 1.5px,transparent 1.5px 3px) 3px 50%/5px 12px no-repeat, repeating-linear-gradient(180deg,#fff 0 1.5px,transparent 1.5px 3px) calc(100% - 3px) 50%/5px 12px no-repeat, /* thresholds at both ends */
-    linear-gradient(#ffffffb0,#ffffffb0) 0 2px/100% 1px no-repeat, linear-gradient(#ffffffb0,#ffffffb0) 0 calc(100% - 2px)/100% 1px no-repeat, /* edge lines */
-    #3a3a3c}
-.fl.rw i{animation:none;transform:none;text-shadow:0 1px 3px #000;padding-right:7px}
-.fl.rw.roll i{animation:roll 2.6s cubic-bezier(.1,.75,.2,1) var(--rd,0s) both}@keyframes roll{from{transform:translateX(calc(-100% + 26px))}to{transform:none}}
-@media (prefers-reduced-motion:reduce){.fl.rw.roll i{animation:none}}
-#ovp .ovrm:hover,#ovRm:hover{border-color:#f87171;color:#f87171}.ovpop{display:flex;flex-direction:column;gap:6px;align-items:stretch;font:600 12px system-ui,sans-serif}.ovpop button{cursor:pointer;background:#fff;border:1px solid #d33;color:#d33;border-radius:6px;padding:5px 9px;font:600 12px system-ui,sans-serif}.ovm{cursor:pointer}
-.fl.rw.park i{animation:none;transform:none;text-align:left;padding-left:9px;padding-right:0}
-.fl.rw.tx i{animation:taxi 9s linear infinite}@keyframes taxi{from{transform:translateX(calc(-100% + 26px))}to{transform:translateX(0)}}
-@media (prefers-reduced-motion:reduce){.fl.rw.tx i{animation:none}}
+/* planes on the ground: side view of the plane in front of an airport that scrolls from right to left (moving: loops; just landed: slows to a stop; standing: still) */
+.gs{position:relative;height:60px;margin:10px 0 4px;border-radius:9px;overflow:hidden;background:linear-gradient(#18222d,#2a3a4e 62%,#3a4f68);border:1px solid #ffffff14}.gs[hidden]{display:none}
+.gs .gl{position:absolute;left:0;display:block;will-change:transform}.gs .far{top:0}.gs .mid{bottom:12px}
+.gs .near{position:absolute;left:0;right:0;bottom:0;height:13px;background:linear-gradient(#262629,#18181a);border-top:1px solid #55555c;overflow:hidden}
+.gs .near i{position:absolute;left:0;top:5px;width:640px;height:2px;background:repeating-linear-gradient(90deg,#f2c230 0 12px,transparent 12px 28px);will-change:transform}
+.gs .plane{position:absolute;right:12px;bottom:4px;width:84px;height:auto;filter:drop-shadow(0 2px 2px #0008)}
+.gs .wheel{transform-box:fill-box;transform-origin:center}
+.gs.mv .far{animation:gsf 22s linear infinite}.gs.mv .mid{animation:gsm 9s linear infinite}.gs.mv .near i{animation:gsn 1.6s linear infinite}.gs.mv .wheel{animation:gsw .5s linear infinite}
+.gs.rl .far{animation:gsf1 2.6s cubic-bezier(.1,.75,.2,1) var(--rd,0s) both}.gs.rl .mid{animation:gsm1 2.6s cubic-bezier(.1,.75,.2,1) var(--rd,0s) both}.gs.rl .near i{animation:gsn1 2.6s cubic-bezier(.1,.75,.2,1) var(--rd,0s) both}
+@keyframes gsf{to{transform:translateX(-320px)}}@keyframes gsm{to{transform:translateX(-320px)}}@keyframes gsn{to{transform:translateX(-28px)}}@keyframes gsw{to{transform:rotate(-360deg)}}
+@keyframes gsf1{to{transform:translateX(-110px)}}@keyframes gsm1{to{transform:translateX(-260px)}}@keyframes gsn1{to{transform:translateX(-224px)}}
+@media (prefers-reduced-motion:reduce){.gs .far,.gs .mid,.gs .near i,.gs .wheel{animation:none!important}}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>

@@ -607,11 +607,11 @@ function renderCard(full) {
     $('pgb').style.width = Math.min(100, a / (a + b) * 100).toFixed(1) + '%';
     $('pgt').textContent = t('{0} flown · {1} to go', fmtDist(a), fmtDist(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) + ' · ' + t('arrives {0}', new Date(Date.now() + b / (f.spd * 3.6) * 3600e3).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' })) : '')
       + (landed ? ' · ' + landedText(f) : f.ground ? ' · ' + t('on ground') : ''); // on the ground within 25 km of its destination: landed, and how long ago
-    // on the ground: a runway instead of the dashed line. Landed: the plane rolls out along it once and stops (a rebuilt card continues the same roll-out instead of restarting or jumping
-    // to the end). On the ground but not landed: it taxis slowly along it while it moves, and waits at the start when it stands still. In the air the plane flies along the dashed line.
-    const fl = $('card').querySelector('.rt .fl'), moving = f.spd * 1.944 > 3;
-    if (fl) { fl.classList.toggle('rw', f.ground); fl.classList.toggle('park', f.ground && !landed && !moving); fl.classList.toggle('tx', f.ground && !landed && moving);
-      if (landed) { f._rolled = f._rolled || Date.now(); const el = Date.now() - f._rolled; if (el < 2600) { fl.classList.add('roll'); fl.style.setProperty('--rd', -el + 'ms'); } } else fl.classList.remove('roll'); }
+    // on the ground the scene replaces the flying plane on the dashed line. Moving (taxiing): the airport scrolls past; just landed: it slows to a stop (a rebuilt card continues the same
+    // slowdown, it is never restarted); standing: still.
+    const gs = $('gs'), fl = $('card').querySelector('.rt .fl'), moving = f.spd * 1.944 > 3;
+    if (gs) { gs.hidden = !f.ground; if (fl) fl.style.display = f.ground ? 'none' : ''; gs.classList.toggle('mv', f.ground && !landed && moving);
+      if (landed) { f._rolled = f._rolled || Date.now(); gs.classList.add('rl'); gs.style.setProperty('--rd', -(Date.now() - f._rolled) + 'ms'); } else gs.classList.remove('rl'); }
     if (!landed) f._rolled = 0; }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
@@ -635,11 +635,25 @@ function landedText(f) {
   const min = (Date.now() - t0) / 60000; return min < 1 ? t('just landed') : t('landed {0} ago', eta(min / 60));
 }
 const eta = h => h < 1 ? Math.round(h * 60) + t(' min') : Math.floor(h) + t(' h ') + Math.round(h % 1 * 60) + t(' min');
+// Planes on the ground get a scene instead of the flying plane on the dashed line: a side view of the plane (nose to the right) in front of an airport that scrolls from right to left
+const GS_WIN = (x0, n, step, y, w, h, op) => Array.from({ length: n }, (_, i) => `<rect x="${x0 + i * step}" y="${y}" width="${w}" height="${h}" fill="#f2c230" opacity="${op}"/>`).join('');
+const GS_FAR = `<g><rect x="57" y="14" width="6" height="30" fill="#34445a"/><path d="M49 14 L71 14 L66 5 L54 5Z" fill="#41546d"/><rect x="53" y="7.5" width="14" height="3" fill="#f2c230" opacity=".9"/><rect x="59.2" y="-1" width="1.6" height="7" fill="#4a5d78"/><circle cx="60" cy="0" r="1.5" fill="#ff5a4f"/>`
+  + `<rect x="147" y="30" width="6" height="14" fill="#34445a"/><circle cx="150" cy="29" r="6.5" fill="#41546d"/><rect x="141" y="27.5" width="18" height="1.6" fill="#55708f"/>`
+  + `<rect x="203" y="24" width="2" height="20" fill="#34445a"/><rect x="198" y="22" width="12" height="3" fill="#f2c230" opacity=".75"/><rect x="273" y="24" width="2" height="20" fill="#34445a"/><rect x="268" y="22" width="12" height="3" fill="#f2c230" opacity=".75"/></g>`;
+const GS_MID = `<g><rect x="14" y="6" width="136" height="20" fill="#202b3a"/>${GS_WIN(21, 12, 11, 12, 6, 4, .6)}<path d="M150 14 h22 v5 h-22z" fill="#2c3a4f"/><rect x="170" y="10" width="3" height="16" fill="#2c3a4f"/>`
+  + `<path d="M205 26 V13 Q235 -4 265 13 V26Z" fill="#1c2633"/><rect x="226" y="15" width="18" height="11" fill="#141c26"/><rect x="288" y="16" width="14" height="10" fill="#202b3a"/></g>`;
+const gsLayer = (cls, w, h, g) => `<svg class="gl ${cls}" width="${w * 2}" height="${h}" viewBox="0 0 ${w * 2} ${h}" aria-hidden="true">${g}<g transform="translate(${w})">${g}</g></svg>`;
+const GS_PLANE = `<svg class="plane" viewBox="0 0 100 42" aria-hidden="true"><path d="M11 22 L5 5 L17 5 L29 17Z" fill="#f2c230"/><path d="M14 22 L3 25 L6 27.5 L22 25Z" fill="#9aa3ad"/>`
+  + `<path d="M10 24 C10 17 17 15 27 15 H76 C89 15 97 19 97 23 C97 27 90 30 77 30 H21 C14 30 10 28 10 24Z" fill="#eceef1"/><path d="M12 25.5 H93" stroke="#f2c230" stroke-width="1.6" fill="none"/>`
+  + `<path d="M86 17.5 L92 19.5 L91 22 L84 22Z" fill="#26364a"/>${Array.from({ length: 10 }, (_, i) => `<circle cx="${28 + i * 5.2}" cy="21" r="1.15" fill="#26364a"/>`).join('')}`
+  + `<path d="M49 27 L70 27 L58 34 L46 34Z" fill="#b9c0c8"/><ellipse cx="57" cy="34.5" rx="7.5" ry="3.3" fill="#8e98a3"/><ellipse cx="63.5" cy="34.5" rx="2" ry="2.7" fill="#262b32"/>`
+  + `<path d="M52 33 V37.5 M85 29 V37.5" stroke="#7d8791" stroke-width="1.6"/><g class="wheel"><circle cx="52" cy="39" r="3.1" fill="#202327"/><circle cx="52" cy="39" r="1.1" fill="#9aa3ad"/><path d="M52 36.2 V41.8" stroke="#9aa3ad" stroke-width=".6"/></g><g class="wheel"><circle cx="85" cy="39" r="2.8" fill="#202327"/><circle cx="85" cy="39" r="1" fill="#9aa3ad"/><path d="M85 36.4 V41.6" stroke="#9aa3ad" stroke-width=".6"/></g></svg>`;
+const GS_HTML = `<div class="gs" id="gs" hidden>${gsLayer('far', 320, 44, GS_FAR)}${gsLayer('mid', 320, 26, GS_MID)}<div class="near"><i></i></div>${GS_PLANE}</div>`;
 function routeHtml(f) {
   if (!f.route) return `<div class="rtx" style="margin-top:12px">${t({ loading: 'Loading route info…', none: 'Route info not found', err: 'Couldn\'t load route info' }[f.rs] || '')}</div>`;
   const { org, dst } = f.route;
   return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(org.name)}</small></div><span class="fl"><i>✈</i></span>`
-    + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(dst.name)}</small></div></div><div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
+    + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(dst.name)}</small></div></div>${GS_HTML}<div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
 }
 $('card').onclick = e => {
   if (e.target.id === 'cx') return select(null);
