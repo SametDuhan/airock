@@ -31,6 +31,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "manual-update.js",
       "src/**",
       "node_modules/leaflet/dist/**",
       "build/icon.png"
