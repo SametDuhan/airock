@@ -303,7 +303,7 @@
     return { ok: true,
       weather: c ? { temp: c.temperature_2m, feels: c.apparent_temperature, hum: c.relative_humidity_2m, code: c.weather_code, day: !!c.is_day, pres: c.surface_pressure,
         wind: c.wind_speed_10m, dir: c.wind_direction_10m, gust: c.wind_gusts_10m, vis: c.visibility } : null,
-      place: { city: ad.province || ad.city || ad.town || ad.village || ad.municipality || ad.county || ad.state || '', region: ad.state || '', country: ad.country || '' },
+      place: { city: ad.province || ad.city || ad.town || ad.village || ad.municipality || ad.county || ad.state || '', region: ad.state || '', country: ad.country || '', cc: /^[a-z]{2}$/i.test(ad.country_code || '') ? ad.country_code.toLowerCase() : '' },
       photo: pg ? { src: pg.thumbnail.source, link: pg.fullurl || '', title: pg.title } : null };
   }
 

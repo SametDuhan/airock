@@ -527,8 +527,15 @@ const AP_R = 600, WX = { 0: ['Clear sky', '☀️'], 1: ['Mostly clear', '🌤�
   65: ['Heavy rain', '🌧️'], 66: ['Freezing rain', '🌧️'], 67: ['Freezing rain', '🌧️'], 71: ['Light snow', '🌨️'], 73: ['Snow', '🌨️'], 75: ['Heavy snow', '❄️'], 77: ['Snow grains', '🌨️'],
   80: ['Rain showers', '🌦️'], 81: ['Rain showers', '🌧️'], 82: ['Violent showers', '⛈️'], 85: ['Snow showers', '🌨️'], 86: ['Snow showers', '🌨️'], 95: ['Thunderstorm', '⛈️'], 96: ['Thunderstorm, hail', '⛈️'], 99: ['Thunderstorm, hail', '⛈️'] };
 const apCache = new Map(); let apSel = null;
+// Big data files are loaded the first time they are needed: runways (airport card opens) and the schedule statistics (the card's "Statistics" is opened)
+const jsLoaded = {}, loadJs = n => jsLoaded[n] ||= new Promise(ok => { const s = document.createElement('script'); s.src = n + '.js'; s.onload = () => ok(true); s.onerror = () => ok(false); document.head.appendChild(s); });
+let rwMap = null, apByCode = null;
+const apIcaoOf = s => s.icao || (apByCode || apLookup()).get(s.code)?.icao;
+function apLookup() { apByCode = new Map(); for (const a of apAll.concat(BIGAP)) { const o = apByCode.get(a.code); if (!o) apByCode.set(a.code, a); else if (!o.icao && a.icao) o.icao = a.icao; } return apByCode; } // the fixed list has no ICAO codes: take them from the other lists
+function runwaysOf(s) { if (!rwMap) { if (!window.AP_RUNWAYS) return null; rwMap = new Map(window.AP_RUNWAYS.split(',').map(x => { const [k, n, m] = x.split(':'); return [k, [+n, +m]]; })); } const k = apIcaoOf(s); return k ? rwMap.get(k) || null : null; }
 function openAp(a) {
   select(null); apSel = { ...a, tab: 'arr' }; $('apc').classList.add('show'); renderAp(); loadAp(apSel); pumpAp();
+  const s = apSel; loadJs('airport-runways').then(ok => { if (ok && apSel === s) renderAp(); });
 }
 function closeAp() { apSel = null; $('apc').classList.remove('show'); }
 async function loadAp(s) {
@@ -548,22 +555,37 @@ function apRows(s) {
     const [st, cl] = f.ground ? [arr && d < 25 ? 'landed' : 'on ground', 'g'] : arr ? (d < 40 && ft_ < 5000 ? ['Landing', 'ok'] : d < 150 ? ['Approaching', 'am'] : ['En route', 'mu']) : (d < 60 && ft_ < 12000 ? ['Departed', 'ok'] : ['En route', 'mu']);
     return `<div class="row ar" data-id="${esc(f.id)}"><div class="rm"><b>${esc(f.cs)}</b><small>${esc(f.route[o].code)}${acCode(f) ? ' · ' + esc(acCode(f)) : ''}</small></div><div class="rs"><i class="sp ${cl}">${t(st)}</i><small>${fmtDist(d)}${eta_ ? ' · ' + eta_ : ''}</small></div></div>`; }).join('');
 }
+// Runways: how many open runways the airport has (under Pressure in the weather grid); the longest one is in the tooltip
+function rwHtml(s) { const r = runwaysOf(s); if (!r) return ''; return `<div title="${esc(t('longest {0}', fmtAlt(r[1] / .3048, 10)))}"><span>${t('Runways')}</span><b>${r[0]}</b></div>`; }
+// Statistics (opened on request, above the METAR): schedule figures from the OpenFlights route data (airports.js codes are IATA there) plus what is in the air around the airport right now
+function apStatsHtml(s) {
+  const open = s.stOpen, head = `<button id="apsb" class="apsb ${open ? 'on' : ''}" aria-expanded="${!!open}"><span>📊 ${t('Statistics')}</span><i>${open ? '▴' : '▾'}</i></button>`;
+  if (!open) return `<div class="aps">${head}</div>`;
+  const D = window.AP_STATS; if (!D) return `<div class="aps">${head}<div class="rtx">${t(s.stErr ? 'No route data for this airport' : 'Loading…')}</div></div>`;
+  const v = D.S[s.code], nowA = apFlights(s, 'dst').length, nowD = apFlights(s, 'org').length, now = `<div class="rtx">${t('Right now: {0} arrivals, {1} departures nearby', nowA, nowD)}</div>`;
+  if (!v) return `<div class="aps">${head}<div class="rtx">${t('No route data for this airport')}</div>${now}</div>`;
+  const mx = v.a[0]?.[1] || 1, al = v.a.map(([c, n]) => `<div class="sr2"><img src="https://images.kiwi.com/airlines/64/${esc(c)}.png" alt="" onerror="this.style.visibility='hidden'"><span title="${esc(D.A[c] || c)}">${esc(D.A[c] || c)}</span><i class="bar"><u style="width:${Math.max(6, n / mx * 100)}%"></u></i><b title="${esc(t('{0} routes', n))}">${n}</b></div>`).join('');
+  const ds = v.d.map(([c, n]) => { const a = (apByCode || apLookup()).get(c); return `<div class="sr2 d"><b class="cd">${esc(c)}</b><span title="${esc(a?.name || '')}">${esc(a?.name || '')}</span><em>${t('{0} airlines', n)}</em></div>`; }).join('');
+  return `<div class="aps">${head}<div class="st3 s3"><div><span>${t('Routes')}</span><b>${nf(v.r)}</b></div><div><span>${t('Destinations')}</span><b>${nf(v.n)}</b></div><div><span>${t('Airlines')}</span><b>${nf(v.l)}</b></div></div>`
+    + `<h4>${t('Top airlines')}</h4>${al}<h4>${t('Top destinations')}</h4>${ds}${now}<div class="rtx sm">${t('Route data: OpenFlights (up to 2017), a guide to the network rather than today\'s timetable.')}</div></div>`;
+}
 function renderAp() {
   const s = apSel; if (!s) return; const i = s.info, w = i?.weather, p = i?.place, x = w && (WX[w.code] || ['—', '']);
-  const place = p ? [p.city, p.country].filter(Boolean).join(', ') : t(s.err ? 'Couldn\'t load airport info' : 'Loading…');
+  const place = p ? [p.city, p.country].filter(Boolean).join(', ') : t(s.err ? 'Couldn\'t load airport info' : 'Loading…'), flag = p?.cc ? `<img class="flag" src="https://flagcdn.com/w40/${esc(p.cc)}.png" alt="${esc(p.cc.toUpperCase())}" title="${esc(p.country || p.cc.toUpperCase())}" onerror="this.remove()">` : '';
   const ph = i?.photo ? `<div class="ph"><a href="${esc(i.photo.link || i.photo.src)}" target="_blank" title="${t('Open on Wikipedia')}"><img src="${esc(i.photo.src)}" alt="" onerror="this.parentNode.parentNode.remove()"></a><span class="by">Wikipedia</span></div>` : '';
   const wx = w ? `<div class="wx"><span class="i">${x[1]}</span><div class="d">${t(x[0])}<br><small>${t('Feels like')} ${fmtTemp(w.feels)}</small></div><span class="t">${fmtTemp(w.temp)}</span></div>`
     + `<div class="wg"><div><span>${t('Wind')}</span><b>${fmtSpd(w.wind)} ${Math.round(w.dir)}°</b></div><div><span>${t('Gusts')}</span><b>${fmtSpd(w.gust)}</b></div>`
     + `<div><span>${t('Humidity')}</span><b>${Math.round(w.hum)}%</b></div><div><span>${t('Pressure')}</span><b>${Math.round(w.pres)} hPa</b></div>`
-    + `<div><span>${t('Visibility')}</span><b>${w.vis == null ? '—' : fmtDist(w.vis / 1000, w.vis >= 10000 ? 0 : 1)}</b></div></div>`
+    + `<div><span>${t('Visibility')}</span><b>${w.vis == null ? '—' : fmtDist(w.vis / 1000, w.vis >= 10000 ? 0 : 1)}</b></div>${rwHtml(s)}</div>`
     : `<div class="rtx" style="margin-top:12px">${t(s.err ? 'Weather unavailable' : 'Loading weather…')}</div>`;
   const mt = i?.metar?.metar, metar = mt ? `<div class="mt"><span class="fc ${esc(mt.cat)}">${esc(mt.cat || 'METAR')}</span>${esc(mt.icao)}${mt.dist > 15 ? ' · ' + fmtDist(mt.dist) : ''}<code>${esc(mt.raw)}</code>`
     + (i.metar.taf ? `<details><summary>TAF</summary><code>${esc(i.metar.taf)}</code></details>` : '') + `</div>` : '';
-  $('apc').innerHTML = `<div class="ch"><div class="cn"><h2>${esc(s.code)}</h2><small>${esc(s.name)}</small><br><small>${esc(place)}</small></div><button id="ax" class="ib" title="${t('Close')}">✕</button></div>`
-    + `${ph}${wx}${metar}<div class="tabs"><button data-t="arr" class="${s.tab === 'arr' ? 'on' : ''}">${t('Arrivals')} <em>${apFlights(s, 'dst').length}</em></button><button data-t="dep" class="${s.tab === 'dep' ? 'on' : ''}">${t('Departures')} <em>${apFlights(s, 'org').length}</em></button></div><div id="apr">${apRows(s)}</div>`;
+  $('apc').innerHTML = `<div class="ch"><div class="cn"><h2>${esc(s.code)}</h2><small>${esc(s.name)}</small><br><small>${esc(place)}</small></div>${flag}<button id="ax" class="ib" title="${t('Close')}">✕</button></div>`
+    + `${ph}${wx}${apStatsHtml(s)}${metar}<div class="tabs"><button data-t="arr" class="${s.tab === 'arr' ? 'on' : ''}">${t('Arrivals')} <em>${apFlights(s, 'dst').length}</em></button><button data-t="dep" class="${s.tab === 'dep' ? 'on' : ''}">${t('Departures')} <em>${apFlights(s, 'org').length}</em></button></div><div id="apr">${apRows(s)}</div>`;
 }
 $('apc').onclick = e => {
   if (e.target.id === 'ax') return closeAp();
+  if (e.target.closest('#apsb') && apSel) { const s = apSel; s.stOpen = !s.stOpen; renderAp(); if (s.stOpen && !window.AP_STATS) loadJs('airport-stats').then(ok => { if (!ok) s.stErr = true; if (apSel === s) renderAp(); }); return; }
   const t = e.target.closest('.tabs button'); if (t && apSel) { apSel.tab = t.dataset.t; return renderAp(); }
   const r = e.target.closest('.row'); if (r) select(r.dataset.id);
 };

@@ -1403,3 +1403,115 @@ DICT.ko = {
   "The disk image was opened: drag SkyTrack to Applications": "디스크 이미지가 열렸습니다: SkyTrack을 응용 프로그램으로 드래그하세요",
   "The AppImage is in your Downloads folder: make it executable and run it": "AppImage가 다운로드 폴더에 있습니다: 실행 가능하게 만든 후 실행하세요"
 };
+Object.assign(DICT.tr, {
+  "Runways": "Pist",
+  "Statistics": "İstatistikler",
+  "Top destinations": "En çok uçulan yerler",
+  "Routes": "Rotalar",
+  "Destinations": "Varış noktaları",
+  "Airlines": "Havayolları",
+  "longest {0}": "en uzun {0}",
+  "{0} routes": "{0} rota",
+  "{0} airlines": "{0} havayolu",
+  "Right now: {0} arrivals, {1} departures nearby": "Şu an: yakında {0} varış, {1} kalkış",
+  "No route data for this airport": "Bu havalimanı için rota verisi yok",
+  "Route data: OpenFlights (up to 2017), a guide to the network rather than today's timetable.": "Rota verisi: OpenFlights (2017'ye kadar), bugünkü tarifeden çok ağın genel bir görünümüdür."
+});
+Object.assign(DICT.es, {
+  "Runways": "Pistas",
+  "Statistics": "Estadísticas",
+  "Top destinations": "Destinos principales",
+  "Routes": "Rutas",
+  "Destinations": "Destinos",
+  "Airlines": "Aerolíneas",
+  "longest {0}": "más larga {0}",
+  "{0} routes": "{0} rutas",
+  "{0} airlines": "{0} aerolíneas",
+  "Right now: {0} arrivals, {1} departures nearby": "Ahora: {0} llegadas y {1} salidas cerca",
+  "No route data for this airport": "No hay datos de rutas de este aeropuerto",
+  "Route data: OpenFlights (up to 2017), a guide to the network rather than today's timetable.": "Datos de rutas: OpenFlights (hasta 2017), una guía de la red más que el horario actual."
+});
+Object.assign(DICT.de, {
+  "Runways": "Landebahnen",
+  "Statistics": "Statistiken",
+  "Top destinations": "Top-Ziele",
+  "Routes": "Strecken",
+  "Destinations": "Ziele",
+  "Airlines": "Fluggesellschaften",
+  "longest {0}": "längste {0}",
+  "{0} routes": "{0} Strecken",
+  "{0} airlines": "{0} Airlines",
+  "Right now: {0} arrivals, {1} departures nearby": "Jetzt: {0} Ankünfte, {1} Abflüge in der Nähe",
+  "No route data for this airport": "Keine Streckendaten für diesen Flughafen",
+  "Route data: OpenFlights (up to 2017), a guide to the network rather than today's timetable.": "Streckendaten: OpenFlights (bis 2017), ein Überblick über das Netz, kein aktueller Flugplan."
+});
+Object.assign(DICT.fr, {
+  "Runways": "Pistes",
+  "Statistics": "Statistiques",
+  "Top destinations": "Destinations principales",
+  "Routes": "Routes",
+  "Destinations": "Destinations",
+  "Airlines": "Compagnies",
+  "longest {0}": "la plus longue {0}",
+  "{0} routes": "{0} routes",
+  "{0} airlines": "{0} compagnies",
+  "Right now: {0} arrivals, {1} departures nearby": "En ce moment : {0} arrivées, {1} départs à proximité",
+  "No route data for this airport": "Aucune donnée de routes pour cet aéroport",
+  "Route data: OpenFlights (up to 2017), a guide to the network rather than today's timetable.": "Données de routes : OpenFlights (jusqu'en 2017), un aperçu du réseau plutôt que l'horaire actuel."
+});
+Object.assign(DICT.ar, {
+  "Runways": "المدارج",
+  "Statistics": "الإحصاءات",
+  "Top destinations": "أبرز الوجهات",
+  "Routes": "المسارات",
+  "Destinations": "الوجهات",
+  "Airlines": "شركات الطيران",
+  "longest {0}": "الأطول {0}",
+  "{0} routes": "{0} مسارات",
+  "{0} airlines": "{0} شركات طيران",
+  "Right now: {0} arrivals, {1} departures nearby": "الآن: {0} وصولًا و{1} إقلاعًا قريبًا",
+  "No route data for this airport": "لا توجد بيانات مسارات لهذا المطار",
+  "Route data: OpenFlights (up to 2017), a guide to the network rather than today's timetable.": "بيانات المسارات: OpenFlights (حتى 2017)، دليل لشبكة الرحلات وليست جدول اليوم."
+});
+Object.assign(DICT.zh, {
+  "Runways": "跑道",
+  "Statistics": "统计",
+  "Top destinations": "热门目的地",
+  "Routes": "航线",
+  "Destinations": "目的地",
+  "Airlines": "航空公司",
+  "longest {0}": "最长 {0}",
+  "{0} routes": "{0} 条航线",
+  "{0} airlines": "{0} 家航空公司",
+  "Right now: {0} arrivals, {1} departures nearby": "当前：附近有 {0} 个到达、{1} 个出发",
+  "No route data for this airport": "暂无该机场的航线数据",
+  "Route data: OpenFlights (up to 2017), a guide to the network rather than today's timetable.": "航线数据：OpenFlights（截至 2017 年），反映网络概况，并非今日时刻表。"
+});
+Object.assign(DICT.ja, {
+  "Runways": "滑走路",
+  "Statistics": "統計",
+  "Top destinations": "主な就航先",
+  "Routes": "路線",
+  "Destinations": "就航先",
+  "Airlines": "航空会社",
+  "longest {0}": "最長 {0}",
+  "{0} routes": "{0} 路線",
+  "{0} airlines": "{0} 社",
+  "Right now: {0} arrivals, {1} departures nearby": "現在: 付近に到着 {0} 件、出発 {1} 件",
+  "No route data for this airport": "この空港の路線データはありません",
+  "Route data: OpenFlights (up to 2017), a guide to the network rather than today's timetable.": "路線データ: OpenFlights（2017年まで）。今日の時刻表ではなく路線網の目安です。"
+});
+Object.assign(DICT.ko, {
+  "Runways": "활주로",
+  "Statistics": "통계",
+  "Top destinations": "주요 취항지",
+  "Routes": "노선",
+  "Destinations": "취항지",
+  "Airlines": "항공사",
+  "longest {0}": "가장 긴 활주로 {0}",
+  "{0} routes": "노선 {0}개",
+  "{0} airlines": "항공사 {0}곳",
+  "Right now: {0} arrivals, {1} departures nearby": "현재: 근처 도착 {0}편, 출발 {1}편",
+  "No route data for this airport": "이 공항의 노선 데이터가 없습니다",
+  "Route data: OpenFlights (up to 2017), a guide to the network rather than today's timetable.": "노선 데이터: OpenFlights (2017년까지), 오늘의 시간표가 아니라 노선망의 개요입니다."
+});

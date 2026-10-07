@@ -3,8 +3,9 @@
 const fs = require('fs'), path = require('path');
 const src = path.join(__dirname, '..', 'src'), out = path.join(__dirname, '..', 'site', 'app');
 const JS = ['geo', 'fuel', 'data', 'webdemo', 'i18n', 'langs', 'langs-more', 'airports', 'airports-more', 'airports-tiny', 'renderer', 'extras', 'layers', 'features', 'tools', 'trip'];
+const LAZY = ['airport-runways', 'airport-stats']; // loaded on demand by the app, no <script> tag
 fs.rmSync(out, { recursive: true, force: true }); fs.mkdirSync(out, { recursive: true });
-for (const n of JS) fs.copyFileSync(path.join(src, n + '.js'), path.join(out, n + '.js'));
+for (const n of JS.concat(LAZY)) fs.copyFileSync(path.join(src, n + '.js'), path.join(out, n + '.js'));
 const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet';
 let html = fs.readFileSync(path.join(src, 'index.html'), 'utf8');
 const rep = (a, b) => { if (!html.includes(a)) throw new Error('build-web: not found in src/index.html: ' + a.slice(0, 60)); html = html.replace(a, b); };
