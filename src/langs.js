@@ -557,3 +557,9 @@ Object.assign(DICT.tr, { 'Wide view: filling in, zoom in for all': 'Geniş gör�
 Object.assign(DICT.es, { 'Wide view: filling in, zoom in for all': 'Vista amplia: rellenando, acércate para ver todos' });
 Object.assign(DICT.de, { 'Wide view: filling in, zoom in for all': 'Weite Ansicht: wird aufgefüllt, zoome hinein für alle' });
 Object.assign(DICT.fr, { 'Wide view: filling in, zoom in for all': 'Vue large : remplissage en cours, zoomez pour tous les voir' });
+
+// Landed card text
+Object.assign(DICT.tr, { 'landed {0} ago': '{0} önce indi', 'just landed': 'az önce indi' });
+Object.assign(DICT.es, { 'landed {0} ago': 'aterrizó hace {0}', 'just landed': 'acaba de aterrizar' });
+Object.assign(DICT.de, { 'landed {0} ago': 'vor {0} gelandet', 'just landed': 'gerade gelandet' });
+Object.assign(DICT.fr, { 'landed {0} ago': 'a atterri il y a {0}', 'just landed': 'vient d\'atterrir' });

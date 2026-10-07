@@ -109,3 +109,12 @@ test('cover: a continent-sized view with spread = true reaches all of it early; 
   const a = D.cover({ s: 40, n: 42, w: 28, e: 30 }, 200, -1, true).circles, b2 = D.cover({ s: 40, n: 42, w: 28, e: 30 }, 200).circles;
   assert.deepEqual(a, b2); // a small view is unchanged
 });
+
+test('landedOf: touchdown time is the first ground point of the trailing run of ground points', () => {
+  const tr = [[0, 1, 1, 30000], [100, 2, 2, 3000], [160, 3, 3, 'ground'], [200, 3, 3, 'ground'], [260, 3, 3, 'ground']];
+  assert.equal(D.landedOf(tr, 1000), 1160);
+  assert.equal(D.landedOf([[0, 1, 1, 30000], [50, 2, 2, 20000]], 1000), null); // still flying
+  assert.equal(D.landedOf([[0, 1, 1, 'ground'], [50, 1, 1, 'ground']], 1000), null); // never flew in this trace
+  assert.equal(D.landedOf([[0, 1, 1, 'ground'], [40, 2, 2, 5000], [90, 3, 3, 'ground']], 0), 90); // took off and landed again: the last touchdown
+  assert.equal(D.landedOf([], 5), null);
+});

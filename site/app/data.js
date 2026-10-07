@@ -261,6 +261,11 @@
     const step = Math.max(1, Math.ceil(pts.length / MAX_PTS));
     return pts.filter((_, k) => k % step === 0 || k === pts.length - 1);
   }
+  // When did the aircraft touch down? It is on the ground now: the first "ground" point of the run of ground points at the end of the trace (epoch seconds), provided it was in the air before. Otherwise null.
+  function landedOf(trace, base = 0) {
+    let i = trace.length; while (i > 0 && trace[i - 1][3] === 'ground') i--;
+    return i === trace.length || i === 0 || typeof trace[i][0] !== 'number' ? null : base + trace[i][0];
+  }
   async function trace(hex) {
     if (typeof hex !== 'string' || !/^[0-9a-fA-F]{6}$/.test(hex)) return { ok: false, error: 'invalid ICAO24' };
     hex = hex.toLowerCase();
@@ -268,7 +273,7 @@
       const r = await get(`https://adsb.lol/data/traces/${hex.slice(-2)}/trace_full_${hex}.json`, 15000);
       if (r.status === 404) return { ok: true, points: [] };
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      const tr = (await r.json()).trace || []; return { ok: true, points: legOf(tr), prof: profOf(tr) };
+      const j = await r.json(), tr = j.trace || []; return { ok: true, points: legOf(tr), prof: profOf(tr), landedAt: landedOf(tr, j.timestamp || 0) };
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
@@ -398,7 +403,7 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  const api = { shareBase: SHARE_BASE, flights, find, setOpenSky, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
+  const api = { landedOf, shareBase: SHARE_BASE, flights, find, setOpenSky, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
   root.SkyData = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
