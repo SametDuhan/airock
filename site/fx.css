@@ -214,3 +214,47 @@ header,header .wrap,.badge,.btn,.card,.box,.chip3d,details,.stats div,.radar .hu
 .chip3d{will-change:transform}
 .btn.primary::after{will-change:transform}
 @media (prefers-reduced-motion:reduce){.badge i::after,.led::after{animation:none}}
+
+/* stacking: the download menu must sit above the tilting video frame and the text under the buttons */
+.hero .btns{position:relative;z-index:30}
+.dlsplit{position:relative;z-index:31}
+.dmenu{z-index:60}
+.hero .trust,.hero .mobile-note{position:relative;z-index:1}
+.stage{position:relative;z-index:1}
+
+/* flight-line dividers between sections */
+.flightline{position:relative;height:40px;max-width:760px;margin:-20px auto;pointer-events:none;opacity:0;transition:opacity 1s var(--ease)}
+.flightline.in{opacity:1}
+.flightline::before{content:"";position:absolute;left:0;right:0;top:50%;height:6px;margin-top:-3px;
+  background:radial-gradient(circle,var(--accent) 1.3px,transparent 1.8px) 0 50%/14px 6px repeat-x;opacity:.45;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent)}
+.flightline svg{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;color:var(--accent);filter:drop-shadow(0 0 8px var(--glow));
+  background:var(--bg);border-radius:50%;padding:3px;box-sizing:content-box}
+
+/* back to top, with a scroll progress ring */
+.totop{position:fixed;right:20px;bottom:20px;z-index:70;width:52px;height:52px;border-radius:50%;border:1px solid var(--ring);background:var(--panel);color:var(--accent);cursor:pointer;display:grid;place-items:center;padding:0;
+  opacity:0;transform:translateY(16px) scale(.9);pointer-events:none;transition:opacity .35s var(--ease),transform .35s var(--ease),border-color .2s;box-shadow:0 14px 34px -10px var(--shadow)}
+.totop.show{opacity:1;transform:none;pointer-events:auto}
+.totop:hover{border-color:var(--accent);transform:translateY(-3px)}
+.totop svg{position:absolute;inset:-1px;width:52px;height:52px;transform:rotate(-90deg)}
+.totop svg circle{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:150.8;stroke-dashoffset:150.8}
+.totop i{width:14px;height:14px;border-left:2.5px solid currentColor;border-top:2.5px solid currentColor;transform:translateY(3px) rotate(45deg)}
+@media (max-width:640px){.totop{right:14px;bottom:14px;width:46px;height:46px}.totop svg{width:46px;height:46px}}
+
+/* radar extras */
+.radar .tick{font:600 11px ui-monospace,Consolas,monospace;fill:var(--muted);opacity:.65;letter-spacing:.06em}
+#rPlane .ring{transform-box:fill-box;transform-origin:center;animation:ringp 2.4s ease-out infinite}
+
+/* footer wordmark */
+footer{overflow:hidden}
+footer::after{content:"SKYTRACK";display:block;text-align:center;font:800 clamp(56px,16vw,210px)/1 Cambria,Georgia,serif;letter-spacing:.14em;margin:36px 0 -.18em;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 34%,transparent),transparent 78%);-webkit-background-clip:text;background-clip:text;color:transparent;pointer-events:none;user-select:none}
+
+/* light theme: readable gold headline (no near-white highlight) */
+:root[data-theme=light] h1 .g{background-image:linear-gradient(100deg,#9a6a00,#d89b00 35%,#e8ae00 55%,#b87f00)}
+:root[data-theme=light] h1 .p{background-image:linear-gradient(180deg,#1c1c1c 40%,#4a463d)}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]) h1 .g{background-image:linear-gradient(100deg,#9a6a00,#d89b00 35%,#e8ae00 55%,#b87f00)}:root:not([data-theme=dark]) h1 .p{background-image:linear-gradient(180deg,#1c1c1c 40%,#4a463d)}}
+:root[data-theme=light] .eyebrow,:root[data-theme=light] .card h3{color:var(--text)}
+:root[data-theme=light] .eyebrow{color:#9a6a00}
+:root[data-theme=light] .stats b{background-image:linear-gradient(180deg,#d89b00,#9a6a00)}
+:root[data-theme=light] .totop,:root[data-theme=light] .chip3d{background:#fff}

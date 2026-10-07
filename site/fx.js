@@ -7,10 +7,11 @@
 
   /* ---- scroll progress, sticky header state, active nav link ---- */
   const prog = $('#prog'), hdr = $('header');
-  let maxS = 1, tick0 = false, stuck = false;
+  let maxS = 1, tick0 = false, stuck = false, tt = null, ring = null;
   const calc = () => { maxS = Math.max(1, document.documentElement.scrollHeight - innerHeight); };
   const onScroll = () => { tick0 = false;
     if (prog) prog.style.transform = `scaleX(${Math.min(1, scrollY / maxS).toFixed(4)})`;
+    const sh = scrollY > 900; if (tt && sh !== tt._s) { tt._s = sh; tt.classList.toggle('show', sh); } if (tt && sh) ring.style.strokeDashoffset = (150.8 * (1 - Math.min(1, scrollY / maxS))).toFixed(1);
     const s = scrollY > 30; if (hdr && s !== stuck) { stuck = s; hdr.classList.toggle('stuck', s); } };
   addEventListener('scroll', () => { if (!tick0) { tick0 = true; requestAnimationFrame(onScroll); } }, { passive: true });
   addEventListener('resize', () => { calc(); onScroll(); }); addEventListener('load', () => { calc(); onScroll(); }); calc(); onScroll();
@@ -21,6 +22,17 @@
     }), { rootMargin: '-45% 0px -50% 0px' });
     secs.forEach(s => so.observe(s));
   }
+
+  /* ---- dividers between sections ---- */
+  const PL = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12 3 4.5v5L13 12 3 14.5v5z"/></svg>';
+  $$('main > section').forEach((sec, i) => { if (!i) return; const d = document.createElement('div'); d.className = 'flightline reveal0'; d.setAttribute('aria-hidden', 'true'); d.innerHTML = PL; sec.parentNode.insertBefore(d, sec); });
+  const fio = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); fio.unobserve(e.target); } }), { threshold: .5 }) : null;
+  $$('.flightline').forEach(d => fio ? fio.observe(d) : d.classList.add('in'));
+
+  /* ---- back to top ---- */
+  tt = document.createElement('button'); tt.className = 'totop'; tt.setAttribute('aria-label', 'Top'); tt.innerHTML = '<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/></svg><i></i>';
+  document.body.appendChild(tt); tt.onclick = () => scrollTo({ top: 0, behavior: RM ? 'auto' : 'smooth' });
+  ring = tt.querySelector('circle');
 
   /* ---- numbered feature groups ---- */
   $$('.group-title').forEach((g, i) => g.dataset.n = String(i + 1).padStart(2, '0'));

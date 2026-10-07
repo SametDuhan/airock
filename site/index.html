@@ -224,7 +224,7 @@ header{position:sticky;top:0;z-index:20}
 #lmenu button{display:flex;align-items:center;gap:8px;white-space:nowrap;background:transparent;border:0;border-radius:8px;padding:7px 9px;color:var(--text);cursor:pointer;font:600 14px system-ui,sans-serif;text-align:left}#lmenu button:hover{background:var(--panel2)}
 #lmenu button i{font:700 11px ui-monospace,Consolas,monospace;font-style:normal;letter-spacing:.08em;width:36px;height:24px;line-height:24px;text-align:center;border-radius:12px;background:var(--panel2);color:var(--muted);flex:none}#lmenu button.on i{background:linear-gradient(135deg,var(--g1),var(--accent));color:var(--accent-ink)}#lmenu button.on{color:var(--accent)}
 </style>
-<link rel="stylesheet" href="fx.css?v=3">
+<link rel="stylesheet" href="fx.css?v=4">
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
 </head>
 <body>
@@ -313,8 +313,8 @@ header{position:sticky;top:0;z-index:20}
       <path id="rPath" d="M40 236C220 232 300 120 470 150S760 150 922 64" stroke="currentColor" stroke-opacity=".28" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round" style="color:var(--text)"/>
       <path id="rLook" d="" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9" opacity=".9"/>
       <g id="rTrail" fill="#f5c431"></g>
-      <g id="rPlane"><path d="M13 0-9-10v6.5L-1 0l-8 3.5V10z" fill="#f5c431"/></g>
-      <circle cx="40" cy="236" r="6" fill="#f5c431"/><circle cx="922" cy="64" r="6" fill="none" stroke="#f5c431" stroke-width="2"/>
+      <g id="rPlane"><circle class="ring" r="12" fill="none" stroke="#f5c431" stroke-width="1.5"/><path d="M13 0-9-10v6.5L-1 0l-8 3.5V10z" fill="#f5c431"/></g>
+      <g class="tick"><text x="40" y="288">0</text><text x="262" y="288">460</text><text x="486" y="288">920</text><text x="708" y="288">1380</text><text x="880" y="288">1850 km</text><text x="14" y="78">FL380</text><text x="14" y="153">FL340</text><text x="14" y="228">FL300</text></g><circle cx="40" cy="236" r="6" fill="#f5c431"/><circle cx="922" cy="64" r="6" fill="none" stroke="#f5c431" stroke-width="2"/>
     </svg>
     <div class="hud"><i class="led" id="rLed"></i><b id="rInfo">FL340</b></div>
   </div>
@@ -708,6 +708,6 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   { const sv = ls.get('st.lang'), b = (navigator.language || '').slice(0, 2).toLowerCase(); setLang(LANGS.some(x => x[0] === sv) ? sv : LANGS.some(x => x[0] === b) ? b : 'en'); }
 })();
 </script>
-<script src="fx.js?v=3"></script>
+<script src="fx.js?v=4"></script>
 </body>
 </html>
