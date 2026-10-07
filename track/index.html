@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkyTrack — Flight tracking link</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+:root{--bg:#141414;--panel:#1c1c1c;--line:#2e2e2e;--text:#ececec;--muted:#a0a0a0;--accent:#f5c431;--g:#4ade80;--y:#facc15;--r:#f87171}
+@media (prefers-color-scheme:light){:root{--bg:#f6f4ee;--panel:#fff;--line:#e2ded3;--text:#1c1c1c;--muted:#66625a;--accent:#e0a800}}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--line)}
+header a{color:var(--accent);text-decoration:none;font:800 18px Cambria,Georgia,serif;letter-spacing:.16em}
+header span{color:var(--muted);font-size:13px}
+main{flex:1;display:grid;grid-template-columns:minmax(300px,380px) 1fr;min-height:0}
+@media (max-width:760px){main{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+#info{padding:18px 18px 24px;overflow:auto;background:var(--panel);border-right:1px solid var(--line)}
+#map{min-height:260px}
+h1{margin:0;font:800 30px Cambria,Georgia,serif;letter-spacing:.04em}
+.air{color:var(--muted);margin:2px 0 14px}
+.rt{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 4px}.rt b{font:800 26px Cambria,Georgia,serif;color:var(--accent)}.rt small{display:block;color:var(--muted);font-size:12px;max-width:150px}
+.pg{height:6px;border-radius:4px;background:var(--line);overflow:hidden}.pg i{display:block;height:100%;background:var(--accent);width:0}
+.kv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}.kv span{color:var(--muted)}.kv b{text-align:right}
+.tb{margin-top:14px;padding:12px 14px;border-radius:10px;border:1px solid var(--line);font-weight:600}
+.tb.g{border-color:var(--g);color:var(--g)}.tb.y{border-color:var(--y);color:var(--y)}.tb.r{border-color:var(--r);color:var(--r)}.tb.x{color:var(--muted);font-weight:400}
+.note{color:var(--muted);font-size:13px;margin-top:14px}.msg{padding:30px 6px;color:var(--muted)}
+.btn{display:inline-block;margin-top:16px;padding:10px 18px;border-radius:8px;background:var(--accent);color:#1a1500;font-weight:700;text-decoration:none}
+.leaflet-container{background:#0e0e0e}
+</style>
+</head>
+<body>
+<header><a href="../">SKYTRACK</a><span id="upd"></span></header>
+<main>
+  <div id="info"><div class="msg" id="msg">Loading…</div></div>
+  <div id="map"></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="../app/geo.js"></script>
+<script src="../app/data.js"></script>
+<script src="track.js"></script>
+</body>
+</html>
