@@ -37,8 +37,9 @@ main{flex:1;position:relative}#map{position:absolute;inset:0;background:#0e0e0e}
 .ch{display:flex;gap:10px;align-items:flex-start}.ch .cn{flex:1;min-width:0}.flag{width:24px;height:auto;max-height:28px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.2);flex:none;margin-top:4px}.logo{width:38px;height:38px;border-radius:4px;background:#fff;object-fit:contain;padding:2px;flex:none}
 #card .ib,#apc .ib{width:28px;height:28px;margin:0;padding:0;color:var(--mut);border-color:var(--line);flex:none}#card .ib:hover,#apc .ib:hover{background:transparent;color:var(--ac);border-color:var(--ac)}
 .ph{display:block;margin:10px 0 2px;border-radius:3px;overflow:hidden;background:#111}.ph{position:relative}.ph img{display:block;width:100%;height:auto}
-#card .pa{position:absolute;top:50%;margin:-17px 0 0;width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;font:700 22px/1 system-ui,sans-serif;background:var(--ac);color:#111;border:2px solid #111;border-radius:50%}
-#card .pa:hover{background:#ffd75a;color:#111}.pa.l{left:6px}.pa.r{right:6px}
+#card .pa{position:absolute;top:0;bottom:0;width:38px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;background:none;border:0;border-radius:0;color:#fff;cursor:pointer;opacity:.55;transition:opacity .15s,background .15s}
+#card .pa svg{width:22px;height:22px;filter:drop-shadow(0 1px 3px #000c)}#card .pa.l svg{transform:scaleX(-1)}
+#card .pa:hover{opacity:1;background:linear-gradient(90deg,#0006,transparent)}#card .pa.r:hover{background:linear-gradient(270deg,#0006,transparent)}.pa.l{left:0}.pa.r{right:0}
 .pc,.by{position:absolute;bottom:6px;background:#000a;color:#fff;font:600 10px ui-monospace,monospace;padding:2px 6px;border-radius:3px}.pc{right:6px}.by{left:6px;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}
 canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 #hov{position:absolute;z-index:1000;display:none;pointer-events:none;background:var(--pn);color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:3px 7px;font:600 11px ui-monospace,monospace;white-space:nowrap}
@@ -236,8 +237,8 @@ html[lang=ar] #side,html[lang=ar] #card,html[lang=ar] #apc,html[lang=ar] .mdl{di
 html[lang=ar] #side .brand{direction:ltr} /* the title and the language menu keep their place, so the menu doesn't open off screen */
 .ph a{cursor:zoom-in}
 #lbx{position:fixed;inset:0;z-index:5000;background:#000d;display:flex;align-items:center;justify-content:center;padding:48px 64px;animation:lmin .16s ease-out}#lbx img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;box-shadow:0 10px 50px #000}
-#lbx button{position:absolute;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:#ffffff1f;color:#fff;cursor:pointer;backdrop-filter:blur(6px)}#lbx button:hover{background:var(--ac);color:#111}
-#lbx .lx{top:14px;right:16px;width:36px;height:36px;font-size:16px}#lbx .ln{top:50%;margin-top:-22px;width:44px;height:44px;font:700 28px/1 system-ui,sans-serif}#lbx .ln.l{left:12px}#lbx .ln.r{right:12px}
+#lbx button{position:absolute;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:#ffffff1f;color:#fff;cursor:pointer;backdrop-filter:blur(6px)}#lbx button:hover{background:#ffffff33;color:#fff}
+#lbx .lx{top:14px;right:16px;width:36px;height:36px;font-size:16px}#lbx .ln{top:50%;margin-top:-26px;width:44px;height:52px;border-radius:8px;background:#ffffff14;color:#fff;opacity:.6}#lbx .ln svg{width:26px;height:26px}#lbx .ln.l svg{transform:scaleX(-1)}#lbx .ln:hover{opacity:1}#lbx .ln.l{left:12px}#lbx .ln.r{right:12px}
 #lbx .lf{position:absolute;left:0;right:0;bottom:12px;display:flex;gap:14px;justify-content:center;align-items:center;font-size:12px;color:#ddd;text-shadow:0 1px 4px #000}#lbx .lo{color:var(--ac);text-decoration:none}#lbx .lo:hover{text-decoration:underline}
 .apm{background:none;border:0}.apm .apb{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;box-sizing:border-box;background:radial-gradient(circle at 50% 20%,#35557f,#16223a 70%);border:1.5px solid #f2c230;box-shadow:0 1px 4px #000a,0 0 0 2px #f2c23033;transition:transform .15s,box-shadow .15s}
 .apm .apb svg{display:block;width:100%;height:100%}.apm:not(.big) .apb{padding:2px;border-width:1px}

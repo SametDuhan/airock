@@ -353,13 +353,14 @@ async function loadPhotos(f) {
   if (f.pics) return; let e = fresh(picCache, f.id);
   if (!e) { const res = await DATA.photos(f.id, f.ac?.reg || f.reg); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok) picCache.set(f.id, e); }
   const ac = f.ac || {}, extra = ac.photo || ac.thumb;
-  f.pics = [...e.v, ...(extra && !e.v.length ? [{ src: extra, big: ac.photo || extra, link: ac.photo || extra, by: '' }] : [])]; f.pi = 0;
+  f.pics = [...e.v, ...(extra && !e.v.length ? [{ src: extra, big: ac.photo || extra, link: ac.photo || extra, by: '' }] : [])]; f.pi = 0; f._pre = f.pics.map(p => { const im = new Image(); im.src = p.src; return im; }); // every photo is fetched right away, so switching is instant
   if (f.id === selected) renderCard(true);
 }
+const CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; // thin chevron, flipped by CSS for "previous"
 const photoHtml = f => { const ac = f.ac || {}, pics = f.pics || (ac.thumb ? [{ src: ac.thumb, link: ac.photo || ac.thumb, by: '' }] : []); if (!pics.length) return '';
   const i = (f.pi || 0) % pics.length, p = pics[i], nav = pics.length > 1;
   return `<div class="ph"><a href="${esc(p.link || p.src)}" target="_blank" title="${t('Open photo')}"><img src="${esc(p.src)}" alt="" onerror="this.parentNode.parentNode.remove()"></a>`
-    + (nav ? `<button class="pa l" id="pp" title="${t('Previous photo')}">‹</button><button class="pa r" id="pn" title="${t('Next photo')}">›</button><span class="pc">${i + 1} / ${pics.length}</span>` : '')
+    + (nav ? `<button class="pa l" id="pp" title="${t('Previous photo')}">${CHEV}</button><button class="pa r" id="pn" title="${t('Next photo')}">${CHEV}</button><span class="pc">${i + 1} / ${pics.length}</span>` : '')
     + (p.by ? `<span class="by" title="${t('Photo')}: ${esc(p.by)}">© ${esc(p.by)}</span>` : '') + `</div>`; };
 function nearest(f) { let b = null, m = 1e9; AP.forEach(a => { const d = km(f.lat, f.lon, a[2], a[3]); if (d < m) { m = d; b = a; } }); return `${b[0]} · ${fmtDist(m)}`; }
 // Trail: positions recorded every 5 s since the app first saw this aircraft
@@ -777,8 +778,8 @@ $('card').onclick = e => {
   { const a = e.target.closest('.ph a'); if (a) { e.preventDefault(); const f = flights.get(selected), pics = f?.pics || (f?.ac?.thumb ? [{ src: f.ac.thumb, big: f.ac.photo, link: f.ac.photo || f.ac.thumb, by: '' }] : []); if (pics.length) openLightbox(pics, f.pi || 0, i => { f.pi = i; renderCard(true); }); return; } }
   { const fl = e.target.closest('#fl'); if (fl && fl.classList.contains('sw')) { flPref = flPref === 'scene' ? 'line' : 'scene'; save('sky.fl', flPref); renderCard(); return; } }
   if (X.click(e)) return;
-  if (e.target.id === 'pp' || e.target.id === 'pn') { const f = flights.get(selected), n = f?.pics?.length; if (!n) return;
-    f.pi = ((f.pi || 0) + (e.target.id === 'pn' ? 1 : n - 1)) % n; return renderCard(true); }
+  if (e.target.closest('#pp, #pn')) { const f = flights.get(selected), n = f?.pics?.length; if (!n) return;
+    f.pi = ((f.pi || 0) + (e.target.closest('#pn') ? 1 : n - 1)) % n; return swapPhoto(f); }
   if (e.target.id !== 'fv') return;
   fav.has(selected) ? fav.delete(selected) : fav.add(selected); save('sky.fav', [...fav]); renderCard(); renderList(); redraw();
 };
@@ -787,8 +788,8 @@ let lbx = null;
 function openLightbox(pics, i = 0, onChange) {
   closeLightbox(); let k = i % pics.length;
   const d = document.createElement('div'); d.id = 'lbx'; lbx = d;
-  d.innerHTML = `<img alt=""><button class="lx" title="${t('Close')}">✕</button>${pics.length > 1 ? `<button class="ln l" title="${t('Previous photo')}">‹</button><button class="ln r" title="${t('Next photo')}">›</button>` : ''}<div class="lf"><span class="lc2"></span><span class="lb2"></span><a class="lo" target="_blank"></a></div>`;
-  const show = () => { const p = pics[k], im = d.querySelector('img'); im.src = p.big || p.src; d.querySelector('.lc2').textContent = pics.length > 1 ? `${k + 1} / ${pics.length}` : '';
+  d.innerHTML = `<img alt=""><button class="lx" title="${t('Close')}">✕</button>${pics.length > 1 ? `<button class="ln l" title="${t('Previous photo')}">${CHEV}</button><button class="ln r" title="${t('Next photo')}">${CHEV}</button>` : ''}<div class="lf"><span class="lc2"></span><span class="lb2"></span><a class="lo" target="_blank"></a></div>`;
+  const show = () => { const p = pics[k], im = d.querySelector('img'); im.src = p.big || p.src; for (const o of [1, -1]) { const q = pics[(k + o + pics.length) % pics.length]; if (q) new Image().src = q.big || q.src; } d.querySelector('.lc2').textContent = pics.length > 1 ? `${k + 1} / ${pics.length}` : '';
     d.querySelector('.lb2').textContent = p.by ? '© ' + p.by : ''; const a = d.querySelector('.lo'); a.href = p.link || p.big || p.src; a.textContent = t('Open the source page') + ' ↗'; a.style.display = /^https:/.test(a.href) ? '' : 'none'; onChange?.(k); };
   const go = n => { k = (k + n + pics.length) % pics.length; show(); };
   d.onclick = e => { if (e.target.closest('.lx') || e.target === d) closeLightbox(); else if (e.target.closest('.ln')) go(e.target.closest('.ln').classList.contains('r') ? 1 : -1); };
@@ -796,6 +797,12 @@ function openLightbox(pics, i = 0, onChange) {
   document.addEventListener('keydown', d._key, true); document.body.appendChild(d); show();
 }
 function closeLightbox() { if (!lbx) return; document.removeEventListener('keydown', lbx._key, true); lbx.remove(); lbx = null; }
+// Switching photos only changes the picture in place (the card is not rebuilt, so nothing blinks); the other photos are already loaded
+function swapPhoto(f) {
+  const ph = $('card').querySelector('.ph'), p = f.pics?.[f.pi || 0], im = ph?.querySelector('img'), by = ph?.querySelector('.by'); if (!p || !im || (p.by && !by) || (!p.by && by)) return renderCard(true);
+  im.src = p.src; ph.querySelector('a').href = p.link || p.src; ph.querySelector('.pc').textContent = `${(f.pi || 0) + 1} / ${f.pics.length}`;
+  if (by) { by.textContent = '© ' + p.by; by.title = `${t('Photo')}: ${p.by}`; }
+}
 function renderList() {
   const q = $('q').value.trim().toLowerCase();
   const arr = [...flights.values()].filter(f => vis(f) && (f.cs.toLowerCase().includes(q) || (f.reg || '').toLowerCase().includes(q))).sort((a, b) => (a.ground - b.ground) || (/^[A-Z]{2,3}\d/.test(b.cs) - /^[A-Z]{2,3}\d/.test(a.cs)) || a.cs.localeCompare(b.cs)).slice(0, 200); // airborne flights with callsigns first
