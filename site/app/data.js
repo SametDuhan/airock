@@ -225,31 +225,36 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  /* ---------- photos of an aircraft: planespotters.net (by ICAO24, 448 px) and Wikimedia Commons (found by registration, up to 2400 px) ---------- */
+  /* ---------- photos of an aircraft: planespotters.net (by ICAO24, 448 px) and Wikimedia Commons (found by registration, up to 1920 px) ---------- */
   async function spotterPhotos(hex) {
     const r = await get('https://api.planespotters.net/pub/photos/hex/' + hex.toLowerCase(), 10000);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return ((await r.json()).photos || []).filter(p => p.thumbnail_large?.src).map(p => ({ src: p.thumbnail_large.src, link: p.link || '', by: p.photographer || '' }));
   }
   // Commons files whose title contains the registration (a search for "TC-JNA" also finds unrelated files, so each title is checked)
-  // the card gets a 960 px version of a Commons photo, the viewer the 2400 px one
   async function commonsPhotos(reg) {
     const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, ''), key = norm(reg);
     if (key.length < 3) return [];
-    const r = await get('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=12&gsrsearch=' + encodeURIComponent('"' + reg + '"')
-      + '&prop=imageinfo&iiprop=url|mime|size|extmetadata&iiurlwidth=2400', 10000);
+    const r = await get('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=8&gsrsearch=' + encodeURIComponent('"' + reg + '"')
+      + '&prop=imageinfo&iiprop=url|mime|size|extmetadata', 6000);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const pages = Object.values((await r.json()).query?.pages || {}).sort((a, b) => a.index - b.index);
-    return pages.filter(p => norm(p.title).includes(key)).map(p => ({ p, i: p.imageinfo?.[0] })).filter(({ i }) => i?.thumburl && /^image\/(jpeg|png)$/.test(i.mime))
-      .map(({ p, i }) => ({ src: i.width > 1100 ? 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(p.title.replace(/^File:/, '')) + '?width=960' : i.thumburl, big: i.thumburl, link: i.descriptionurl || '', by: String(i.extmetadata?.Artist?.value || '').replace(/<[^>]*>/g, '').trim().slice(0, 60) }));
+    // thumbnails of the standard widths (960 for the card, 1920 for the viewer) are the ones Commons keeps ready: other widths are made on request and take seconds
+    const th = (i, w) => { const u = i.url.split('?')[0]; if (!(i.width > w)) return u; return u.replace('/commons/', '/commons/thumb/') + '/' + w + 'px-' + u.slice(u.lastIndexOf('/') + 1); };
+    return pages.filter(p => norm(p.title).includes(key)).map(p => ({ p, i: p.imageinfo?.[0] })).filter(({ i }) => i?.url && /^image\/(jpeg|png)$/.test(i.mime))
+      .map(({ p, i }) => ({ src: th(i, 960), big: th(i, 1920), link: i.descriptionurl || '', by: String(i.extmetadata?.Artist?.value || '').replace(/<[^>]*>/g, '').trim().slice(0, 60) }));
   }
   async function photos(hex, reg = '') {
     if (typeof hex !== 'string' || !/^[0-9a-fA-F]{6}$/.test(hex)) return { ok: false, error: 'invalid ICAO24' };
-    const [a, c] = await Promise.allSettled([spotterPhotos(hex), /^[A-Za-z0-9-]{3,10}$/.test(reg) ? commonsPhotos(reg) : []]);
-    if (a.status === 'rejected' && c.status === 'rejected') return { ok: false, error: a.reason?.message || 'no response' };
+    const sp = spotterPhotos(hex), cm = /^[A-Za-z0-9-]{3,10}$/.test(reg) ? commonsPhotos(reg) : Promise.resolve([]);
+    sp.catch(() => {}); cm.catch(() => {});
+    const [a] = await Promise.allSettled([sp]);
+    // Commons is slower: it gets 1.5 s after planespotters answered, then the photos are shown without it (and not remembered, so a later look asks again)
+    const c = await Promise.race([cm.then(v => ({ v }), e => ({ e })), sleep(1500).then(() => null)]);
+    if (a.status === 'rejected' && c?.e) return { ok: false, error: a.reason?.message || 'no response' };
     const out = [], seen = new Set();
-    for (const p of [...(a.value || []), ...(c.value || [])]) { if (seen.has(p.src)) continue; seen.add(p.src); out.push(p); if (out.length >= 8) break; }
-    return { ok: true, photos: out };
+    for (const p of [...(a.value || []), ...(c?.v || [])]) { if (seen.has(p.src)) continue; seen.add(p.src); out.push(p); if (out.length >= 6) break; }
+    return { ok: true, photos: out, partial: !c };
   }
 
   /* ---------- adsb.lol trace: positions the aircraft actually flew today ---------- */

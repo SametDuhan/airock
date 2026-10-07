@@ -351,10 +351,12 @@ async function loadAircraft(f) {
 // Photos: planespotters (448 px, possibly several) first, then the full-size adsbdb photo (or its thumbnail as a last resort)
 async function loadPhotos(f) {
   if (f.pics) return; let e = fresh(picCache, f.id);
-  if (!e) { const res = await DATA.photos(f.id, f.ac?.reg || f.reg); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok) picCache.set(f.id, e); }
+  if (!e) { const res = await DATA.photos(f.id, f.ac?.reg || f.reg); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok && !res.partial) picCache.set(f.id, e); }
   const ac = f.ac || {}, extra = ac.photo || ac.thumb;
-  // sharpest first: the high-resolution Commons photos, then the adsbdb photo, then planespotters (448 px at most, that is all its API gives)
-  f.pics = [...e.v.filter(p => p.big), ...(extra ? [{ src: extra, big: ac.photo || extra, link: ac.photo || extra, by: '' }] : []), ...e.v.filter(p => !p.big)]; f.pi = 0; f._pre = f.pics.map(p => { const im = new Image(); im.src = p.src; return im; }); // every photo is fetched right away, so switching is instant
+  // 3 photos at most (quicker to load and to flip through). The first one comes from planespotters when there is one: its CDN is fast, Commons makes big thumbnails slowly. Then the sharper
+  // Commons photos, then the adsbdb photo, then more planespotters ones to fill up.
+  const ps = e.v.filter(p => !p.big), cm = e.v.filter(p => p.big), ad = extra ? [{ src: extra, big: ac.photo || extra, link: ac.photo || extra, by: '' }] : [];
+  f.pics = [...ps.slice(0, 1), ...cm.slice(0, 2), ...ad, ...ps.slice(1)].slice(0, 3); f.pi = 0; f._pre = f.pics.map(p => { const im = new Image(); im.src = p.src; return im; }); // every photo is fetched right away, so switching is instant
   if (f.id === selected) renderCard(true);
 }
 const CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; // thin chevron, flipped by CSS for "previous"
