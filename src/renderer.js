@@ -783,20 +783,47 @@ $('card').onclick = e => {
   if (e.target.id !== 'fv') return;
   fav.has(selected) ? fav.delete(selected) : fav.add(selected); save('sky.fav', [...fav]); renderCard(); renderList(); redraw();
 };
-// In-app photo viewer: opens over the app instead of the browser; arrows / ← → switch photos, Esc or a click outside closes it; the source page can still be opened from the viewer
+// In-app photo viewer: opens over the app instead of the browser; arrows / ← → switch photos, Esc or a click outside closes it; the source page can still be opened from the viewer.
+// Zoom: mouse wheel (towards the pointer), double-click, pinch, the + / − / fit buttons or the + − 0 keys; drag to move a zoomed photo.
 let lbx = null;
 function openLightbox(pics, i = 0, onChange) {
   closeLightbox(); let k = i % pics.length;
   const d = document.createElement('div'); d.id = 'lbx'; lbx = d;
-  d.innerHTML = `<img alt=""><button class="lx" title="${t('Close')}">✕</button>${pics.length > 1 ? `<button class="ln l" title="${t('Previous photo')}">${CHEV}</button><button class="ln r" title="${t('Next photo')}">${CHEV}</button>` : ''}<div class="lf"><span class="lc2"></span><span class="lb2"></span><a class="lo" target="_blank"></a></div>`;
-  const show = () => { const p = pics[k], im = d.querySelector('img'); im.src = p.big || p.src; for (const o of [1, -1]) { const q = pics[(k + o + pics.length) % pics.length]; if (q) new Image().src = q.big || q.src; } d.querySelector('.lc2').textContent = pics.length > 1 ? `${k + 1} / ${pics.length}` : '';
+  const ic = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${p}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  d.innerHTML = `<img alt="" draggable="false"><button class="lx" title="${t('Close')}">✕</button><div class="lz"><button data-z="out" title="−">${ic('M5 12h14')}</button><button data-z="fit" title="1:1">${ic('M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5')}</button><button data-z="in" title="+">${ic('M12 5v14M5 12h14')}</button></div>`
+    + (pics.length > 1 ? `<button class="ln l" title="${t('Previous photo')}">${CHEV}</button><button class="ln r" title="${t('Next photo')}">${CHEV}</button>` : '') + `<div class="lf"><span class="lc2"></span><span class="lb2"></span><a class="lo" target="_blank"></a></div>`;
+  const im = d.querySelector('img'), Z = { z: 1, x: 0, y: 0, base: 1, moved: false }, MAXZ = 8;
+  // the photo is fitted into the free area (small photos are enlarged at most 2.5x); Z.z is the zoom on top of that
+  const fit = () => { const nw = im.naturalWidth, nh = im.naturalHeight; if (!nw) return; const aw = d.clientWidth - 128, ah = d.clientHeight - 96; Z.base = Math.min(aw / nw, ah / nh, 2.5); im.style.width = nw * Z.base + 'px'; im.style.height = nh * Z.base + 'px'; };
+  const apply = (smooth) => { const w = im.offsetWidth * Z.z / 2, h = im.offsetHeight * Z.z / 2; Z.x = Math.max(-w, Math.min(w, Z.x)); Z.y = Math.max(-h, Math.min(h, Z.y));
+    im.style.transition = smooth ? 'transform .15s ease-out' : 'none'; im.style.transform = `translate(${Z.x}px, ${Z.y}px) scale(${Z.z})`; d.classList.toggle('zm', Z.z > 1.001); };
+  const zoomAt = (nz, px, py, smooth = true) => { nz = Math.max(1, Math.min(MAXZ, nz)); const r = d.getBoundingClientRect(), cx = px - (r.left + r.width / 2), cy = py - (r.top + r.height / 2), f = nz / Z.z;
+    Z.x = nz === 1 ? 0 : cx - (cx - Z.x) * f; Z.y = nz === 1 ? 0 : cy - (cy - Z.y) * f; Z.z = nz; apply(smooth); };
+  const mid = () => { const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+  const show = () => { const p = pics[k]; Z.z = 1; Z.x = Z.y = 0; im.style.transform = ''; im.onload = () => { fit(); apply(false); }; im.src = p.big || p.src; if (im.complete) im.onload();
+    for (const o of [1, -1]) { const q = pics[(k + o + pics.length) % pics.length]; if (q) new Image().src = q.big || q.src; } d.querySelector('.lc2').textContent = pics.length > 1 ? `${k + 1} / ${pics.length}` : '';
     d.querySelector('.lb2').textContent = p.by ? '© ' + p.by : ''; const a = d.querySelector('.lo'); a.href = p.link || p.big || p.src; a.textContent = t('Open the source page') + ' ↗'; a.style.display = /^https:/.test(a.href) ? '' : 'none'; onChange?.(k); };
   const go = n => { k = (k + n + pics.length) % pics.length; show(); };
-  d.onclick = e => { if (e.target.closest('.lx') || e.target === d) closeLightbox(); else if (e.target.closest('.ln')) go(e.target.closest('.ln').classList.contains('r') ? 1 : -1); };
-  d._key = e => { if (e.key === 'Escape') closeLightbox(); else if (pics.length > 1 && e.key === 'ArrowRight') go(1); else if (pics.length > 1 && e.key === 'ArrowLeft') go(-1); else return; e.preventDefault(); e.stopPropagation(); };
+  d.addEventListener('wheel', e => { e.preventDefault(); zoomAt(Z.z * Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0015)), e.clientX, e.clientY, false); }, { passive: false });
+  const ptr = new Map(); let pinch = 0, drag = null;
+  d.addEventListener('pointerdown', e => { if (e.target.closest('button, a')) return; ptr.set(e.pointerId, [e.clientX, e.clientY]); Z.moved = false; d.setPointerCapture(e.pointerId);
+    if (ptr.size === 2) { const [a, b] = [...ptr.values()]; pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); drag = null; } else drag = { x: e.clientX, y: e.clientY, ox: Z.x, oy: Z.y }; });
+  d.addEventListener('pointermove', e => { if (!ptr.has(e.pointerId)) return; ptr.set(e.pointerId, [e.clientX, e.clientY]);
+    if (ptr.size === 2) { const [a, b] = [...ptr.values()], dist = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) zoomAt(Z.z * dist / pinch, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, false); pinch = dist; Z.moved = true; }
+    else if (drag && Z.z > 1) { if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 3) Z.moved = true; Z.x = drag.ox + e.clientX - drag.x; Z.y = drag.oy + e.clientY - drag.y; apply(false); } });
+  const up = e => { ptr.delete(e.pointerId); pinch = 0; drag = null; };
+  d.addEventListener('pointerup', up); d.addEventListener('pointercancel', up);
+  im.addEventListener('dblclick', e => { e.preventDefault(); zoomAt(Z.z > 1.001 ? 1 : 2.5, e.clientX, e.clientY); });
+  d.onclick = e => { const zb = e.target.closest('[data-z]');
+    if (zb) { const [mx, my] = mid(), m = zb.dataset.z; zoomAt(m === 'fit' ? 1 : Z.z * (m === 'in' ? 1.6 : 1 / 1.6), mx, my); }
+    else if (e.target.closest('.lx') || (e.target === d && !Z.moved)) closeLightbox(); else if (e.target.closest('.ln')) go(e.target.closest('.ln').classList.contains('r') ? 1 : -1); };
+  d._key = e => { const [mx, my] = mid();
+    if (e.key === 'Escape') closeLightbox(); else if (pics.length > 1 && e.key === 'ArrowRight') go(1); else if (pics.length > 1 && e.key === 'ArrowLeft') go(-1);
+    else if (e.key === '+' || e.key === '=') zoomAt(Z.z * 1.4, mx, my); else if (e.key === '-' || e.key === '_') zoomAt(Z.z / 1.4, mx, my); else if (e.key === '0') zoomAt(1, mx, my); else return; e.preventDefault(); e.stopPropagation(); };
+  d._resize = () => { fit(); apply(false); }; window.addEventListener('resize', d._resize);
   document.addEventListener('keydown', d._key, true); document.body.appendChild(d); show();
 }
-function closeLightbox() { if (!lbx) return; document.removeEventListener('keydown', lbx._key, true); lbx.remove(); lbx = null; }
+function closeLightbox() { if (!lbx) return; document.removeEventListener('keydown', lbx._key, true); window.removeEventListener('resize', lbx._resize); lbx.remove(); lbx = null; }
 // Switching photos only changes the picture in place (the card is not rebuilt, so nothing blinks); the other photos are already loaded
 function swapPhoto(f) {
   const ph = $('card').querySelector('.ph'), p = f.pics?.[f.pi || 0], im = ph?.querySelector('img'), by = ph?.querySelector('.by'); if (!p || !im || (p.by && !by) || (!p.by && by)) return renderCard(true);
