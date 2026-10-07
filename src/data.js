@@ -225,22 +225,23 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  /* ---------- photos of an aircraft: planespotters.net (by ICAO24, 448 px) and Wikimedia Commons (found by registration, up to 1280 px) ---------- */
+  /* ---------- photos of an aircraft: planespotters.net (by ICAO24, 448 px) and Wikimedia Commons (found by registration, up to 2400 px) ---------- */
   async function spotterPhotos(hex) {
     const r = await get('https://api.planespotters.net/pub/photos/hex/' + hex.toLowerCase(), 10000);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return ((await r.json()).photos || []).filter(p => p.thumbnail_large?.src).map(p => ({ src: p.thumbnail_large.src, link: p.link || '', by: p.photographer || '' }));
   }
   // Commons files whose title contains the registration (a search for "TC-JNA" also finds unrelated files, so each title is checked)
+  // the card gets a 960 px version of a Commons photo, the viewer the 2400 px one
   async function commonsPhotos(reg) {
     const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, ''), key = norm(reg);
     if (key.length < 3) return [];
     const r = await get('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=12&gsrsearch=' + encodeURIComponent('"' + reg + '"')
-      + '&prop=imageinfo&iiprop=url|mime|extmetadata&iiurlwidth=1280', 10000);
+      + '&prop=imageinfo&iiprop=url|mime|size|extmetadata&iiurlwidth=2400', 10000);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const pages = Object.values((await r.json()).query?.pages || {}).sort((a, b) => a.index - b.index);
     return pages.filter(p => norm(p.title).includes(key)).map(p => ({ p, i: p.imageinfo?.[0] })).filter(({ i }) => i?.thumburl && /^image\/(jpeg|png)$/.test(i.mime))
-      .map(({ p, i }) => ({ src: i.thumburl, big: i.thumburl, link: i.descriptionurl || '', by: String(i.extmetadata?.Artist?.value || '').replace(/<[^>]*>/g, '').trim().slice(0, 60) }));
+      .map(({ p, i }) => ({ src: i.width > 1100 ? 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(p.title.replace(/^File:/, '')) + '?width=960' : i.thumburl, big: i.thumburl, link: i.descriptionurl || '', by: String(i.extmetadata?.Artist?.value || '').replace(/<[^>]*>/g, '').trim().slice(0, 60) }));
   }
   async function photos(hex, reg = '') {
     if (typeof hex !== 'string' || !/^[0-9a-fA-F]{6}$/.test(hex)) return { ok: false, error: 'invalid ICAO24' };
@@ -311,7 +312,7 @@
     const [w, p, ph] = await Promise.allSettled([
       json(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&wind_speed_unit=kn`),
       json(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&accept-language=en&lat=${lat}&lon=${lon}`),
-      json(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${lat}%7C${lon}&ggsradius=6000&ggslimit=10&prop=pageimages%7Cinfo&inprop=url&piprop=thumbnail&pithumbsize=640`)]);
+      json(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${lat}%7C${lon}&ggsradius=6000&ggslimit=10&prop=pageimages%7Cinfo&inprop=url&piprop=thumbnail&pithumbsize=1280`)]);
     const c = w.status === 'fulfilled' ? w.value.current : null, ad = p.status === 'fulfilled' ? p.value.address || {} : {};
     const pages = ph.status === 'fulfilled' ? Object.values(ph.value.query?.pages || {}).filter(x => x.thumbnail?.source).sort((a, b) => a.index - b.index) : [];
     const pg = pages.find(x => /airport|airfield|aerodrome|international|havaliman|havaalan/i.test(x.title)) || null;
