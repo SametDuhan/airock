@@ -609,7 +609,9 @@ function renderCard(full) {
       + (landed ? ' · ' + landedText(f) : f.ground ? ' · ' + t('on ground') : ''); // on the ground within 25 km of its destination: landed, and how long ago
     // on the ground the scene takes the place of the flying plane on the dashed line
     const fl = $('fl');
-    if (fl) { const kt = f.spd * 1.944, pose = SkyGeo.scenePose(f.alt * 3.281, f.vr * 196.85, kt, f.ground, !landed); fl.classList.toggle('g', pose.show); gsMotion(f, fl, kt, pose.show); if (pose.show) gsPose(f, fl, pose); }
+    // the scene is left above 5500 ft and entered again only below 5200 ft (no flicker around the limit); the change itself is a cross-fade (CSS): the scene fades out as the dashed line fades in
+    if (fl && !fl._init) { fl._init = 1; fl.classList.add('nt'); requestAnimationFrame(() => requestAnimationFrame(() => fl.classList.remove('nt'))); } // a card that has just opened shows its state at once, without fading in from the other one
+    if (fl) { const kt = f.spd * 1.944, pose = SkyGeo.scenePose(f.alt * 3.281, f.vr * 196.85, kt, f.ground, !landed); const show = f.ground || f.alt * 3.281 < (fl.classList.contains('g') ? 5500 : 5200); fl.classList.toggle('g', show); gsMotion(f, fl, kt, show); if (show) gsPose(f, fl, pose); }
   }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],

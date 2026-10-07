@@ -217,8 +217,10 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 .mdl .rcf{grid-template-columns:1fr 1fr auto}.mdl .wff{grid-template-columns:1fr auto}.mdl .rcr{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}.mdl .rcr b{width:54px;flex:none;font:700 12px ui-monospace,monospace}.mdl .ch2 button{margin:6px 6px 0 0}
 /* planes on the ground: in the slot of the flying plane (between the two airport codes) a small scene, a side view of the plane in front of an airport that scrolls from right to left.
    The scene is drawn 60 px high and scaled down; the motion is done in renderer.js (gsMotion) and follows the ground speed */
-.rt>.fl.g{height:32px;margin:2px 0 0;border-radius:7px;background:linear-gradient(#18222d,#2a3a4e 62%,#3a4f68);border:1px solid #ffffff14}.fl.g::before,.fl.g>i{display:none}
-.fl .gsi{display:none}.fl.g .gsi{display:block;position:absolute;left:0;top:0;width:192%;height:60px;transform:scale(.52);transform-origin:0 0}
+.rt>.fl{outline:1px solid transparent;outline-offset:-1px;transition:height .7s ease,margin-top .7s ease,border-radius .7s ease,outline-color .7s ease}.fl::before,.fl>i{transition:opacity .7s ease}
+.rt>.fl.nt,.rt>.fl.nt *,.rt>.fl.nt::before{transition:none!important}
+.rt>.fl.g{height:32px;margin-top:2px;border-radius:7px;outline-color:#ffffff1f}.fl.g::before,.fl.g>i{opacity:0}
+.fl .gsi{position:absolute;left:0;top:0;width:192%;height:60px;transform:scale(.52);transform-origin:0 0;opacity:0;visibility:hidden;transition:opacity .7s ease,visibility 0s .7s}.fl.g .gsi{opacity:1;visibility:visible;transition:opacity .7s ease}
 .gsi .gl{position:absolute;left:0;display:block;will-change:transform}
 .gsi .bg,.gsi .bg>div,.gsi .sky,.gsi .gnd{position:absolute;inset:0}
 .gsi .bgn{background:linear-gradient(#0b1422,#15263b 55%,#27405c)}.gsi .bgd{background:linear-gradient(#3f86d6,#7db6e8 62%,#c4e0f3);opacity:0;transition:opacity .9s linear}
