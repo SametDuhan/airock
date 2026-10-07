@@ -795,7 +795,7 @@ function openLightbox(pics, i = 0, onChange) {
     + (pics.length > 1 ? `<button class="ln l" title="${t('Previous photo')}">${CHEV}</button><button class="ln r" title="${t('Next photo')}">${CHEV}</button>` : '') + `<div class="lf"><span class="lc2"></span><span class="lb2"></span><a class="lo" target="_blank"></a></div>`;
   const im = d.querySelector('img'), Z = { z: 1, x: 0, y: 0, base: 1, moved: false }, MAXZ = 8;
   // the photo is fitted into the free area (a small photo is enlarged at most 1.4x); Z.z is the zoom on top of that
-  const fit = () => { const nw = im.naturalWidth, nh = im.naturalHeight; if (!nw) return; const aw = d.clientWidth - 128, ah = d.clientHeight - 96; Z.base = Math.min(aw / nw, ah / nh, nw >= 1200 ? 2.5 : 1.4); // small photos are not blown up much: that only makes them blurry im.style.width = nw * Z.base + 'px'; im.style.height = nh * Z.base + 'px'; };
+  const fit = () => { const nw = im.naturalWidth, nh = im.naturalHeight; if (!nw) return; const aw = d.clientWidth - 128, ah = d.clientHeight - 96; Z.base = Math.min(aw / nw, ah / nh, nw >= 1200 ? 2.5 : 1.4); im.style.width = nw * Z.base + 'px'; im.style.height = nh * Z.base + 'px'; };
   const apply = (smooth) => { const w = im.offsetWidth * Z.z / 2, h = im.offsetHeight * Z.z / 2; Z.x = Math.max(-w, Math.min(w, Z.x)); Z.y = Math.max(-h, Math.min(h, Z.y));
     im.style.transition = smooth ? 'transform .15s ease-out' : 'none'; im.style.transform = `translate(${Z.x}px, ${Z.y}px) scale(${Z.z})`; d.classList.toggle('zm', Z.z > 1.001); };
   const zoomAt = (nz, px, py, smooth = true) => { nz = Math.max(1, Math.min(MAXZ, nz)); const r = d.getBoundingClientRect(), cx = px - (r.left + r.width / 2), cy = py - (r.top + r.height / 2), f = nz / Z.z;
