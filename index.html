@@ -224,9 +224,14 @@ header{position:sticky;top:0;z-index:20}
 #lmenu button{display:flex;align-items:center;gap:8px;white-space:nowrap;background:transparent;border:0;border-radius:8px;padding:7px 9px;color:var(--text);cursor:pointer;font:600 14px system-ui,sans-serif;text-align:left}#lmenu button:hover{background:var(--panel2)}
 #lmenu button i{font:700 11px ui-monospace,Consolas,monospace;font-style:normal;letter-spacing:.08em;width:36px;height:24px;line-height:24px;text-align:center;border-radius:12px;background:var(--panel2);color:var(--muted);flex:none}#lmenu button.on i{background:linear-gradient(135deg,var(--g1),var(--accent));color:var(--accent-ink)}#lmenu button.on{color:var(--accent)}
 </style>
+<link rel="stylesheet" href="fx.css?v=1">
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
 </head>
 <body>
+<div class="progress" id="prog"></div>
+<canvas id="net" aria-hidden="true"></canvas>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="cursor-glow" id="cg" aria-hidden="true"></div>
 <div class="sky" aria-hidden="true">
   <div class="fly a"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12 3 4.5v5L13 12 3 14.5v5z"/></svg></div>
   <div class="fly b"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12 3 4.5v5L13 12 3 14.5v5z"/></svg></div>
@@ -296,6 +301,23 @@ header{position:sticky;top:0;z-index:20}
   <p class="eyebrow reveal" data-i18n="t.eyebrow">Turbulence ahead</p>
   <h2 class="reveal" data-i18n="t.h2">Green, yellow or red. In plain words.</h2>
   <p class="sub reveal" data-i18n="t.sub">SkyTrack looks at the route ahead of the aircraft, at its altitude, using official SIGMET and G-AIRMET advisories and recent pilot reports.</p>
+    <div class="radar reveal" aria-hidden="true">
+    <svg id="radarSvg" viewBox="0 0 960 300" fill="none">
+      <defs>
+        <radialGradient id="zy"><stop offset="0" stop-color="#facc15" stop-opacity=".5"/><stop offset="1" stop-color="#facc15" stop-opacity="0"/></radialGradient>
+        <radialGradient id="zr"><stop offset="0" stop-color="#f87171" stop-opacity=".6"/><stop offset="1" stop-color="#f87171" stop-opacity="0"/></radialGradient>
+      </defs>
+      <g class="gridl"><path d="M0 75H960M0 150H960M0 225H960"/><path d="M160 0V300M320 0V300M480 0V300M640 0V300M800 0V300"/></g>
+      <ellipse class="zone" cx="413" cy="150" rx="95" ry="62" fill="url(#zy)"/>
+      <ellipse class="zone" cx="690" cy="118" rx="80" ry="58" fill="url(#zr)"/>
+      <path id="rPath" d="M40 236C220 232 300 120 470 150S760 150 922 64" stroke="currentColor" stroke-opacity=".28" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round" style="color:var(--text)"/>
+      <path id="rLook" d="" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9" opacity=".9"/>
+      <g id="rTrail" fill="#f5c431"></g>
+      <g id="rPlane"><path d="M13 0-9-10v6.5L-1 0l-8 3.5V10z" fill="#f5c431"/></g>
+      <circle cx="40" cy="236" r="6" fill="#f5c431"/><circle cx="922" cy="64" r="6" fill="none" stroke="#f5c431" stroke-width="2"/>
+    </svg>
+    <div class="hud"><i class="led" id="rLed"></i><b id="rInfo">FL340</b></div>
+  </div>
   <div class="grid c3 reveal" style="margin-bottom:22px">
     <div class="card"><h3><span class="dots"><i class="g"></i></span><span data-i18n="t.g">Green</span></h3><p data-i18n="t.gp">Nothing reported or forecast on the route ahead.</p></div>
     <div class="card"><h3><span class="dots"><i class="y"></i></span><span data-i18n="t.y">Yellow</span></h3><p data-i18n="t.yp">Moderate turbulence is possible. The card shows roughly how far ahead.</p></div>
@@ -686,5 +708,6 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   { const sv = ls.get('st.lang'), b = (navigator.language || '').slice(0, 2).toLowerCase(); setLang(LANGS.some(x => x[0] === sv) ? sv : LANGS.some(x => x[0] === b) ? b : 'en'); }
 })();
 </script>
+<script src="fx.js?v=1"></script>
 </body>
 </html>
