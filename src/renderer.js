@@ -327,6 +327,8 @@ setInterval(() => {
 
 /* ---------- live data ---------- */
 // Requests an area slightly larger than the visible one; panning/zooming within that area makes no new request
+let osSet = null; // is an OpenSky account saved? (null = unknown / not the desktop app)
+if (window.api?.openskyGet) window.api.openskyGet().then(r => { osSet = !!r.set; });
 const LIVE_MS = 6000; // two feeds take turns, so each one gets ~5 requests/min for a close view
 let fetchedBox = null, fetchedAt = 0, reqId = 0, moveTimer = null, lastReq = 0;
 // Last good positions are kept for the next start, so the map is not empty while the first request is on its way (or when the data sources are busy)
@@ -357,7 +359,7 @@ async function poll(force) {
       if ((age > GRACE_MS && inCov(f)) || age > 600000) { flights.delete(id); if (selected === id) select(null); } }); }
   r.flights.forEach(upsert); redraw(); saveCache();
   pollMs = r.partial || (r.src || '').includes('+ OpenSky') ? 12000 : LIVE_MS;
-  $('st').textContent = `${r.src} · ${t('last updated')} ${new Date().toLocaleTimeString(LOC(), TF())}${r.partial ? ' · ' + t('wide view: center only, zoom in') : ''}`;
+  $('st').textContent = `${r.src} · ${t('last updated')} ${new Date().toLocaleTimeString(LOC(), TF())}${r.partial ? ' · ' + t('wide view: center only, zoom in') : ''}${r.partial && osSet === false ? ' · ' + t('Tip: add a free OpenSky account in Settings to fill the wide view') : ''}`;
   pumpRoutes();
 }
 // Self-scheduling refresh: 6 s normally, slower for wide views (more requests) and after errors, so the free feeds are not pushed into their rate limits

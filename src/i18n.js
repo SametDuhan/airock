@@ -137,6 +137,9 @@ const TR = {
   '{0} aircraft with an emergency code': '{0} uçak acil durum kodu veriyor',
   '📊 Stats': '📊 İstatistikler',
   'OpenSky account saved': 'OpenSky hesabı kaydedildi',
+  '1) Sign up at opensky-network.org (free)  2) Account page → create an API client  3) Paste Client ID and secret here.': '1) opensky-network.org\'a ücretsiz üye ol  2) Hesap sayfasında bir API istemcisi oluştur  3) Client ID ve secret\'ı buraya yapıştır.',
+  'Open OpenSky account page': 'OpenSky hesap sayfasını aç',
+  'Tip: add a free OpenSky account in Settings to fill the wide view': 'İpucu: geniş görünümün dolması için Ayarlar\'dan ücretsiz OpenSky hesabı ekle',
   'OpenSky account removed': 'OpenSky hesabı kaldırıldı',
   // update check
   'Check for updates': 'Güncellemeleri denetle',
