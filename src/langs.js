@@ -545,3 +545,9 @@ Object.assign(DICT.fr, {
   'Copy tracking link': 'Copier le lien de suivi',
   'Tracking link copied': 'Lien de suivi copié'
 });
+
+// Thinning out crowded areas when zoomed out
+Object.assign(DICT.tr, { 'Showing {0} of {1} aircraft · zoom in for all': '{1} uçaktan {0} tanesi gösteriliyor · hepsi için yakınlaştır', 'Thin out crowded areas when zoomed out': 'Uzaklaşınca kalabalık bölgelerdeki uçakları seyrelt' });
+Object.assign(DICT.es, { 'Showing {0} of {1} aircraft · zoom in for all': 'Mostrando {0} de {1} aviones · acércate para ver todos', 'Thin out crowded areas when zoomed out': 'Reducir aviones en zonas concurridas al alejar' });
+Object.assign(DICT.de, { 'Showing {0} of {1} aircraft · zoom in for all': '{0} von {1} Flugzeugen werden angezeigt · zoome hinein für alle', 'Thin out crowded areas when zoomed out': 'Beim Herauszoomen volle Gebiete ausdünnen' });
+Object.assign(DICT.fr, { 'Showing {0} of {1} aircraft · zoom in for all': '{0} avions sur {1} affichés · zoomez pour tous les voir', 'Thin out crowded areas when zoomed out': 'Réduire les avions dans les zones denses en dézoomant' });

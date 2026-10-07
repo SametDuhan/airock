@@ -61,12 +61,21 @@
   // A 429 pauses that feed for as long as it asks (Retry-After), otherwise 8 s.
   const HEDGE_MS = 2500, GAP_MS = 1100; let rot = 0;
   // Per-feed gate: requests to one feed are spaced GAP_MS apart (they used to go out almost together and the feeds answered 429 to most of them)
-  const gate = {}; const slot = name => { const at = Math.max(Date.now(), gate[name] || 0); gate[name] = at + GAP_MS; return sleep(at - Date.now()); };
-  async function fromFeeds(first, fetchUrl, delayMs) {
+  // The turns form a queue per feed. A request for a view the user has already left (older generation, see flights()) is dropped when its turn comes, without waiting:
+  // otherwise the new view stands behind the whole queue of the old one (zooming out to Europe queued 20+ circles, so the zoom-in that followed waited ~15 s).
+  let genNow = 0; const tail = {};
+  const slot = (name, gen) => {
+    const mine = (tail[name] || Promise.resolve(0)).then(async last => {
+      if (gen < genNow) return { at: last, stale: true };
+      await sleep(Math.max(0, last + GAP_MS - Date.now())); return { at: Date.now(), stale: gen < genNow }; });
+    tail[name] = mine.then(x => x.at);
+    return mine.then(x => { if (x.stale) throw new Error('superseded'); });
+  };
+  async function fromFeeds(first, fetchUrl, delayMs, gen) {
     await sleep(delayMs); const errs = [], live = FEEDS.map((_, k) => FEEDS[(first + k) % FEEDS.length]).filter(f => Date.now() >= (feedPause[f.name] || 0));
     FEEDS.forEach(f => { if (!live.includes(f)) errs.push(f.name + ': paused'); });
     if (!live.length) throw new Error(errs.join(', '));
-    const ask = async f => { await slot(f.name); const r = await get(fetchUrl(f), 7000);
+    const ask = async f => { await slot(f.name, gen); const r = await get(fetchUrl(f), 7000);
       if (r.status === 429) { feedPause[f.name] = Date.now() + Math.min(120, Math.max(5, +r.headers.get('retry-after') || 8)) * 1000; throw new Error(f.name + ': rate limited (429)'); }
       if (!r.ok) throw new Error(f.name + ': HTTP ' + r.status); const j = await r.json(); return { name: f.name, ac: j.ac || j.aircraft || [] }; };
     return new Promise((resolve, reject) => {
@@ -78,21 +87,30 @@
       start();
     });
   }
-  async function adsbLol(b, o = { from: 0, count: 0 }) {
-    // o.count = n: a batch of n circles starting at the o.from-th nearest the center (the renderer asks batch by batch after the map jumped, so aircraft appear as they come)
-    rot++; const budget = MAX_CIRCLES * FEEDS.length * 3 / 2 | 0, cv = o.count ? cover(b, o.from + o.count) : cover(b, budget, rot), circles = o.count ? cv.circles.slice(o.from) : cv.circles, { partial, covered } = cv,
-      seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
-    if (!circles.length) return { src: '', flights: [], partial, covered, cov: [], total: cv.total };
+  // Is this circle (almost) inside circles that answered a moment ago? Tested with the center and 8 points on a ring at 60% of its radius.
+  // fresh = [[lat, lon, radius km], ...]. Zooming out from Paris then does not ask for Paris again.
+  const mostlyCovered = (c, fresh) => {
+    const rKm = c.r * 1.852 * .6, pts = [[c.lat, c.lon]];
+    for (let k = 0; k < 8; k++) { const th = k * Math.PI / 4; pts.push([c.lat + rKm / 111.2 * Math.cos(th), c.lon + rKm / 111.2 * Math.sin(th) / Math.max(.05, Math.cos(c.lat * Math.PI / 180))]); }
+    return pts.filter(p => fresh.some(f => km(p[0], p[1], f[0], f[1]) <= f[2])).length >= 8;
+  };
+  async function adsbLol(b, o = { from: 0, count: 0, fresh: [], gen: Infinity }) {
+    // o.count = n: a batch of n circles starting at the o.from-th nearest the center, leaving out circles that o.fresh already covers
+    // (the renderer asks batch by batch after the map moved, so aircraft appear as they come); o.gen: see flights()
+    rot++; const budget = MAX_CIRCLES * FEEDS.length * 3 / 2 | 0, cv = o.count ? cover(b, 200) : cover(b, budget, rot), { partial, covered } = cv,
+      all = o.count && o.fresh?.length ? cv.circles.filter(c => !mostlyCovered(c, o.fresh)) : cv.circles, circles = o.count ? all.slice(o.from, o.from + o.count) : all,
+      total = o.count ? all.length : cv.total, seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
+    if (!circles.length) return { src: '', flights: [], partial, covered, cov: [], total };
     await Promise.all(circles.map(async (c, i) => {
       try {
-        const r = await fromFeeds((i + rot) % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 150);
+        const r = await fromFeeds((i + rot) % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 150, o.gen);
         r.ac.forEach(a => a.lat != null && a.lon != null && seen.set(a.hex, a)); used.add(r.name); okN++; good.push(c);
       } catch (e) { lastErr = e.message; }
     }));
     if (!okN) throw new Error(lastErr || 'no response');
     const part = partial || okN < circles.length;
     // cov: the circles that really answered [lat, lon, radius km]: only aircraft inside them can be called "gone" when an answer does not list them
-    return { src: [...used].join(' + '), flights: [...seen.values()].map(fromAdsb), partial: part, total: cv.total, covered: part ? covered : undefined, cov: good.map(c => [c.lat, c.lon, c.r * 1.852]) };
+    return { src: [...used].join(' + '), flights: [...seen.values()].map(fromAdsb), partial: part, total, covered: part ? covered : undefined, cov: good.map(c => [c.lat, c.lon, c.r * 1.852]) };
   }
   // Watchlist: current state of specific aircraft anywhere in the world (one request for all of them)
   async function watch(hexes) {
@@ -144,20 +162,24 @@
     if (o.s > o.n || o.w > o.e) throw new Error('invalid bounds');
     return o;
   }
-  // opts (optional, from the renderer): { from: k, count: n } answers from n circles only, starting at the k-th nearest the center (no OpenSky); see fillView() in renderer.js
+  // opts (optional, from the renderer): { from: k, count: n, fresh: [[lat, lon, km], ...] } answers from n circles only, starting at the k-th nearest the center, leaving out circles
+  // that `fresh` (areas that answered a moment ago) already covers; no OpenSky. See fillView() in renderer.js.
+  // Every call is a new "generation": requests of older calls that are still waiting for their turn are dropped (see slot()), so a new view never queues behind an old one.
   async function flights(b, opts) {
     try { b = bounds(b); } catch (e) { return { ok: false, error: e.message }; }
-    const num = (x, m) => Math.max(0, Math.min(m, Math.floor(+x) || 0)), o = { from: num(opts?.from, 40), count: num(opts?.count, 6) };
+    const num = (x, m) => Math.max(0, Math.min(m, Math.floor(+x) || 0)), gen = ++genNow,
+      fresh = Array.isArray(opts?.fresh) ? opts.fresh.slice(0, 120).filter(f => Array.isArray(f) && f.length >= 3 && f.slice(0, 3).every(Number.isFinite)).map(f => f.slice(0, 3)) : [],
+      o = { from: num(opts?.from, 80), count: num(opts?.count, 6), fresh, gen };
     if (o.count) { try { const r = await adsbLol(b, o); return { ok: true, src: r.src, ...r }; } catch (e) { return { ok: false, error: 'adsb: ' + e.message }; } }
     const os = async () => ({ partial: false, flights: await openSky(b) });
     if (!cover(b).partial) { // zoomed in: the community feeds cover the whole area; OpenSky only as a backup
       const errs = [];
-      for (const [src, fn] of [['adsb', () => adsbLol(b)], ['OpenSky', os]]) { try { const r = await fn(); return { ok: true, src: r.src || src, ...r }; } catch (e) { errs.push(`${src}: ${e.message}`); } }
+      for (const [src, fn] of [['adsb', () => adsbLol(b, o)], ['OpenSky', os]]) { try { const r = await fn(); return { ok: true, src: r.src || src, ...r }; } catch (e) { errs.push(`${src}: ${e.message}`); } }
       return { ok: false, error: errs.join(' · ') };
     }
     // Wide view: the community feeds cover only the center, OpenSky covers everything. Ask both at the same time and merge (the community data wins),
     // so aircraft do not appear and disappear when the source changes from one request to the next.
-    const [a, osr] = await Promise.allSettled([adsbLol(b), os()]);
+    const [a, osr] = await Promise.allSettled([adsbLol(b, o), os()]);
     if (a.status === 'fulfilled' && osr.status === 'fulfilled') {
       const m = new Map(osr.value.flights.map(f => [f.id, f])); a.value.flights.forEach(f => m.set(f.id, f));
       return { ok: true, src: a.value.src + ' + OpenSky', partial: false, flights: [...m.values()] };
