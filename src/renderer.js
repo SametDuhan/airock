@@ -501,14 +501,15 @@ const AP_SVG = { big: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M0 2
 const AP_MAX = 600, apBig = new Set(APO.map(a => a.code));
 // order = importance: the fixed list, the scheduled-service airports, then the medium ones (zoom 6+) and the small airfields (zoom 8+) from airports-more.js
 const apMore = (window.AIRPORTS_MORE || '').split(';').filter(Boolean).map(a => { const [code, icao, name, lat, lon, sz] = a.split('|'); return { code, icao, name, lat: +lat, lon: +lon, sz }; });
-const apAll = APO.concat(BIGAP.filter(a => !apBig.has(a.code))).concat(apMore.filter(a => a.sz === 'm'), apMore.filter(a => a.sz === 's'));
+const apTiny = (window.AIRPORTS_TINY || '').split(';').filter(Boolean).map(a => { const [code, name, lat, lon] = a.split('|'); return { code, icao: code, name, lat: +lat, lon: +lon, sz: 't' }; });
+const apAll = APO.concat(BIGAP.filter(a => !apBig.has(a.code))).concat(apMore.filter(a => a.sz === 'm'), apMore.filter(a => a.sz === 's'), apTiny);
 const apMk = new Map();
-function apIcon(a) { const big = apBig.has(a.code), z = map.getZoom(), sz = big ? (z < 5 ? 15 : z < 7 ? 19 : 23) : (z < 8 ? 13 : 16);
+function apIcon(a) { const big = apBig.has(a.code), z = map.getZoom(), sz = big ? (z < 5 ? 15 : z < 7 ? 19 : 23) : (z < 8 ? 13 : z < 10 ? 16 : 14);
   return L.divIcon({ className: 'apm' + (big ? ' big' : ''), iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2], html: `<div class="apb">${big ? AP_SVG.big : AP_SVG.small}</div>${z >= 7 || (big && z >= 5) ? `<span class="apl">${esc(a.code)}</span>` : ''}` }); }
 function drawAp() {
   if (!map.hasLayer(apLayer)) return;
   const z = map.getZoom(), v = map.getBounds().pad(.15), want = new Map();
-  for (const a of apAll) { if (want.size >= AP_MAX) break; if ((apBig.has(a.code) || z >= (a.sz === 's' ? 8 : a.sz === 'm' ? 6 : 5)) && v.contains([a.lat, a.lon])) want.set(a.code, a); }
+  for (const a of apAll) { if (want.size >= AP_MAX) break; if ((apBig.has(a.code) || z >= (a.sz === 't' ? 10 : a.sz === 's' ? 8 : a.sz === 'm' ? 6 : 5)) && v.contains([a.lat, a.lon])) want.set(a.code, a); }
   for (const [c, m] of apMk) if (!want.has(c)) { apLayer.removeLayer(m); apMk.delete(c); }
   for (const [c, a] of want) {
     const m = apMk.get(c) || L.marker([a.lat, a.lon], { icon: apIcon(a), riseOnHover: true, zIndexOffset: apBig.has(c) ? 100 : 0 }).bindTooltip(`${a.code}${a.icao ? ' / ' + a.icao : ''} · ${a.name}`)
