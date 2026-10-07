@@ -778,7 +778,7 @@ function routeHtml(f) {
 let flPref = LS('sky.fl', 'scene');
 $('card').onclick = e => {
   if (e.target.id === 'cx') return select(null);
-  { const a = e.target.closest('.ph a'); if (a) { e.preventDefault(); const f = flights.get(selected), pics = f?.pics || (f?.ac?.thumb ? [{ src: f.ac.thumb, big: f.ac.photo, link: f.ac.photo || f.ac.thumb, by: '' }] : []); if (pics.length) openLightbox(pics, f.pi || 0, i => { f.pi = i; renderCard(true); }); return; } }
+  { const a = e.target.closest('.ph a'); if (a) { e.preventDefault(); const f = flights.get(selected), pics = f?.pics || (f?.ac?.thumb ? [{ src: f.ac.thumb, big: f.ac.photo, link: f.ac.photo || f.ac.thumb, by: '' }] : []); if (pics.length) openLightbox(pics, f.pi || 0, i => { f.pi = i; swapPhoto(f); }); return; } }
   { const fl = e.target.closest('#fl'); if (fl && fl.classList.contains('sw')) { flPref = flPref === 'scene' ? 'line' : 'scene'; save('sky.fl', flPref); renderCard(); return; } }
   if (X.click(e)) return;
   if (e.target.closest('#pp, #pn')) { const f = flights.get(selected), n = f?.pics?.length; if (!n) return;
@@ -803,8 +803,15 @@ function openLightbox(pics, i = 0, onChange) {
   const zoomAt = (nz, px, py, smooth = true) => { nz = Math.max(1, Math.min(MAXZ, nz)); const r = d.getBoundingClientRect(), cx = px - (r.left + r.width / 2), cy = py - (r.top + r.height / 2), f = nz / Z.z;
     Z.x = nz === 1 ? 0 : cx - (cx - Z.x) * f; Z.y = nz === 1 ? 0 : cy - (cy - Z.y) * f; Z.z = nz; apply(smooth); };
   const mid = () => { const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
-  const show = () => { const p = pics[k]; Z.z = 1; Z.x = Z.y = 0; im.style.transform = ''; im.onload = () => { fit(); apply(false); }; im.src = p.big || p.src; if (im.complete) im.onload();
-    for (const o of [1, -1]) { const q = pics[(k + o + pics.length) % pics.length]; if (q) new Image().src = q.big || q.src; } d.querySelector('.lc2').textContent = pics.length > 1 ? `${k + 1} / ${pics.length}` : '';
+  // The viewer opens at once with the version the card already has (it is in the cache); the big version loads behind it and replaces it when it is ready, keeping the zoom.
+  // The photos next to the shown one are loaded ahead (and kept in d._hold, so the browser doesn't drop them), so flipping is instant too.
+  d._hold = [];
+  const warm = q => { if (!q) return; for (const u of new Set([q.src, q.big])) if (u) { const h = new Image(); h.src = u; d._hold.push(h); } };
+  const show = () => { const p = pics[k]; Z.z = 1; Z.x = Z.y = 0; im.style.transform = ''; im.onload = () => { fit(); apply(false); }; im.src = p.src; if (im.complete && im.naturalWidth) im.onload();
+    if (p.big && p.big !== p.src) { const hi = new Image(); hi.src = p.big; d._hold.push(hi);
+      (hi.decode ? hi.decode() : Promise.resolve()).then(() => { if (lbx === d && pics[k] === p && hi.naturalWidth) { im.onload = null; im.src = p.big; fit(); apply(false); } }).catch(() => {}); }
+    for (const o of [1, -1]) if (pics.length > 2 || o === 1) warm(pics[(k + o + pics.length) % pics.length]);
+    d.querySelector('.lc2').textContent = pics.length > 1 ? `${k + 1} / ${pics.length}` : '';
     d.querySelector('.lb2').textContent = p.by ? '© ' + p.by : ''; const a = d.querySelector('.lo'); a.href = p.link || p.big || p.src; a.textContent = t('Open the source page') + ' ↗'; a.style.display = /^https:/.test(a.href) ? '' : 'none'; onChange?.(k); };
   const go = n => { k = (k + n + pics.length) % pics.length; show(); };
   d.addEventListener('wheel', e => { e.preventDefault(); zoomAt(Z.z * Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0015)), e.clientX, e.clientY, false); }, { passive: false });
