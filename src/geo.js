@@ -70,11 +70,11 @@
   //  rise  how far the plane has lifted in the scene (px, the nose-up angle does most of the "taking off"), pitch  nose-up angle (deg): climbing (vertical rate > 0) 8 to 14, descending 4 to 8 nose down,
   //        level 0; on the runway the nose comes up for rotation (110 kt and more, 10) except right after landing; the first few hundred feet at speed also count as climbing
   //  gear  landing gear down (on the ground, in the first 250 ft, or descending below 3000 ft)
-  //  show  the scene is shown (on the ground or below 5500 ft); above it the flying plane on the dashed line is shown
+  //  show  always true: the scene works at every altitude (the user picks the scene or the dashed line on the card)
   function scenePose(altFt, vsFpm, kt, ground, rolloutOk = true) {
     const c = (v, lo, hi) => Math.max(lo, Math.min(hi, v)), a = ground ? 0 : Math.max(0, altFt || 0), vs = vsFpm || 0;
     const pitch = ground ? (kt > 110 && rolloutOk ? 10 : 0) : vs > 100 || (vs > -100 && a < 300 && kt > 100) ? 8 + c(vs / 500, 0, 6) : vs < -100 ? -(4 + c(-vs / 250, 0, 4)) : 0;
-    return { show: !!ground || a < 5500, g: c(a / 700, 0, 1), cl: c((a - 50) / 700, 0, 1), rise: c(a / 1500, 0, 1) * 10, pitch, gear: !!ground || a < 250 || (vs < -300 && a < 3000) };
+    return { show: true, g: c(a / 700, 0, 1), cl: c((a - 50) / 700, 0, 1), rise: c(a / 1500, 0, 1) * 10, pitch, gear: !!ground || a < 250 || (vs < -300 && a < 3000) };
   }
   const api = { scenePose, sunElevation, solarHour, isNight, R, brg, km, gc, unwrap, nearLon, regCountry, ahead, sun, night, sunSide };
   root.SkyGeo = api;

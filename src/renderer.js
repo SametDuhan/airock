@@ -487,9 +487,26 @@ $('mDemo').onclick = () => setMode(false); $('mLive').onclick = () => setMode(tr
 
 /* ---------- airports ---------- */
 const apLayer = L.layerGroup().addTo(map);
-APO.forEach(a => L.circleMarker([a.lat, a.lon], { radius: 6, color: '#000', weight: 1, fillColor: '#f2c230', fillOpacity: 1 }).bindTooltip(`${a.code} · ${a.name}`)
-  .on('click', e => { L.DomEvent.stopPropagation(e); openAp(a); }).addTo(apLayer));
-$('bAp').onclick = function () { const on = !map.hasLayer(apLayer); on ? apLayer.addTo(map) : apLayer.remove(); this.classList.toggle('on', on); };
+// Airport marker: a round badge with a small terminal + control tower; big airports (the fixed list) are larger and gold, the rest of the scheduled-service airports (airports.js) appear
+// from zoom 6 and only those in view are drawn (at most AP_MAX), so thousands of airports don't slow the map down. The code label shows from zoom 7.
+const AP_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19h18v1.6H3z" fill="#141414"/><path d="M4 19v-5h7v5z" fill="#141414"/><path d="M14 19v-9h1.4V8.4h-2.2L14.6 6h2.8l1.4 2.4h-2.2V10H18v9z" fill="#141414"/></svg>';
+const AP_MAX = 350, apBig = new Set(APO.map(a => a.code)), apAll = APO.concat(BIGAP.filter(a => !apBig.has(a.code)));
+const apMk = new Map();
+function apIcon(a) { const big = apBig.has(a.code), z = map.getZoom(), sz = big ? (z < 5 ? 22 : 28) : 20;
+  return L.divIcon({ className: 'apm' + (big ? ' big' : ''), iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2], html: `<div class="apb">${AP_SVG}</div>${z >= 7 || (big && z >= 5) ? `<span class="apl">${esc(a.code)}</span>` : ''}` }); }
+function drawAp() {
+  if (!map.hasLayer(apLayer)) return;
+  const z = map.getZoom(), v = map.getBounds().pad(.15), want = new Map();
+  for (const a of apAll) { if (want.size >= AP_MAX) break; if ((apBig.has(a.code) || z >= 6) && v.contains([a.lat, a.lon])) want.set(a.code, a); }
+  for (const [c, m] of apMk) if (!want.has(c)) { apLayer.removeLayer(m); apMk.delete(c); }
+  for (const [c, a] of want) {
+    const m = apMk.get(c) || L.marker([a.lat, a.lon], { icon: apIcon(a), riseOnHover: true, zIndexOffset: apBig.has(c) ? 100 : 0 }).bindTooltip(`${a.code}${a.icao ? ' / ' + a.icao : ''} · ${a.name}`)
+      .on('click', e => { L.DomEvent.stopPropagation(e); openAp(a); });
+    if (!apMk.has(c)) { apMk.set(c, m); apLayer.addLayer(m); } else m.setIcon(apIcon(a));
+  }
+}
+map.on('zoomend', () => { for (const m of apMk.values()) apLayer.removeLayer(m); apMk.clear(); drawAp(); }); map.on('moveend', drawAp); drawAp();
+$('bAp').onclick = function () { const on = !map.hasLayer(apLayer); on ? (apLayer.addTo(map), drawAp()) : apLayer.remove(); this.classList.toggle('on', on); };
 
 /* ---------- airport panel: photo, weather, arrivals / departures ---------- */
 // Arrivals / departures come from the aircraft we already see: those within AP_R km whose route (adsbdb / demo) ends or starts at this airport
@@ -608,9 +625,9 @@ function renderCard(full) {
       + (landed ? ' · ' + landedText(f) : f.ground ? ' · ' + t('on ground') : ''); // on the ground within 25 km of its destination: landed, and how long ago
     // on the ground the scene takes the place of the flying plane on the dashed line
     const fl = $('fl');
-    // the scene is eligible until 5500 ft and again only below 5200 ft (no flicker around the limit); the user can switch it off (flPref); the change itself is a cross-fade (CSS): the scene fades out as the dashed line fades in
+    // the scene is available at every altitude; the user picks the scene or the dashed line (flPref); the change itself is a cross-fade (CSS)
     if (fl && !fl._init) { fl._init = 1; fl.classList.add('nt'); requestAnimationFrame(() => requestAnimationFrame(() => fl.classList.remove('nt'))); } // a card that has just opened shows its state at once, without fading in from the other one
-    if (fl) { const kt = f.spd * 1.944, pose = SkyGeo.scenePose(f.alt * 3.281, f.vr * 196.85, kt, f.ground, !landed); const eligible = f.ground || f.alt * 3.281 < (fl._el ? 5500 : 5200), show = eligible && flPref === 'scene'; fl._el = eligible; fl.classList.toggle('sw', eligible); fl.classList.toggle('g', show); gsMotion(f, fl, kt, show); if (show) gsPose(f, fl, pose); }
+    if (fl) { const kt = f.spd * 1.944, pose = SkyGeo.scenePose(f.alt * 3.281, f.vr * 196.85, kt, f.ground, !landed); const eligible = true, show = eligible && flPref === 'scene'; fl._el = eligible; fl.classList.toggle('sw', eligible); fl.classList.toggle('g', show); gsMotion(f, fl, kt, show); if (show) gsPose(f, fl, pose); }
   }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
@@ -715,7 +732,7 @@ function routeHtml(f) {
   return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(short10(org.name))}</small></div><span class="fl" id="fl" role="button" title="${esc(t('Click to switch between the animation and the dashed line'))}"><i>✈</i>${GS_HTML}</span>`
     + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(short10(dst.name))}</small></div></div><div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
 }
-// The user picks what the strip between the airport codes shows: the animated scene or the dashed line with the flying plane (click it to switch; remembered). Above ~5500 ft there is only the line.
+// The user picks what the strip between the airport codes shows: the animated scene or the dashed line with the flying plane (click it to switch; remembered).
 let flPref = LS('sky.fl', 'scene');
 $('card').onclick = e => {
   if (e.target.id === 'cx') return select(null);

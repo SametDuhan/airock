@@ -575,3 +575,41 @@ Object.assign(DICT.tr, { 'Click to switch between the animation and the dashed l
 Object.assign(DICT.es, { 'Click to switch between the animation and the dashed line': 'Haz clic para alternar entre la animación y la línea de puntos' });
 Object.assign(DICT.de, { 'Click to switch between the animation and the dashed line': 'Klicken, um zwischen Animation und gestrichelter Linie zu wechseln' });
 Object.assign(DICT.fr, { 'Click to switch between the animation and the dashed line': 'Cliquez pour passer de l\'animation à la ligne pointillée' });
+
+// In-app update download
+Object.assign(DICT.tr, {
+  'Download and install': 'İndir ve kur',
+  'Install': 'Kur',
+  'Update {0} downloaded': '{0} güncellemesi indirildi',
+  'Update download failed': 'Güncelleme indirilemedi',
+  'Open the download page': 'İndirme sayfasını aç',
+  'The disk image was opened: drag SkyTrack to Applications': 'Disk görüntüsü açıldı: SkyTrack\'i Uygulamalar klasörüne sürükle',
+  'The AppImage is in your Downloads folder: make it executable and run it': 'AppImage İndirilenler klasöründe: çalıştırılabilir yapıp çalıştır'
+});
+Object.assign(DICT.es, {
+  'Download and install': 'Descargar e instalar',
+  'Install': 'Instalar',
+  'Update {0} downloaded': 'Actualización {0} descargada',
+  'Update download failed': 'No se pudo descargar la actualización',
+  'Open the download page': 'Abrir la página de descarga',
+  'The disk image was opened: drag SkyTrack to Applications': 'Se abrió la imagen de disco: arrastra SkyTrack a Aplicaciones',
+  'The AppImage is in your Downloads folder: make it executable and run it': 'El AppImage está en tu carpeta de Descargas: hazlo ejecutable y ejecútalo'
+});
+Object.assign(DICT.de, {
+  'Download and install': 'Herunterladen und installieren',
+  'Install': 'Installieren',
+  'Update {0} downloaded': 'Update {0} heruntergeladen',
+  'Update download failed': 'Update konnte nicht heruntergeladen werden',
+  'Open the download page': 'Download-Seite öffnen',
+  'The disk image was opened: drag SkyTrack to Applications': 'Das Disk-Image wurde geöffnet: Ziehe SkyTrack in „Programme“',
+  'The AppImage is in your Downloads folder: make it executable and run it': 'Das AppImage liegt im Ordner „Downloads“: ausführbar machen und starten'
+});
+Object.assign(DICT.fr, {
+  'Download and install': 'Télécharger et installer',
+  'Install': 'Installer',
+  'Update {0} downloaded': 'Mise à jour {0} téléchargée',
+  'Update download failed': 'Le téléchargement de la mise à jour a échoué',
+  'Open the download page': 'Ouvrir la page de téléchargement',
+  'The disk image was opened: drag SkyTrack to Applications': 'L\'image disque est ouverte : faites glisser SkyTrack dans Applications',
+  'The AppImage is in your Downloads folder: make it executable and run it': 'L\'AppImage est dans votre dossier Téléchargements : rendez-la exécutable et lancez-la'
+});

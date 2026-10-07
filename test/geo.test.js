@@ -53,7 +53,7 @@ test('scenePose: from the airport on the ground to the open sky, and back', () =
   assert.equal(P(700, 2000, 200, false).g, 1); // at 700 ft nothing of the airport is left
   assert.ok(P(350, 2000, 190, false).g > .4 && P(350, 2000, 190, false).g < .6);
   assert.equal(P(1500, 2000, 220, false).g, 1); assert.equal(P(1500, 2000, 220, false).cl, 1); // 1500 ft: only sky and clouds
-  assert.equal(P(6000, 0, 250, false).show, false); // cruise-ish: the dashed line again
+  assert.equal(P(6000, 0, 250, false).show, true); // the scene works at every altitude
   const app = P(2500, -700, 160, false); assert.ok(app.gear && app.pitch <= -4 && app.pitch >= -8); // descending: nose down, gear down
   assert.equal(P(2500, 0, 160, false).pitch, 0); assert.equal(P(2500, 0, 160, false).gear, false); // level: flat, gear up
   assert.equal(P(-50, 0, 0, false).g, 0); // bad input stays inside the range

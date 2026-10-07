@@ -164,8 +164,13 @@ try { window.api?.onUpdate?.(u => { upd.hidden = false;
   if (u.state === 'downloading') upd.innerHTML = `<span>⬇ ${t('Downloading update {0}…', u.version)}</span><i class="pbar" style="width:0"></i>`;
   else if (u.state === 'progress') { const b = upd.querySelector('.pbar'); if (b) b.style.width = u.percent + '%'; }
   else if (u.state === 'ready') upd.innerHTML = `<span>✓ ${t('Update {0} is ready', u.version)}</span><button id="updGo">${t('Restart')}</button>`;
-  else if (u.state === 'manual') upd.innerHTML = `<span>${t('New version {0} available', u.version)}</span><button id="updGo" data-url="${esc(u.url)}">${t('Download')}</button>`; }); } catch {}
-upd.onclick = e => { if (e.target.id !== 'updGo') return; const u = e.target.dataset.url; if (u) window.open(u); else try { window.api.installUpdate(); } catch {} };
+  else if (u.state === 'downloaded') upd.innerHTML = `<span>✓ ${t('Update {0} downloaded', u.version)}</span><button id="updInst">${t('Install')}</button>`;
+  else if (u.state === 'manualError') upd.innerHTML = `<span title="${esc(u.error || '')}">${t('Update download failed')}</span><button id="updGo" data-url="${esc(u.url)}">${t('Open the download page')}</button>`;
+  else if (u.state === 'manual') upd.innerHTML = `<span>${t('New version {0} available', u.version)}</span>` + (u.canDownload && window.api.downloadUpdate ? `<button id="updDl">${t('Download and install')}</button>` : `<button id="updGo" data-url="${esc(u.url)}">${t('Download')}</button>`); }); } catch {}
+upd.onclick = e => {
+  if (e.target.id === 'updDl') { e.target.disabled = true; try { window.api.downloadUpdate(); } catch {} return; }
+  if (e.target.id === 'updInst') { window.api.installDownloaded().then(x => { if (x?.platform === 'darwin') toast(t('The disk image was opened: drag SkyTrack to Applications')); else if (x?.platform === 'linux') toast(t('The AppImage is in your Downloads folder: make it executable and run it')); }); return; }
+  if (e.target.id !== 'updGo') return; const u = e.target.dataset.url; if (u) window.open(u); else try { window.api.installUpdate(); } catch {} };
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { modal(stm, false); modal(alm, false); modal(stt, false); } });
 
