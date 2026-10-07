@@ -68,33 +68,51 @@ X.event = f => { baseEvent(f);
 
 /* ---------- overhead: what is flying above me ---------- */
 const ovp = $('ovp'); let ov = LS('sky.over', null), ovPlacing = false, ovLayer = L.layerGroup().addTo(map), ovRad = LS('sky.overR', 20);
+const OV_MIN = 2, OV_MAX = 50; ovRad = Math.max(OV_MIN, Math.min(OV_MAX, Math.round(+ovRad) || 20)); // radius in km, any whole number from 2 to 50
 const COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'], compass = d => COMPASS[Math.round(d / 45) % 8];
 function drawOver() { ovLayer.clearLayers(); if (!ov) return;
-  L.marker([ov.lat, ov.lon], { icon: L.divIcon({ className: '', html: '<div class="ovm"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }), interactive: false }).addTo(ovLayer);
+  const mk = L.marker([ov.lat, ov.lon], { icon: L.divIcon({ className: '', html: '<div class="ovm"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }), keyboard: false }).addTo(ovLayer);
+  const box = document.createElement('div'), tt = document.createElement('b'), rm = document.createElement('button'); box.className = 'ovpop'; tt.textContent = '📍 ' + t('Your spot'); rm.textContent = '✕ ' + t('Remove my spot'); rm.onclick = clearOver; box.append(tt, rm);
+  mk.bindPopup(box, { closeButton: false, offset: [0, -4] }); // click the marker on the map to remove the spot
   L.circle([ov.lat, ov.lon], { radius: ovRad * 1000, color: '#2f8cff', weight: 1.5, fillOpacity: .06, dashArray: '4 6', interactive: false }).addTo(ovLayer); }
 function overList() { if (!ov) return [];
   return [...flights.values()].filter(f => !f.gone && !f.ground && vis(f)).map(f => { const d = km(ov.lat, ov.lon, f.lat, f.lon); return { f, d, b: brg(ov.lat, ov.lon, f.lat, f.lon), el: Math.atan2(f.alt, d * 1000) * 180 / Math.PI }; })
     .filter(x => x.d <= ovRad).sort((a, b) => a.d - b.d); }
-function renderOver() { if (!ovp.classList.contains('show')) return;
-  if (document.activeElement?.id === 'ovA') return; // do not rebuild while typing
-  const list = overList(), [rmax, ru] = uDist(50), [rv] = uDist(ovRad);
-  ovp.innerHTML = `<div class="ch"><div class="cn"><h2>${t('Overhead')}</h2><small>${ov ? t('Aircraft within {0} of your spot', fmtDist(ovRad)) : t('Choose where you are')}</small></div><button class="ib" id="ovx" title="${t('Close')}">✕</button></div>`
-    + `<div class="ctl"><button id="ovPick">📍 ${t(ov ? 'Move my spot' : 'Click the map')}</button><input id="ovA" placeholder="${t('Airport code')}" autocomplete="off"></div>`
-    + `<div class="rg"><span>${t('Radius')}</span><input id="ovR" type="range" min="5" max="50" step="5" value="${ovRad}"><b>${fmtDist(ovRad)}</b></div>`
-    + (ov ? (list.length ? list.map(({ f, d, b, el }) => `<div class="ov" data-id="${esc(f.id)}"><div class="dir"><span>${compass(b)}</span><small>${Math.round(el)}°↑</small></div><div class="rm"><b>${esc(f.cs)}</b><small>${esc([f.route ? f.route.org.code + '→' + f.route.dst.code : '', acCode(f), f.route?.airline].filter(Boolean).join(' · '))}</small></div><div class="rs">${fmtDist(d, 1)}<br>${fmtAlt(f.alt * 3.281, 100)}</div></div>`).join('')
-      : `<div class="none">${t('Nothing overhead right now.')}</div>`) : `<div class="none">${t('Click the map where you are, or type an airport code. SkyTrack lists the aircraft flying around that spot, with the direction to look and how high in the sky.')}</div>`);
+// The panel is built once and only its parts are updated: rebuilding it on every change (as before) threw away the slider while it was being dragged
+let ovBuilt = '';
+function buildOver() {
+  ovp.innerHTML = `<div class="ch"><div class="cn"><h2>${t('Overhead')}</h2><small id="ovSub"></small></div><button class="ib" id="ovx" title="${t('Close')}">✕</button></div>`
+    + `<div class="ctl"><button id="ovPick"></button><input id="ovA" placeholder="${t('Airport code')}" autocomplete="off"></div>`
+    + `<div class="rg"><span>${t('Radius')}</span><input id="ovR" type="range" min="${OV_MIN}" max="${OV_MAX}" step="1" aria-label="${t('Radius')}"><b id="ovRv"></b></div>`
+    + `<div class="ctl"><button id="ovRm" class="ovrm">✕ ${t('Remove my spot')}</button></div><div id="ovL"></div>`;
+  ovBuilt = LANG + U.dist;
 }
-function setOver(lat, lon, move = true) { document.activeElement?.blur?.(); ov = { lat, lon }; save('sky.over', ov); drawOver(); if (move) map.setView([lat, lon], Math.max(map.getZoom(), 9)); ovp.classList.add('show'); renderOver(); }
+function renderOver() {
+  if (!ovp.classList.contains('show')) return;
+  if (ovBuilt !== LANG + U.dist || !$('ovL')) buildOver();
+  $('ovSub').textContent = ov ? t('Aircraft within {0} of your spot', fmtDist(ovRad, U.dist === 'km' ? 0 : 1)) : t('Choose where you are');
+  $('ovPick').textContent = '📍 ' + t(ov ? 'Move my spot' : 'Click the map');
+  const r = $('ovR'); if (+r.value !== ovRad) r.value = ovRad; $('ovRv').textContent = fmtDist(ovRad, U.dist === 'km' ? 0 : 1);
+  $('ovRm').style.display = ov ? '' : 'none';
+  const list = overList();
+  $('ovL').innerHTML = ov ? (list.length ? list.map(({ f, d, b, el }) => `<div class="ov" data-id="${esc(f.id)}"><div class="dir"><span>${compass(b)}</span><small>${Math.round(el)}°↑</small></div><div class="rm"><b>${esc(f.cs)}</b><small>${esc([f.route ? f.route.org.code + '→' + f.route.dst.code : '', acCode(f), f.route?.airline].filter(Boolean).join(' · '))}</small></div><div class="rs">${fmtDist(d, 1)}<br>${fmtAlt(f.alt * 3.281, 100)}</div></div>`).join('')
+      : `<div class="none">${t('Nothing overhead right now.')}</div>`) : `<div class="none">${t('Click the map where you are, or type an airport code. SkyTrack lists the aircraft flying around that spot, with the direction to look and how high in the sky.')}</div>`;
+}
+// Remove the spot (from the panel, from its marker on the map, or from the left menu)
+const syncOvMenu = () => { $('ovRmRow').style.display = ov ? '' : 'none'; };
+function clearOver() { ov = null; save('sky.over', null); ovPlacing = false; document.body.classList.remove('placing'); map.closePopup(); drawOver(); renderOver(); syncOvMenu(); toast(t('Overhead spot removed')); }
+function setOver(lat, lon, move = true) { document.activeElement?.blur?.(); ov = { lat, lon }; save('sky.over', ov); drawOver(); if (move) map.setView([lat, lon], Math.max(map.getZoom(), 9)); ovp.classList.add('show'); renderOver(); syncOvMenu(); }
 ovp.onclick = e => {
   if (e.target.id === 'ovx') { ovp.classList.remove('show'); return; }
+  if (e.target.id === 'ovRm') return clearOver();
   if (e.target.id === 'ovPick') { ovPlacing = true; document.body.classList.add('placing'); toast(t('Click the map to set your spot')); return; }
   const r = e.target.closest('.ov'); if (r) select(r.dataset.id);
 };
-ovp.oninput = e => { if (e.target.id === 'ovR') { ovRad = +e.target.value; save('sky.overR', ovRad); drawOver(); renderOver(); } };
+ovp.oninput = e => { if (e.target.id === 'ovR') { ovRad = Math.max(OV_MIN, Math.min(OV_MAX, Math.round(+e.target.value) || OV_MIN)); save('sky.overR', ovRad); drawOver(); renderOver(); } };
 ovp.onkeydown = e => { if (e.target.id === 'ovA' && e.key === 'Enter') { const a = knownAps.get(apCode(e.target.value)); if (a) setOver(a.lat, a.lon); else toast(t('Unknown airport: use an IATA or ICAO code, e.g. IST or LTFM')); } };
 map.on('click', e => { if (!ovPlacing) return; ovPlacing = false; document.body.classList.remove('placing'); setOver(e.latlng.lat, e.latlng.lng, false); select(null); });
 $('bOver').onclick = () => { if (ovp.classList.contains('show')) { ovp.classList.remove('show'); return; } select(null); if (apSel) closeAp(); ovp.classList.add('show'); drawOver(); renderOver(); if (ov) map.setView([ov.lat, ov.lon], Math.max(map.getZoom(), 9)); };
-setInterval(renderOver, 2500); drawOver();
+$('bOverRm').onclick = clearOver; setInterval(renderOver, 2500); drawOver(); syncOvMenu();
 
 /* ---------- worldwide search (callsign / registration / type / airport) ---------- */
 let remote = { q: '', flights: [] }, srchT = null;
