@@ -67,3 +67,17 @@ test('sunElevation / solarHour: under the sun, opposite it, and the hour of the 
   assert.ok(Math.abs(G.solarHour(s.lon - 90, date) - 6) < .01); // 90 degrees west: morning
   assert.ok(G.sunElevation(41, 29, new Date(Date.UTC(2026, 5, 21, 2, 0, 0))) < 0); // Istanbul at 05:00 local mean time in June: before sunrise there... (sun below the horizon)
 });
+
+test('isNight: exactly the region the Night layer of the map shades (the polygon of night())', () => {
+  const G = require('../src/geo.js');
+  const inPoly = (lat, lon, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [yi, xi] = poly[i], [yj, xj] = poly[j]; if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) c = !c; } return c; };
+  let n = 0;
+  for (const date of [new Date(Date.UTC(2026, 5, 21, 12)), new Date(Date.UTC(2026, 11, 21, 3)), new Date(Date.UTC(2026, 2, 20, 18, 30)), new Date(Date.UTC(2026, 9, 7, 15, 20))]) {
+    const poly = G.night(date);
+    for (let lat = -80; lat <= 80; lat += 10) for (let lon = -175; lon <= 175; lon += 10) {
+      if (Math.abs(G.sunElevation(lat, lon, date)) < 1.5) continue; // right on the line: polygon steps of 3 degrees
+      assert.equal(G.isNight(lat, lon, date), inPoly(lat, lon, poly), `${lat},${lon} at ${date.toISOString()}`); n++;
+    }
+  }
+  assert.ok(n > 1000);
+});

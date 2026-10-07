@@ -674,14 +674,14 @@ const GS_HTML = `<div class="gsi"><div class="bg"><div class="bgn"></div><div cl
 // touchdown, paused when the plane stands still. Playback rate changes keep the position, and the position is kept on the flight when the card is rebuilt.
 const NO_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Where things are in the scene for this moment of the flight (SkyGeo.scenePose): the ground sinks out, clouds fade in, the plane rises and pitches, the gear folds up; and the look of the sky
-// follows the sun at the airport the plane is at (the nearer of departure / arrival): day = bright sky and the sun, night = dark sky, stars and the moon. CSS transitions (about a second)
+// follows the Night layer of the map at the airport the plane is at (the nearer of departure / arrival): inside the night region = dark sky, stars and the moon, otherwise a bright sky and the sun. CSS transitions (about a second)
 // smooth the once-a-second updates.
 function gsPose(f, el, p) {
   const $q = n => el.querySelector(n);
   $q('.gnd').style.transform = `translateY(${(p.g * 90).toFixed(1)}px)`; $q('.sky').style.opacity = p.cl.toFixed(2);
   $q('.plane').style.transform = `translateY(${(-p.rise).toFixed(1)}px) rotate(${(-p.pitch).toFixed(1)}deg)`; $q('.gear').classList.toggle('up', !p.gear);
   const o = f.route.org, d = f.route.dst, ap = km(f.lat, f.lon, o.lat, o.lon) <= km(f.lat, f.lon, d.lat, d.lon) ? o : d;
-  const elev = SkyGeo.sunElevation(ap.lat, ap.lon), hr = SkyGeo.solarHour(ap.lon), day = Math.max(0, Math.min(1, (elev + 2) / 10));
+  const hr = SkyGeo.solarHour(ap.lon), day = SkyGeo.isNight(ap.lat, ap.lon) ? 0 : 1; // day or night from the same region as the map's Night layer, not from the clock
   const df = Math.max(0, Math.min(1, (hr - 6) / 12)), nf = (hr >= 18 ? hr - 18 : hr + 6) / 12; // how far through the day / the night: the sun and the moon cross the sky from left to right
   $q('.bgd').style.opacity = day.toFixed(2); $q('.stars').style.opacity = (Math.max(0, 1 - day * 1.6) * .9).toFixed(2); el.querySelector('.gsi').classList.toggle('day', day > .5);
   const sun = $q('.sun'), moon = $q('.moon'); sun.style.opacity = day.toFixed(2); sun.style.left = (12 + 76 * df).toFixed(1) + '%'; sun.style.top = (21 - 13 * Math.sin(Math.PI * df)).toFixed(1) + 'px';

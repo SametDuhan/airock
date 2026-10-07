@@ -60,6 +60,8 @@
   }
   // Sun height above the horizon (degrees, negative = night) at a place, and the local mean solar time (hours, 12 = the sun is highest): for the day / night look of the flight-card scene
   const sunElevation = (lat, lon, date = new Date()) => { const s = sun(date); return 90 - km(lat, lon, s.lat, s.lon) / 6371 / R; };
+  // Is the place in the night: the same region the map's Night layer shades (night() below is the line where the sun is on the horizon)
+  const isNight = (lat, lon, date = new Date()) => sunElevation(lat, lon, date) < 0;
   const solarHour = (lon, date = new Date()) => { const s = sun(date); return (12 + (((lon - s.lon + 540) % 360) - 180) / 15 + 24) % 24; };
   // How the flight-card scene looks for a given moment of the flight (see gsPose in renderer.js). Inputs: altitude (ft), vertical rate (ft/min), ground speed (kt), on the ground or not,
   // and rolloutOk = false right after landing (the nose is down then, whatever the speed).
@@ -74,7 +76,7 @@
     const pitch = ground ? (kt > 110 && rolloutOk ? 10 : 0) : vs > 100 || (vs > -100 && a < 300 && kt > 100) ? 8 + c(vs / 500, 0, 6) : vs < -100 ? -(4 + c(-vs / 250, 0, 4)) : 0;
     return { show: !!ground || a < 5500, g: c(a / 700, 0, 1), cl: c((a - 50) / 700, 0, 1), rise: c(a / 1500, 0, 1) * 10, pitch, gear: !!ground || a < 250 || (vs < -300 && a < 3000) };
   }
-  const api = { scenePose, sunElevation, solarHour, R, brg, km, gc, unwrap, nearLon, regCountry, ahead, sun, night, sunSide };
+  const api = { scenePose, sunElevation, solarHour, isNight, R, brg, km, gc, unwrap, nearLon, regCountry, ahead, sun, night, sunSide };
   root.SkyGeo = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
