@@ -104,7 +104,7 @@ function toast(msg, id) {
 
 /* ---------- aircraft: single canvas layer ---------- */
 // Instead of a separate HTML element per aircraft, all are drawn on one canvas: stays smooth with thousands of aircraft
-// Icon shapes (24x24, nose up): b = body, e = engines (outlined separately so each one is visible), r = rotor (helicopters, stroke only)
+// Icon shapes (24x24, nose up): b = body, e = engines (outlined separately so each one is visible), r = rotor blades (helicopters, stroke only), d = rotor disc (filled, faint)
 const SHAPES = {
   gen: { b: 'M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z', s: 1 },
   air2: { b: 'M12 1.5c1 0 1.6 1.6 1.6 3.5v4l8.9 6v2l-8.9-2.8v5.3l2.4 2v1.3L12 21.8l-4 1v-1.3l2.4-2v-5.3L1.5 17v-2l8.9-6V5c0-1.9.6-3.5 1.6-3.5z',
@@ -113,10 +113,12 @@ const SHAPES = {
     e: 'M6.5 10.6a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM15.5 10.6a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM2.8 12.8a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM19.2 12.8a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0z', s: 1.3 },
   jet: { b: 'M12 1c.9 0 1.4 2 1.4 4v5l6.6 5v1.8l-6.6-2v4.2l1.6 1.5v1.3L12 21l-3 .8v-1.3l1.6-1.5v-4.2l-6.6 2V15l6.6-5V5c0-2 .5-4 1.4-4z',
     e: 'M8.6 14.5a.9.9 0 0 1 1.8 0v4a.9.9 0 0 1-1.8 0zM13.6 14.5a.9.9 0 0 1 1.8 0v4a.9.9 0 0 1-1.8 0z', s: .9 },
-  heli: { b: 'M12 5.6c2.6 0 4.2 2.1 4.2 5s-1.6 4.6-4.2 4.6-4.2-1.7-4.2-4.6 1.6-5 4.2-5zM11 14.6h2V21h-2zM9.4 19.6h5.2v2H9.4z',
-    r: 'M21.5 10.4a9.5 9.5 0 1 1-19 0a9.5 9.5 0 1 1 19 0zM5.3 3.7l13.4 13.4M18.7 3.7L5.3 17.1', s: 1.4 }
+  heli: { b: 'M12 3.6c2.4 0 3.8 2 3.8 4.6 0 2.2-.8 3.7-1.6 4.6h-4.4c-.8-.9-1.6-2.4-1.6-4.6 0-2.6 1.4-4.6 3.8-4.6zM11.2 12.4h1.6v7.4h-1.6zM9.3 18.6h5.4l-.6 1.7H9.9zM11.35 19.8h1.3v2.4h-1.3z', // cabin, tail boom, stabilizer, tail fin
+    e: 'M7.1 6.8h1v6.4h-1zM15.9 6.8h1v6.4h-1z', // skids
+    d: 'M22 8.6a10 10 0 1 1-20 0a10 10 0 1 1 20 0z', // faint rotor disc (filled)
+    r: 'M5 1.6l14 14M19 1.6L5 15.6', rw: 1.1, ra: .8, s: 1.2 } // two rotor blades (thin strokes)
 };
-for (const k in SHAPES) { const o = SHAPES[k]; o.B = new Path2D(o.b); if (o.e) o.E = new Path2D(o.e); if (o.r) o.R = new Path2D(o.r); }
+for (const k in SHAPES) { const o = SHAPES[k]; o.B = new Path2D(o.b); if (o.e) o.E = new Path2D(o.e); if (o.r) o.R = new Path2D(o.r); if (o.d) o.D = new Path2D(o.d); }
 // Which icon an aircraft gets: helicopter / four-engine airliner / twin airliner / small jet / everything else
 const HELI_RE = /^(EC\d\d|AS\d\d|AW\d\d|B06|B407|B412|B427|B429|B505|R22|R44|R66|S76|S92|S61|S64|A109|A119|A139|A149|A169|A189|MD52|MD60|MI\d|KA\d\d|NH90|H47|H53|H60|H64|H500|UH\d\d|CH\d\d|MH\d\d|BK17|EN28|EN48|SCOU|GAZL|LYNX|PUMA|TIGR)/;
 const FOUR_ENG = new Set('A342 A343 A345 A346 A388 A124 A225 B741 B742 B743 B744 B74D B74R B74S B748 B703 B701 B720 B52 B1 C17 C5M C5 C135 K35R KC10 IL96 IL76 IL62 IL86 IL18 AN12 AN22 AN70 A400 C130 C30J L100 E3CF E6 DC8 DC85 DC86 DC87 B461 B462 B463 RJ70 RJ85 RJ1H VC10 TU95 TU16'.split(' '));
@@ -169,7 +171,8 @@ function rings(ctx, f, p, size) {
 function icon(ctx, p, hdg, size, fill, kind = 'gen') {
   const sh = SHAPES[kind] || SHAPES.gen;
   ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(hdg * R); const sc = size * sh.s / 24; ctx.scale(sc, sc); ctx.translate(-12, -12); ctx.lineWidth = .7 * Math.min(1, size / 24) / sc;
-  if (sh.R) { ctx.save(); ctx.strokeStyle = fill; ctx.globalAlpha = .9; ctx.lineWidth = 1.7; ctx.stroke(sh.R); ctx.restore(); }
+  if (sh.D) { ctx.save(); ctx.fillStyle = fill; ctx.globalAlpha = .16; ctx.fill(sh.D); ctx.restore(); }
+  if (sh.R) { ctx.save(); ctx.strokeStyle = fill; ctx.lineCap = 'round'; ctx.globalAlpha = sh.ra || .9; ctx.lineWidth = sh.rw || 1.7; ctx.stroke(sh.R); ctx.restore(); }
   ctx.fillStyle = fill; ctx.fill(sh.B); ctx.stroke(sh.B);
   if (sh.E) { ctx.fill(sh.E); ctx.stroke(sh.E); }
   ctx.restore();
@@ -541,7 +544,7 @@ function renderList() {
     const done = inV.filter(f => f.rs && f.rs !== 'loading').length; if (done < inV.length) st = t('loading route info · {0} / {1} aircraft', done, inV.length); }
   $('apSt').textContent = st;
   $('list').innerHTML = (window.searchExtra ? searchExtra($('q').value, arr) : '') + (arr.length || !$('q').value.trim() ? '' : `<div class="none" style="padding:12px 16px;color:var(--mut);font-size:12px">${t('Nothing matches')}</div>`) + arr.map(f => { const k = kindOf(f), sh = SHAPES[k] || SHAPES.gen, col = f.ground ? '#9aa0a6' : color(f.alt), rot = k === 'heli' ? '' : '';
-    return `<div class="row ${f.id === selected ? 'on' : ''}" data-id="${esc(f.id)}"><svg class="ri" viewBox="0 0 24 24" fill="${col}" stroke="#000" stroke-width=".6"><path d="${sh.b}"/>${sh.e ? `<path d="${sh.e}"/>` : ''}${sh.r ? `<path d="${sh.r}" fill="none" stroke="${col}" stroke-width="1.2" opacity=".6"/>` : ''}</svg>`
+    return `<div class="row ${f.id === selected ? 'on' : ''}" data-id="${esc(f.id)}"><svg class="ri" viewBox="0 0 24 24" fill="${col}" stroke="#000" stroke-width=".6"><path d="${sh.b}"/>${sh.e ? `<path d="${sh.e}"/>` : ''}${sh.d ? `<path d="${sh.d}" stroke="none" opacity=".16"/>` : ''}${sh.r ? `<path d="${sh.r}" fill="none" stroke="${col}" stroke-width="${sh.rw || 1.2}" stroke-linecap="round" opacity="${sh.ra || .6}"/>` : ''}</svg>`
     + `<div class="rm"><b>${isEmg(f) ? '<em>⚠</em>' : ''}${fav.has(f.id) ? '<u>★</u>' : ''}${esc(f.cs)}</b><small>${f.route ? esc(f.route.org.code + ' → ' + f.route.dst.code) : esc(acCode(f) || f.reg || '')}</small></div>`
     + `<span>${f.ground ? t('on ground') : fmtAlt(f.alt * 3.281, 100)}</span></div>`; }).join('');
 }
