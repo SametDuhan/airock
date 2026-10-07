@@ -607,12 +607,9 @@ function renderCard(full) {
     $('pgb').style.width = Math.min(100, a / (a + b) * 100).toFixed(1) + '%';
     $('pgt').textContent = t('{0} flown · {1} to go', fmtDist(a), fmtDist(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) + ' · ' + t('arrives {0}', new Date(Date.now() + b / (f.spd * 3.6) * 3600e3).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' })) : '')
       + (landed ? ' · ' + landedText(f) : f.ground ? ' · ' + t('on ground') : ''); // on the ground within 25 km of its destination: landed, and how long ago
-    // on the ground the scene replaces the flying plane on the dashed line. Moving (taxiing): the airport scrolls past; just landed: it slows to a stop (a rebuilt card continues the same
-    // slowdown, it is never restarted); standing: still.
-    const gs = $('gs'), fl = $('card').querySelector('.rt .fl'), moving = f.spd * 1.944 > 3;
-    if (gs) { gs.hidden = !f.ground; if (fl) fl.style.display = f.ground ? 'none' : ''; gs.classList.toggle('mv', f.ground && !landed && moving);
-      if (landed) { f._rolled = f._rolled || Date.now(); gs.classList.add('rl'); gs.style.setProperty('--rd', -(Date.now() - f._rolled) + 'ms'); } else gs.classList.remove('rl'); }
-    if (!landed) f._rolled = 0; }
+    // on the ground the scene takes the place of the flying plane on the dashed line
+    const fl = $('fl'); if (fl) { fl.classList.toggle('g', f.ground); gsMotion(f, fl, f.ground ? f.spd * 1.944 : 0); }
+  }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
     ['Altitude', f.ground ? t('on ground') : ft(f.alt)], ['Speed', fmtSpd(f.spd * 1.944)], ['Heading', Math.round(f.hdg) + '°'],
@@ -635,7 +632,8 @@ function landedText(f) {
   const min = (Date.now() - t0) / 60000; return min < 1 ? t('just landed') : t('landed {0} ago', eta(min / 60));
 }
 const eta = h => h < 1 ? Math.round(h * 60) + t(' min') : Math.floor(h) + t(' h ') + Math.round(h % 1 * 60) + t(' min');
-// Planes on the ground get a scene instead of the flying plane on the dashed line: a side view of the plane (nose to the right) in front of an airport that scrolls from right to left
+// Planes on the ground get a scene in the slot of the flying plane (between the two airport codes): a side view of the plane (nose to the right) in front of an airport that scrolls from
+// right to left, at a speed that follows the plane's ground speed (see gsMotion)
 const GS_WIN = (x0, n, step, y, w, h, op) => Array.from({ length: n }, (_, i) => `<rect x="${x0 + i * step}" y="${y}" width="${w}" height="${h}" fill="#f2c230" opacity="${op}"/>`).join('');
 const GS_FAR = `<g><rect x="57" y="14" width="6" height="30" fill="#34445a"/><path d="M49 14 L71 14 L66 5 L54 5Z" fill="#41546d"/><rect x="53" y="7.5" width="14" height="3" fill="#f2c230" opacity=".9"/><rect x="59.2" y="-1" width="1.6" height="7" fill="#4a5d78"/><circle cx="60" cy="0" r="1.5" fill="#ff5a4f"/>`
   + `<rect x="147" y="30" width="6" height="14" fill="#34445a"/><circle cx="150" cy="29" r="6.5" fill="#41546d"/><rect x="141" y="27.5" width="18" height="1.6" fill="#55708f"/>`
@@ -643,17 +641,39 @@ const GS_FAR = `<g><rect x="57" y="14" width="6" height="30" fill="#34445a"/><pa
 const GS_MID = `<g><rect x="14" y="6" width="136" height="20" fill="#202b3a"/>${GS_WIN(21, 12, 11, 12, 6, 4, .6)}<path d="M150 14 h22 v5 h-22z" fill="#2c3a4f"/><rect x="170" y="10" width="3" height="16" fill="#2c3a4f"/>`
   + `<path d="M205 26 V13 Q235 -4 265 13 V26Z" fill="#1c2633"/><rect x="226" y="15" width="18" height="11" fill="#141c26"/><rect x="288" y="16" width="14" height="10" fill="#202b3a"/></g>`;
 const gsLayer = (cls, w, h, g) => `<svg class="gl ${cls}" width="${w * 2}" height="${h}" viewBox="0 0 ${w * 2} ${h}" aria-hidden="true">${g}<g transform="translate(${w})">${g}</g></svg>`;
-const GS_PLANE = `<svg class="plane" viewBox="0 0 100 42" aria-hidden="true"><path d="M11 22 L5 5 L17 5 L29 17Z" fill="#f2c230"/><path d="M14 22 L3 25 L6 27.5 L22 25Z" fill="#9aa3ad"/>`
-  + `<path d="M10 24 C10 17 17 15 27 15 H76 C89 15 97 19 97 23 C97 27 90 30 77 30 H21 C14 30 10 28 10 24Z" fill="#eceef1"/><path d="M12 25.5 H93" stroke="#f2c230" stroke-width="1.6" fill="none"/>`
-  + `<path d="M86 17.5 L92 19.5 L91 22 L84 22Z" fill="#26364a"/>${Array.from({ length: 10 }, (_, i) => `<circle cx="${28 + i * 5.2}" cy="21" r="1.15" fill="#26364a"/>`).join('')}`
-  + `<path d="M49 27 L70 27 L58 34 L46 34Z" fill="#b9c0c8"/><ellipse cx="57" cy="34.5" rx="7.5" ry="3.3" fill="#8e98a3"/><ellipse cx="63.5" cy="34.5" rx="2" ry="2.7" fill="#262b32"/>`
-  + `<path d="M52 33 V37.5 M85 29 V37.5" stroke="#7d8791" stroke-width="1.6"/><g class="wheel"><circle cx="52" cy="39" r="3.1" fill="#202327"/><circle cx="52" cy="39" r="1.1" fill="#9aa3ad"/><path d="M52 36.2 V41.8" stroke="#9aa3ad" stroke-width=".6"/></g><g class="wheel"><circle cx="85" cy="39" r="2.8" fill="#202327"/><circle cx="85" cy="39" r="1" fill="#9aa3ad"/><path d="M85 36.4 V41.6" stroke="#9aa3ad" stroke-width=".6"/></g></svg>`;
-const GS_HTML = `<div class="gs" id="gs" hidden>${gsLayer('far', 320, 44, GS_FAR)}${gsLayer('mid', 320, 26, GS_MID)}<div class="near"><i></i></div>${GS_PLANE}</div>`;
+// The plane from the side (an A320-like airliner, nose to the right): gradient fuselage with a yellow cheat line and tail, cockpit and cabin windows, doors, wing, engine with its fan, landing gear
+const GS_PLANE = `<svg class="plane" viewBox="0 0 120 44" aria-hidden="true"><defs><linearGradient id="gsB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e4e8ed"/><stop offset="1" stop-color="#a9b2bd"/></linearGradient>`
+  + `<linearGradient id="gsE" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfe4ea"/><stop offset="1" stop-color="#7f8a96"/></linearGradient></defs>`
+  + `<path d="M14 21 L8 3 L21 3 L38 21Z" fill="#f2c230"/><path d="M8 3 L11 3 L16 21 L14 21Z" fill="#c99a12"/>`
+  + `<path d="M15 25 L2 28.5 L5.5 31 L26 28Z" fill="#b4bcc6"/>`
+  + `<path d="M8 19 C14 20.4 22 21 31 21 L90 21 C101 21 109 24 114 28.5 C110.5 32.2 103 33.5 95 33.5 L32 33.5 C21 33.5 12 27 8 19Z" fill="url(#gsB)"/>`
+  + `<path d="M20 30.2 C45 30.8 85 30.8 111 29.6" stroke="#f2c230" stroke-width="1.7" fill="none"/>`
+  + `<path d="M98 23 L106 23.2 L109.5 25.6 L100.5 25.4Z" fill="#22344a"/><path d="M98 23 L100.5 25.4" stroke="#e4e8ed" stroke-width=".7"/>`
+  + Array.from({ length: 15 }, (_, i) => `<rect x="${27 + i * 4.3}" y="23.2" width="2.2" height="2.7" rx="1" fill="#2a3b52"/>`).join('')
+  + `<rect x="38" y="22.8" width="4.6" height="8.2" rx="1" fill="none" stroke="#b3bbc5" stroke-width=".6"/><rect x="88" y="22.8" width="4.6" height="8.2" rx="1" fill="none" stroke="#b3bbc5" stroke-width=".6"/>`
+  + `<path d="M50 32 L84 32 L69 39 L55 39Z" fill="#c3cad3"/><path d="M50 32 L84 32" stroke="#8d97a3" stroke-width=".7"/>`
+  + `<rect x="66" y="35" width="7" height="3" fill="#9aa4af"/><ellipse cx="70" cy="40" rx="10" ry="4.4" fill="url(#gsE)"/><ellipse cx="78.2" cy="40" rx="2" ry="3.8" fill="#1d2228"/><ellipse cx="78.2" cy="40" rx=".9" ry="1.6" fill="#6f7a86"/>`
+  + `<path d="M58 33.5 V38.6 M100 33.5 V38.6" stroke="#8b95a1" stroke-width="1.7"/>`
+  + `<g class="wheel"><circle cx="58" cy="40.6" r="3.4" fill="#1e2125"/><circle cx="58" cy="40.6" r="1.3" fill="#a3acb6"/><path d="M58 37.3 V43.9 M54.7 40.6 H61.3" stroke="#a3acb6" stroke-width=".6"/></g>`
+  + `<g class="wheel"><circle cx="100" cy="40.6" r="3" fill="#1e2125"/><circle cx="100" cy="40.6" r="1.1" fill="#a3acb6"/><path d="M100 37.6 V43.6 M97 40.6 H103" stroke="#a3acb6" stroke-width=".6"/></g></svg>`;
+const GS_HTML = `<div class="gsi">${gsLayer('far', 320, 44, GS_FAR)}${gsLayer('mid', 320, 26, GS_MID)}<div class="near"><b class="nl"></b></div>${GS_PLANE}</div>`;
+// The scene never stops looping while the plane moves, only its speed changes: slow like a taxiing plane (15 knots = one pass of the nearest layer in 2 s), faster while rolling out after
+// touchdown. It stands still (paused) when the plane does. Playback rate changes keep the position, and the position is kept on the flight when the card is rebuilt.
+const NO_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function gsMotion(f, el, kt) {
+  if (!el._an) {
+    el._an = NO_MOTION ? [] : [['.far', 320, 128000], ['.mid', 320, 53000], ['.nl', 28, 2000]].map(([sel, px, ms]) => { const a = el.querySelector(sel).animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-px}px)` }], { duration: ms, iterations: Infinity }); a.currentTime = f._gsT || 0; a.pause(); return a; });
+    el._wh = NO_MOTION ? [] : [...el.querySelectorAll('.wheel')].map(w => { const a = w.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(-360deg)' }], { duration: 650, iterations: Infinity }); a.pause(); return a; });
+  }
+  const k = Math.max(.35, Math.min(5, kt / 15)), on = f.ground && kt > 1;
+  for (const a of [...el._an, ...el._wh]) { a.updatePlaybackRate(k); if (on) a.play(); else a.pause(); }
+  if (el._an[0]) f._gsT = el._an[0].currentTime;
+}
 function routeHtml(f) {
   if (!f.route) return `<div class="rtx" style="margin-top:12px">${t({ loading: 'Loading route info…', none: 'Route info not found', err: 'Couldn\'t load route info' }[f.rs] || '')}</div>`;
   const { org, dst } = f.route;
-  return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(org.name)}</small></div><span class="fl"><i>✈</i></span>`
-    + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(dst.name)}</small></div></div>${GS_HTML}<div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
+  return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(org.name)}</small></div><span class="fl" id="fl"><i>✈</i>${GS_HTML}</span>`
+    + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(dst.name)}</small></div></div><div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
 }
 $('card').onclick = e => {
   if (e.target.id === 'cx') return select(null);
