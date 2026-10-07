@@ -12,6 +12,7 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 
 - **Canlı uçuşlar**: uçak konumları 15 saniyede bir yenilenir. Haritayı kaydırınca ya da yakınlaştırınca yeni bölge hemen yüklenir.
 - **Demo modu**: internet gerektirmeyen 45 sanal uçuş. Zaman 30 kat hızlı akar.
+- **Web demosu**: SkyTrack'i tarayıcıda dene: [sametduhan.github.io/airock/app/](https://sametduhan.github.io/airock/app/). Uçuşlar ve türbülans alanları sanaldır; canlı veri için masaüstü uygulaması gerekir. Yeniden derlemek için `npm run build:web` (çıktı `site/app/` içinde).
 - **Uçuş bilgisi**: bir uçağa tıklayınca şunları görürsün:
   - havayolu ve logosu, uçak tipi, tescil ve (varsa) fotoğraf
   - rota (kalkış → varış), ilerleme çubuğu, kalan mesafe ve tahmini kalan süre

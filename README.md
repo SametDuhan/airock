@@ -14,6 +14,7 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
 
 - **Live flights**: aircraft positions refresh every 15 seconds. When you move or zoom the map, the new area loads right away.
 - **Demo mode**: 45 simulated flights that need no internet connection. Time runs 30× faster.
+- **Web demo**: try SkyTrack in your browser at [sametduhan.github.io/airock/app/](https://sametduhan.github.io/airock/app/), with simulated flights and simulated turbulence areas. Live data needs the desktop app. Rebuild it with `npm run build:web` (output in `site/app/`).
 - **Flight details**: click a plane to see:
   - its airline and logo, aircraft type, registration and a photo (when one is available)
   - its route (departure → arrival), progress bar, distance left and estimated time left

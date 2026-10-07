@@ -14,7 +14,8 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder",
-    "test": "node --test"
+    "test": "node --test",
+    "build:web": "node scripts/build-web.js"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
