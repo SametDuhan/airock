@@ -9,7 +9,7 @@ X.rows = (f, rows) => {
   const at = rows.findIndex(r => r[0] === 'Position'), add = [];
   if (f.tbs === 'ok' && f.tb.level >= 2) add.push(['Seat tip', t('Over the wings you feel turbulence least, the back rows most.')]);
   const sn = SkyGeo.sunSide(f.lat, f.lon, f.hdg);
-  if (sn.side) add.push(['Sun side', sn.side === 'right' ? t('Right side · sit on the left to avoid glare') : t('Left side · sit on the right to avoid glare')]);
+  if (sn.side) add.push(['Sun side', sn.side === 'right' ? t('Right side') : t('Left side')]);
   rows.splice(at < 0 ? rows.length : at, 0, ...add);
 };
 
