@@ -84,3 +84,58 @@ test('legOf: a gap at altitude that the aircraft could not have flown through is
   const cruise = [[0, 48, 16, 36000, 450], [60, 47.9, 16.1, 36000, 450], [4000, 30, 40, 36000, 450], [4060, 29.9, 40.1, 36000, 450]]; // a real coverage hole at cruise (~3000 km in 1.1 h)
   assert.equal(D.legOf(cruise).length, 4);
 });
+
+test('cover: every point of the area is inside some circle, and no circle is bigger than the API allows', () => {
+  const geo = require('../src/geo.js');
+  for (const b of [{ s: 21, n: 29.5, w: 49, e: 63 }, { s: 44, n: 54, w: 0, e: 18 }, { s: 35, n: 43, w: 24, e: 40 }, { s: -5, n: 8, w: 100, e: 112 }]) {
+    const c = D.cover(b, 99); assert.equal(c.partial, false);
+    assert.ok(c.circles.every(x => x.r <= 250), 'radius over 250 nm');
+    for (let la = b.s; la <= b.n; la += 0.5) for (let lo = b.w; lo <= b.e; lo += 0.5)
+      assert.ok(c.circles.some(x => geo.km(la, lo, x.lat, x.lon) <= x.r * 1.852), `uncovered ${la},${lo} in ${JSON.stringify(b)}`);
+  }
+});
+
+test('cover: a Dubai-sized view needs far fewer circles than a fixed 600 km grid did', () => {
+  assert.ok(D.cover({ s: 21, n: 29.5, w: 49, e: 63 }, 99).circles.length <= 4);
+});
+
+test('cover: a continent-sized view with spread = true reaches all of it early; nearest-first stays around the center', () => {
+  const geo = require('../src/geo.js'), b = { s: 0, n: 65, w: -25, e: 85 }; // Europe + Africa + Asia, like the zoomed-out screenshot
+  const near = D.cover(b, 200).circles, spread = D.cover(b, 200, -1, true).circles;
+  assert.equal(spread.length, near.length); assert.ok(near.length > 40);
+  assert.deepEqual(spread[0], near[0]); // the first one is the center in both
+  const span = list => { const k = list.slice(0, 12); return Math.max(...k.map(c => Math.max(...k.map(d => geo.km(c.lat, c.lon, d.lat, d.lon))))); };
+  assert.ok(span(spread) > span(near) * 1.3, `spread ${span(spread)} vs nearest ${span(near)}`);
+  const a = D.cover({ s: 40, n: 42, w: 28, e: 30 }, 200, -1, true).circles, b2 = D.cover({ s: 40, n: 42, w: 28, e: 30 }, 200).circles;
+  assert.deepEqual(a, b2); // a small view is unchanged
+});
+
+test('landedOf: touchdown time is the first ground point of the trailing run of ground points', () => {
+  const tr = [[0, 1, 1, 30000], [100, 2, 2, 3000], [160, 3, 3, 'ground'], [200, 3, 3, 'ground'], [260, 3, 3, 'ground']];
+  assert.equal(D.landedOf(tr, 1000), 1160);
+  assert.equal(D.landedOf([[0, 1, 1, 30000], [50, 2, 2, 20000]], 1000), null); // still flying
+  assert.equal(D.landedOf([[0, 1, 1, 'ground'], [50, 1, 1, 'ground']], 1000), null); // never flew in this trace
+  assert.equal(D.landedOf([[0, 1, 1, 'ground'], [40, 2, 2, 5000], [90, 3, 3, 'ground']], 0), 90); // took off and landed again: the last touchdown
+  assert.equal(D.landedOf([], 5), null);
+});
+
+test('arrivalOf: the flight an aircraft just completed (legOf only has the taxi points once it is on the ground)', () => {
+  // taxi at LHR, take off, cruise, land at VIE, taxi at VIE
+  const tr = [[0, 51.47, -0.46, 'ground'], [60, 51.48, -0.40, 'ground'], [120, 51.5, -0.3, 1500], [700, 50.5, 4, 25000], [1300, 49.5, 8, 33000], [1900, 49.4, 10, 36000], [2500, 49.2, 12, 36000], [3100, 49, 14, 34000], [3700, 48.6, 15.5, 20000], [4000, 48.3, 16.3, 3000], [4100, 48.12, 16.56, 'ground'], [4200, 48.11, 16.57, 'ground']];
+  const a = D.arrivalOf(tr); assert.deepEqual(a.start, [51.48, -0.40]); // the last ground point before the climb
+  assert.equal(a.pts.length, 9); assert.deepEqual(a.pts[a.pts.length - 1], [48.3, 16.3]);
+  assert.equal(D.legOf(tr).length, 1); // what the old code gave for a plane on the ground: just its last point, nothing of the flight
+  assert.equal(D.arrivalOf([[0, 1, 1, 'ground'], [60, 1, 1, 'ground']]), null); // never flew
+  assert.equal(D.arrivalOf([[0, 1, 1, 'ground'], [60, 2, 2, 3000], [90, 3, 3, 20000]]), null); // still flying
+});
+
+test('route: a 400 or 404 from adsbdb means "no route" (airports are full of TWR / GND vehicles), only real failures are errors', async () => {
+  const real = globalThis.fetch; const answer = status => { globalThis.fetch = async () => ({ status, ok: status >= 200 && status < 300, json: async () => ({ response: { flightroute: null } }) }); };
+  try {
+    answer(400); assert.deepEqual(await D.route('TWR1'), { ok: true, route: null });
+    answer(404); assert.deepEqual(await D.route('AFR45KP'), { ok: true, route: null });
+    answer(429); assert.equal((await D.route('BAW1')).ok, false);
+    answer(500); assert.equal((await D.route('BAW1')).ok, false);
+    answer(400); assert.equal((await D.aircraft('~abcdef')).ok, true); // a TIS-B style id: unknown, not a failure
+  } finally { globalThis.fetch = real; }
+});

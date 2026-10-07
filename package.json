@@ -1,6 +1,6 @@
 {
   "name": "skytrack",
-  "version": "0.7.3",
+  "version": "0.7.7",
   "description": "Free desktop flight tracker using open ADS-B data. No account or API key needed.",
   "license": "MIT",
   "author": "Samet Duhan Şahin",
@@ -14,7 +14,8 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder",
-    "test": "node --test"
+    "test": "node --test",
+    "build:web": "node scripts/build-web.js"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
@@ -30,6 +31,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "manual-update.js",
       "src/**",
       "node_modules/leaflet/dist/**",
       "build/icon.png"

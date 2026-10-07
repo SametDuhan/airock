@@ -12,6 +12,11 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 
 - **Canlı uçuşlar**: uçak konumları 15 saniyede bir yenilenir. Haritayı kaydırınca ya da yakınlaştırınca yeni bölge hemen yüklenir.
 - **Demo modu**: internet gerektirmeyen 45 sanal uçuş. Zaman 30 kat hızlı akar.
+- **Web demosu**: SkyTrack'i tarayıcıda dene: [sametduhan.github.io/airock/app/](https://sametduhan.github.io/airock/app/). Uçuşlar ve türbülans alanları sanaldır; canlı veri için masaüstü uygulaması gerekir. Yeniden derlemek için `npm run build:web` (çıktı `site/app/` içinde).
+- **Rota kontrolü**: iki havalimanı seç (**Mod → 🧭 Rota kontrolü**); FL280, FL340 ve FL390'da yol boyunca bildirilen türbülansı, ilk görüldüğü yeri ve haritada çizgiyi gör.
+- **Takip ettiğin uçuşlar için türbülans uyarısı**: takip listendeki bir uçuşun önündeki yol sallantılı olunca (ve düzelince) SkyTrack haber verir. **🔔 Uyarılar → Bir uçuşu takip et**, kalkıştan önce `TK1` gibi bir uçuş numarası alır ve havalanınca izlemeye başlar.
+- **Koltuk ipuçları**: uçuş kartı güneşin uçağın hangi tarafında olduğunu (gerçek güneş konumundan) ve türbülans varsa kabinde en az nerede hissedildiğini söyler.
+- **Takip bağlantısı**: canlı bir uçuşta **🔗 Takip bağlantısını kopyala**, bir arkadaşın ya da yakının açabileceği bir sayfa verir (`site/track/`). `proxy/` içindeki proxy'yi gerektirir; `src/data.js` içinde `PROXY_URL` ayarlanana kadar kapalı kalır.
 - **Uçuş bilgisi**: bir uçağa tıklayınca şunları görürsün:
   - havayolu ve logosu, uçak tipi, tescil ve (varsa) fotoğraf
   - rota (kalkış → varış), ilerleme çubuğu, kalan mesafe ve tahmini kalan süre
@@ -35,7 +40,7 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 - **Harita katmanları**: yağış radarına ek olarak **Türbülans** düğmesi SIGMET / G-AIRMET türbülans alanlarını, **Rüzgar** rüzgar oklarını (açılan seçiciden irtifayı seç), **Gece** ise Dünya'nın gece tarafını çizer.
 - **Katlanan menü**: sol menüdeki bir bölümün başlığına (Veri, Mod, Harita, Filtreler, Uçaklar) tıklayınca o bölüm kapanır. Neyi kapattığını hatırlar.
 - **Uçak gözlemci modu**: **Mod** bölümünden açılır. Defter (uçuş kartında **📓 Gözlemi kaydet**, CSV dışa aktarma), *yeni uçak* / *yeni tip* rozetleri ve ek bilgiler (ICAO24, squawk, kategori) ekler. Normal modda bunların hiçbiri görünmez.
-- **Beş dil**: menünün üstündeki dil düğmesi tüm arayüzü İngilizce, Türkçe, İspanyolca, Almanca ve Fransızca arasında değiştirir. Sistem diliyle açılır. Yeni dil eklemek için `src/langs.js` içine bir tablo ve `src/i18n.js` içindeki `LANGS` listesine bir satır eklemen yeter.
+- **On beş dil**: menünün üstündeki dil düğmesi tüm arayüzü İngilizce, Türkçe, İspanyolca, Almanca, Fransızca, Arapça ve Farsça (sağdan sola), Çince, Japonca, Korece, İtalyanca, Rusça, Portekizce, Lehçe ve Svahili arasında değiştirir. Sistem diliyle açılır. Yeni dil eklemek için `src/langs.js` içine bir tablo ve `src/i18n.js` içindeki `LANGS` listesine bir satır eklemen yeter.
 - **Farklı uçak simgeleri**: helikopterlerin rotorlu simgesi var, dört motorlu yolcu uçakları dört motoruyla daha büyük çizilir; iki motorlu yolcu uçakları, küçük jetler ve diğer uçaklar ayrı şekillerde. Hepsi irtifaya göre renklenir.
 - **İrtifa ve hız grafiği**: canlı uçuş kartında, uçuş boyunca irtifa ve hızı gösteren küçük bir grafik çıkar.
 - **Görsel paylaş**: uçuş kartındaki **📷 Görsel paylaş**, uçuşun rotası, çağrı kodu ve sayılarıyla bir resim kaydeder (panoya da kopyalar).

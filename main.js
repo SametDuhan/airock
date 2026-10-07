@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, shell, session, Tray, Menu, nativeImage, sa
 const path = require('path');
 const fs = require('fs');
 const data = require('./src/data.js'); // flight, route and aircraft data (shared with the browser build)
+const manual = require('./manual-update.js'); // in-app download of the installer where electron-updater cannot update by itself
+const { spawn } = require('child_process');
 
 // Small settings file in the user data folder (only the tray option for now)
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -29,11 +31,29 @@ const newerVer = (a, b) => { const x = String(a).split('.').map(Number), y = Str
 let checkNow = async () => ({ state: 'none' });
 function setupUpdates() {
   ipcMain.handle('checkUpdate', () => checkNow());
-  // macOS (unsigned) and builds run from source (npm start) cannot install updates by themselves: they only look for a newer release and link to it
+  // macOS (unsigned) and builds run from source (npm start) cannot install updates by themselves: they look for a newer release and download its installer into the Downloads folder
+  // themselves (progress in the update bar, checked against the checksum of the release), then start it (Windows), open it (macOS: the disk image) or show it (Linux)
   if (process.platform === 'darwin' || !app.isPackaged) {
+    let info = null, file = null, busy = false; const ver = () => process.env.SKYTRACK_TEST_VERSION || app.getVersion(); // SKYTRACK_TEST_VERSION: pretend to be an older version (tests)
     checkNow = async () => { try { const r = await fetch('https://api.github.com/repos/SametDuhan/airock/releases/latest', { headers: { 'User-Agent': 'SkyTrack' } }); if (!r.ok) throw new Error('HTTP ' + r.status);
-      const j = await r.json(), v = String(j.tag_name || '').replace(/^v/, ''); if (newerVer(v, app.getVersion())) { sendUpdate('manual', { version: v, url: j.html_url }); return { state: 'available', version: v, manual: true }; } return { state: 'none' };
+      const j = await r.json(), v = String(j.tag_name || '').replace(/^v/, ''); if (newerVer(v, ver())) { info = { version: v, url: j.html_url, asset: manual.pickAsset(j.assets, process.platform, process.arch) }; sendUpdate('manual', { version: v, url: j.html_url, canDownload: !!info.asset }); return { state: 'available', version: v, manual: true }; } return { state: 'none' };
     } catch (e) { updLog('check failed: ' + e.message); return { state: 'error', error: String(e.message).slice(0, 160) }; } };
+    ipcMain.handle('downloadUpdate', async () => {
+      if (!info || !info.asset || busy) return { ok: false }; busy = true; let last = 0;
+      sendUpdate('downloading', { version: info.version });
+      try { file = await manual.downloadVerified({ asset: info.asset, dir: process.env.SKYTRACK_TEST_DOWNLOADS || app.getPath('downloads'), onProgress: p => { if (p === 100 || Date.now() - last > 250) { last = Date.now(); sendUpdate('progress', { percent: p }); } } });
+        updLog('downloaded ' + file); sendUpdate('downloaded', { version: info.version }); return { ok: true }; }
+      catch (e) { updLog('download failed: ' + e.message); sendUpdate('manualError', { version: info.version, url: info.url, error: String(e.message).slice(0, 160) }); return { ok: false, error: e.message }; }
+      finally { busy = false; }
+    });
+    ipcMain.handle('installDownloaded', () => {
+      if (!file || !fs.existsSync(file)) return { ok: false };
+      if (process.env.SKYTRACK_TEST_VERSION) return { ok: true, platform: process.platform, test: true, file }; // tests never run an installer
+      if (process.platform === 'win32') { spawn(file, [], { detached: true, stdio: 'ignore' }).unref(); quitting = true; app.quit(); }
+      else if (process.platform === 'darwin') shell.openPath(file); // the disk image: drag SkyTrack to Applications
+      else { try { fs.chmodSync(file, 0o755); } catch {} shell.showItemInFolder(file); }
+      return { ok: true, platform: process.platform };
+    });
   } else {
     const { autoUpdater } = require('electron-updater');
     autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = true;
@@ -68,12 +88,12 @@ function createWindow() {
 }
 
 // Live data: adsb.lol (primary) and OpenSky (fallback / wide view) — details in src/data.js
-ipcMain.handle('flights', (_, b) => data.flights(b));
+ipcMain.handle('flights', (_, b, o) => data.flights(b, o));
 // Flight route (by callsign) and aircraft info (by ICAO24 code): adsbdb.com
 ipcMain.handle('route', (_, cs) => data.route(cs));
 ipcMain.handle('aircraft', (_, hex) => data.aircraft(hex));
-// Aircraft photos (planespotters.net)
-ipcMain.handle('photos', (_, hex) => data.photos(hex));
+// Aircraft photos (planespotters.net and Wikimedia Commons)
+ipcMain.handle('photos', (_, hex, reg) => data.photos(hex, typeof reg === 'string' ? reg : ''));
 // Path flown so far (adsb.lol trace)
 ipcMain.handle('trace', (_, hex) => data.trace(hex));
 

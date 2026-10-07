@@ -14,6 +14,11 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
 
 - **Live flights**: aircraft positions refresh every 15 seconds. When you move or zoom the map, the new area loads right away.
 - **Demo mode**: 45 simulated flights that need no internet connection. Time runs 30× faster.
+- **Web demo**: try SkyTrack in your browser at [sametduhan.github.io/airock/app/](https://sametduhan.github.io/airock/app/), with simulated flights and simulated turbulence areas. Live data needs the desktop app. Rebuild it with `npm run build:web` (output in `site/app/`).
+- **Route check**: pick two airports (**Mode → 🧭 Route check**) and see what turbulence is reported along the way at FL280, FL340 and FL390, with the first spot and a line on the map.
+- **Turbulence alerts for watched flights**: SkyTrack tells you when the route ahead of a flight on your watchlist gets bumpy (and when it clears). **🔔 Alerts → Watch a flight** takes a flight number such as `TK1` before it departs and starts watching when it is in the air.
+- **Seat tips**: the flight card says which side of the aircraft the sun is on (from the real sun position) and, when turbulence is ahead, where in the cabin it is felt least.
+- **Tracking link**: **🔗 Copy tracking link** on a live flight gives a page for a friend or family member (`site/track/`). It needs the proxy in `proxy/`, so it stays off until `PROXY_URL` is set in `src/data.js`.
 - **Flight details**: click a plane to see:
   - its airline and logo, aircraft type, registration and a photo (when one is available)
   - its route (departure → arrival), progress bar, distance left and estimated time left
@@ -37,7 +42,7 @@ SkyTrack is a free desktop app for tracking flights live on a map, similar to Fl
 - **Map layers**: besides rain radar, the **Turbulence** button draws SIGMET / G-AIRMET turbulence areas, **Wind** draws wind arrows (pick the flight level in the selector that appears) and **Night** shades the night side of the Earth.
 - **Foldable menu**: click a section title in the left menu (Data, Mode, Map, Filters, Aircraft) to fold it. SkyTrack remembers what you folded.
 - **Plane spotter mode**: switch to it under **Mode**. It adds a logbook (**📓 Log sighting** on a flight card, CSV export), *new aircraft* / *new type* badges, and extra details (ICAO24, squawk, category). In normal mode none of this is shown.
-- **Five languages**: the language button at the top of the menu switches the whole interface between English, Turkish, Spanish, German and French. It starts in your system language. To add another language, add a table to `src/langs.js` and an entry to `LANGS` in `src/i18n.js`.
+- **Fifteen languages**: the language button at the top of the menu switches the whole interface between English, Turkish, Spanish, German, French, Arabic and Persian (right-to-left), Chinese, Japanese, Korean, Italian, Russian, Portuguese, Polish and Swahili. It starts in your system language. To add another language, add a table to `src/langs.js` (or `src/langs-more.js` / `src/langs-more2.js`) and an entry to `LANGS` in `src/i18n.js`.
 - **Different aircraft icons**: helicopters get a rotor icon, four-engine airliners are drawn larger with all four engines, and twin-engine airliners, small jets and other aircraft each have their own shape. All are colored by altitude.
 - **Altitude and speed profile**: on a live flight card, a small chart shows the altitude and speed over the current flight.
 - **Share image**: **📷 Share image** on a flight card saves (and copies) a picture of the flight with its route, callsign and numbers.
@@ -102,6 +107,8 @@ The repository is named `airock`; the app itself is SkyTrack. Your filters and a
 | Aircraft positions, zoomed in | [adsb.lol](https://adsb.lol) and [adsb.fi](https://adsb.fi) | Free, no key. Both have strict rate limits, so SkyTrack spreads its requests over the two and falls back to the other one on an error. A wide view covers about twice as much as with one source. |
 | Aircraft positions, wide view or backup | [OpenSky Network](https://opensky-network.org) | Covers a large area in one request. Has a low daily limit for anonymous users. |
 | Route, aircraft type, registration, photo | [adsbdb.com](https://www.adsbdb.com) | Free, no key. Some flights may be missing or out of date. |
+| Airport names and positions (to check a flight's route against what the aircraft really did) | [OurAirports](https://ourairports.com/data/) | Public domain, bundled in `src/airports.js`. |
+| Airport runways and the extra airports on the map | [OurAirports](https://ourairports.com/data/) | Public domain, bundled in `src/airport-runways.js`, `src/airports-more.js`, `src/airports-tiny.js`. |
 | Airline logos | images.kiwi.com | |
 | Airport weather, wind at flight levels | [Open-Meteo](https://open-meteo.com) | Free, no key. |
 | METAR and TAF, turbulence advisories, pilot reports | [aviationweather.gov](https://aviationweather.gov) | Free, no key. Turbulence "none" means none reported or forecast, not a guarantee. |

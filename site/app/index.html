@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://opendata.adsb.fi https://aviationweather.gov https://api.rainviewer.com https://api.open-meteo.com https://nominatim.openstreetmap.org https://en.wikipedia.org https://commons.wikimedia.org https://api.planespotters.net https://adsb.lol https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
-<title>SkyTrack</title>
-<link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' https://cdnjs.cloudflare.com; connect-src https://opendata.adsb.fi https://aviationweather.gov https://api.rainviewer.com https://api.open-meteo.com https://nominatim.openstreetmap.org https://en.wikipedia.org https://commons.wikimedia.org https://api.planespotters.net https://adsb.lol https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
+<title>SkyTrack — Web demo</title>
+<meta name="description" content="Try SkyTrack in your browser: a demo with simulated flights and turbulence areas. Download the free desktop app for live data.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <style>
 :root{--bg:#141414;--pn:#1c1c1c;--ac:#f2c230;--fg:#f0e6d2;--mut:#8d877c;--line:#ffffff14}
 *{box-sizing:border-box}
@@ -304,4 +306,21 @@ html:is([lang=ar],[lang=fa]) #side .brand{direction:ltr} /* the title and the la
 <button id="open" class="ib" title="Close menu" aria-label="Menu"><b></b><b></b><b></b></button><div class="bar"><span class="cdot"></span><div class="ct"><span id="clock"></span><small id="cdate"></small></div></div>
 <div id="stm" class="mdl"></div><div id="stt" class="mdl"></div><div id="alm" class="mdl"></div><div id="rcm" class="mdl"></div><div id="ovp"></div><div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
 <div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span><div id="rpTip"></div></div></main></div>
-<script src="loader.js"></script></body></html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="geo.js"></script>
+<script src="fuel.js"></script>
+<script src="data.js"></script>
+<script src="webdemo.js"></script>
+<script src="i18n.js"></script>
+<script src="langs.js"></script>
+<script src="langs-more.js"></script>
+<script src="langs-more2.js"></script>
+<script src="airports.js"></script>
+<script src="airports-more.js"></script>
+<script src="airports-tiny.js"></script>
+<script src="renderer.js"></script>
+<script src="extras.js"></script>
+<script src="layers.js"></script>
+<script src="features.js"></script>
+<script src="tools.js"></script>
+<script src="trip.js"></script></body></html>
