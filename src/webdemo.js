@@ -23,14 +23,12 @@
   if (typeof document === 'undefined') return;
   // always start in demo mode; hide the Live switch (it cannot work from a web page) and say where to get the real thing
   try { localStorage.setItem('sky.live', 'false'); } catch {}
-  const tr = /^tr/i.test(navigator.language || '');
-  const T = tr ? { msg: 'Bu bir demo: uçuşlar ve türbülans alanları simüle edilmiştir.', cta: 'Canlı veri için uygulamayı indir' }
-    : { msg: 'This is a demo: flights and turbulence areas are simulated.', cta: 'Get the app for live data' };
   const st = document.createElement('style');
   st.textContent = '#mLive{display:none!important}#webBar{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);z-index:2000;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px);padding:8px 8px 8px 14px;border:1px solid #ffffff22;border-radius:10px;background:#1c1c1cf2;color:#f0e6d2;font:13px system-ui,sans-serif;box-shadow:0 6px 24px #0008}#webBar a{background:#f5c431;color:#1a1500;font-weight:700;text-decoration:none;border-radius:7px;padding:7px 12px}';
   document.head.appendChild(st);
   const bar = document.createElement('div'); bar.id = 'webBar';
-  const s = document.createElement('span'); s.textContent = T.msg;
-  const a = document.createElement('a'); a.href = '../#download'; a.textContent = T.cta;
-  bar.append(s, a); document.body.appendChild(bar);
+  const sp = document.createElement('span'), an = document.createElement('a'); an.href = '../#download'; bar.append(sp, an); document.body.appendChild(bar);
+  // the texts follow the app's language (t() comes from i18n.js, which loads after this file; extras.js calls this again when the language changes)
+  root.webBarUpdate = () => { const tt = root.t || (x => x); sp.textContent = tt('This is a demo: flights and turbulence areas are simulated.'); an.textContent = tt('Get the app for live data'); };
+  root.webBarUpdate(); addEventListener('load', () => root.webBarUpdate());
 })(typeof window !== 'undefined' ? window : globalThis);

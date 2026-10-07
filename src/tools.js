@@ -161,7 +161,7 @@ addEventListener('resize', () => { if (tourEl) showTour(); });
 function showWelcome(done) {
   const w = document.createElement('div'); w.id = 'welcome';
   const draw = () => { w.innerHTML = `<div class="wc"><div class="wl">SKYTRACK</div><h3>${t('Welcome to SkyTrack')}</h3><p>${t('Thank you for choosing SkyTrack.')}</p><div class="wq">${t('Choose your language')}</div>`
-    + `<div class="wg9">${LANGS.map(l => `<button data-l="${l.c}" class="${l.c === LANG ? 'on' : ''}" lang="${l.c}">${esc(l.n)}</button>`).join('')}</div><button class="go" data-go>${t('Continue')}</button></div>`; w.querySelector('[data-go]').focus(); };
+    + `<div class="wg9">${LANGS.map(l => `<button data-l="${l.c}" class="${l.c === LANG ? 'on' : ''}" lang="${l.c}"><img src="https://flagcdn.com/w40/${l.f}.png" alt="" onerror="this.remove()">${esc(l.n)}</button>`).join('')}</div><button class="go" data-go>${t('Continue')}</button></div>`; w.querySelector('[data-go]').focus(); };
   w.onclick = e => { const b = e.target.closest('[data-l]'); if (b) { setLang(b.dataset.l); draw(); return; } if (e.target.closest('[data-go]')) { save('sky.lang', LANG); w.remove(); done(); } };
   draw(); document.body.appendChild(w);
 }

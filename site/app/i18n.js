@@ -150,7 +150,10 @@ const TR = {
   'Version {0} is available: use the bar at the bottom of the menu.': '{0} sürümü mevcut: menünün altındaki çubuğu kullan.'
 };
 // Languages: English (default texts), Turkish (TR below), Spanish / German / French (DICT in langs.js), Arabic / Chinese / Japanese / Korean (langs-more.js)
-const LANGS = [{ c: 'en', n: 'English', loc: 'en-US' }, { c: 'tr', n: 'Türkçe', loc: 'tr-TR' }, { c: 'es', n: 'Español', loc: 'es-ES' }, { c: 'de', n: 'Deutsch', loc: 'de-DE' }, { c: 'fr', n: 'Français', loc: 'fr-FR' }, { c: 'ar', n: 'العربية', loc: 'ar-AE-u-nu-latn' }, { c: 'zh', n: '中文', loc: 'zh-CN' }, { c: 'ja', n: '日本語', loc: 'ja-JP' }, { c: 'ko', n: '한국어', loc: 'ko-KR' }];
+const LANGS = [{ c: 'en', n: 'English', loc: 'en-US', f: 'gb' }, { c: 'tr', n: 'Türkçe', loc: 'tr-TR', f: 'tr' }, { c: 'es', n: 'Español', loc: 'es-ES', f: 'es' }, { c: 'de', n: 'Deutsch', loc: 'de-DE', f: 'de' }, { c: 'fr', n: 'Français', loc: 'fr-FR', f: 'fr' },
+  { c: 'ar', n: 'العربية', loc: 'ar-AE-u-nu-latn', f: 'sa' }, { c: 'zh', n: '中文', loc: 'zh-CN', f: 'cn' }, { c: 'ja', n: '日本語', loc: 'ja-JP', f: 'jp' }, { c: 'ko', n: '한국어', loc: 'ko-KR', f: 'kr' },
+  { c: 'it', n: 'Italiano', loc: 'it-IT', f: 'it' }, { c: 'ru', n: 'Русский', loc: 'ru-RU', f: 'ru' }, { c: 'pt', n: 'Português', loc: 'pt-PT', f: 'pt' }, { c: 'pl', n: 'Polski', loc: 'pl-PL', f: 'pl' },
+  { c: 'fa', n: 'فارسی', loc: 'fa-IR-u-ca-gregory-nu-latn', f: 'ir' }, { c: 'sw', n: 'Kiswahili', loc: 'sw-KE', f: 'ke' }]; // f: flag (country code) shown in the welcome screen
 const DICT = { tr: TR };
 let LANG = (() => { try { const v = JSON.parse(localStorage.getItem('sky.lang')); if (LANGS.some(l => l.c === v)) return v; } catch {} if (!localStorage.getItem('sky.tour')) return 'en'; // first run: English until the person picks a language in the welcome screen
   const b = (navigator.language || '').toLowerCase().slice(0, 2); return LANGS.some(l => l.c === b) ? b : 'en'; })();

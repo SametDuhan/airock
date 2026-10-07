@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; img-src 'self' file: https: data:; style-src 'self' file: 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' file: https://cdnjs.cloudflare.com; connect-src https://opendata.adsb.fi https://aviationweather.gov https://api.rainviewer.com https://api.open-meteo.com https://nominatim.openstreetmap.org https://en.wikipedia.org https://commons.wikimedia.org https://api.planespotters.net https://adsb.lol https://api.adsb.lol https://opensky-network.org https://api.adsbdb.com">
 <title>SkyTrack</title>
 <link rel="stylesheet" href="../node_modules/leaflet/dist/leaflet.css">
@@ -171,9 +172,9 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 .lsw{display:flex;align-items:center;gap:4px;height:30px;padding:2px 8px 2px 2px;border:1px solid var(--line);border-radius:15px;background:#111;cursor:pointer;color:var(--mut);transition:border-color .2s}.lsw:hover,.lsw[aria-expanded=true]{border-color:var(--ac);color:var(--ac)}
 .lsw .lc{font:700 11px ui-monospace,monospace;font-style:normal;letter-spacing:.08em;min-width:34px;height:24px;line-height:24px;text-align:center;border-radius:12px;background:linear-gradient(135deg,#ffd75e,var(--ac));color:#141414;box-shadow:0 0 10px rgba(242,194,48,.35)}
 .lsw svg{transition:transform .25s}.lsw[aria-expanded=true] svg{transform:rotate(180deg)}
-#lmenu{position:absolute;right:0;top:38px;z-index:60;min-width:168px;padding:6px;background:#181818;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 34px #000b;display:flex;flex-direction:column;gap:2px;animation:lmin .16s ease-out}#lmenu[hidden]{display:none}@keyframes lmin{from{opacity:0;transform:translateY(-6px)}}
-#lmenu button{display:flex;align-items:center;gap:10px;background:transparent;border:0;border-radius:8px;padding:6px 8px;color:var(--fg);cursor:pointer;font:600 13px 'Segoe UI',system-ui,sans-serif;text-align:left}#lmenu button:hover{background:#ffffff10}
-#lmenu button i{font:700 11px ui-monospace,monospace;font-style:normal;letter-spacing:.08em;width:34px;height:22px;line-height:22px;text-align:center;border-radius:11px;background:#ffffff14;color:var(--mut);flex:none}#lmenu button.on i{background:linear-gradient(135deg,#ffd75e,var(--ac));color:#141414}#lmenu button.on{color:var(--ac)}
+#lmenu{position:absolute;right:0;top:38px;z-index:60;width:max-content;max-width:calc(100vw - 24px);padding:6px;background:#181818;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 34px #000b;display:grid;grid-template-columns:repeat(2,126px);gap:2px 4px;animation:lmin .16s ease-out}#lmenu[hidden]{display:none}@keyframes lmin{from{opacity:0;transform:translateY(-6px)}}
+#lmenu button{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:8px;padding:6px 6px;white-space:nowrap;color:var(--fg);cursor:pointer;font:600 13px 'Segoe UI',system-ui,sans-serif;text-align:left}#lmenu button:hover{background:#ffffff10}
+#lmenu button i{font:700 11px ui-monospace,monospace;font-style:normal;letter-spacing:.08em;width:30px;height:22px;line-height:22px;text-align:center;border-radius:11px;background:#ffffff14;color:var(--mut);flex:none}#lmenu button.on i{background:linear-gradient(135deg,#ffd75e,var(--ac));color:#141414}#lmenu button.on{color:var(--ac)}
 .flt .fr u{text-decoration:none}
 
 /* ---- shared modal, settings, alerts, overhead, tour, update bar ---- */
@@ -200,9 +201,9 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 #upd{flex:none;position:sticky;bottom:34px;z-index:3;margin:0;padding:9px 14px;background:linear-gradient(135deg,#ffd75e,var(--ac));color:#141414;display:flex;align-items:center;gap:10px;font:700 12px 'Segoe UI',system-ui,sans-serif}#upd[hidden]{display:none}#upd span{flex:1}#upd button{background:#141414;color:var(--ac);border:0;border-radius:999px;padding:5px 12px;cursor:pointer;font-weight:700;font-size:11px}
 #upd .pbar{position:absolute;left:0;bottom:0;height:3px;background:#141414;transition:width .3s}
 #welcome{position:fixed;inset:0;z-index:5100;background:#000d;backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;animation:lmin .25s ease-out}
-#welcome .wc{width:min(440px,100%);background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:16px;padding:28px 26px 22px;text-align:center;box-shadow:0 20px 60px #000d}
+#welcome .wc{width:min(460px,100%);max-height:calc(100vh - 24px);overflow:auto;background:var(--pn);border:1px solid var(--line);border-top:3px solid var(--ac);border-radius:16px;padding:28px 26px 22px;text-align:center;box-shadow:0 20px 60px #000d}
 #welcome .wl{font:700 13px Cambria,Georgia,serif;letter-spacing:.3em;color:var(--ac)}#welcome h3{margin:10px 0 6px;font:700 24px 'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif}#welcome p{margin:0 0 20px;color:#d6cfbf;font-size:14px}
-#welcome .wq{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-bottom:10px}#welcome .wg9{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#welcome .wq{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-bottom:10px}#welcome .wg9{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}#welcome .wg9 button{display:flex;flex-direction:column;align-items:center;gap:6px}#welcome .wg9 img{width:30px;height:20px;object-fit:cover;border-radius:3px;box-shadow:0 0 0 1px #ffffff33}
 #welcome .wg9 button{background:#ffffff0a;border:1px solid var(--line);border-radius:10px;color:var(--fg);padding:10px 6px;cursor:pointer;font:600 13px 'Segoe UI',system-ui,sans-serif}#welcome .wg9 button:hover{border-color:var(--ac)}#welcome .wg9 button.on{background:var(--ac);color:#111;border-color:var(--ac)}
 #welcome .go{margin-top:18px;width:100%;background:var(--ac);color:#111;border:0;border-radius:10px;padding:11px;font:700 14px 'Segoe UI',system-ui,sans-serif;cursor:pointer}#welcome .go:hover{filter:brightness(1.08)}
 #tour{position:fixed;inset:0;z-index:5000}#tour .spot{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.72),0 0 0 3px var(--ac);transition:all .35s cubic-bezier(.2,.7,.2,1);pointer-events:none}
@@ -239,8 +240,8 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 .gsi .near{position:absolute;left:0;right:0;bottom:0;height:13px;background:linear-gradient(#262629,#18181a);border-top:1px solid #55555c;overflow:hidden}
 .gsi .nl{position:absolute;left:0;top:5px;width:700px;height:2px;background:repeating-linear-gradient(90deg,#f2c230 0 12px,transparent 12px 28px);will-change:transform}
 .gsi .plane{position:absolute;left:50%;margin-left:-52px;bottom:5px;width:104px;height:auto;filter:drop-shadow(0 2px 2px #0008)}.gsi .wheel{transform-box:fill-box;transform-origin:center}
-html[lang=ar] #side,html[lang=ar] #card,html[lang=ar] #apc,html[lang=ar] .mdl{direction:rtl}
-html[lang=ar] #side .brand{direction:ltr} /* the title and the language menu keep their place, so the menu doesn't open off screen */
+html:is([lang=ar],[lang=fa]) #side,html:is([lang=ar],[lang=fa]) #card,html:is([lang=ar],[lang=fa]) #apc,html:is([lang=ar],[lang=fa]) .mdl{direction:rtl}
+html:is([lang=ar],[lang=fa]) #side .brand{direction:ltr} /* the title and the language menu keep their place, so the menu doesn't open off screen */
 .ph a{cursor:zoom-in}
 #card .ph{aspect-ratio:3/2}#card .ph a{display:block;width:100%;height:100%}#card .ph img{width:100%;height:100%;object-fit:contain} /* every aircraft photo gets the same frame, so the card below doesn't jump when the photos differ in shape */
 #lbx{position:fixed;inset:0;z-index:5000;background:#000d;display:flex;align-items:center;justify-content:center;padding:48px 64px;animation:lmin .16s ease-out}#lbx{touch-action:none;user-select:none}#lbx img{position:absolute;left:50%;top:50%;margin:0;translate:-50% -50%;max-width:none;border-radius:4px;box-shadow:0 10px 50px #000;cursor:zoom-in;will-change:transform;transform-origin:center}#lbx.zm img{cursor:grab}#lbx.zm:active img{cursor:grabbing}
@@ -251,9 +252,31 @@ html[lang=ar] #side .brand{direction:ltr} /* the title and the language menu kee
 .apm .apb svg{display:block;width:100%;height:100%}.apm:not(.big) .apb{padding:2px;border-width:1px}
 .apm.big .apb{box-shadow:0 1px 5px #000b,0 0 0 2px #f2c23055}.apm:hover .apb{transform:scale(1.3);box-shadow:0 2px 8px #000b,0 0 0 3px #f2c23077,0 0 12px #f2c230aa}
 .apm .apl{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:3px;font:700 10px ui-monospace,monospace;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000,0 0 2px #000;pointer-events:none}
+
+/* Phones and small tablets (the web demo; the desktop app has its own window): the menu is a drawer over the map, the cards are sheets at the bottom, the bars shrink */
+@media (max-width:760px){
+  #app{position:relative;display:block}
+  aside{position:absolute;left:0;top:0;bottom:0;width:min(88vw,330px);z-index:2500;box-shadow:0 0 40px #000c;transition:transform .3s cubic-bezier(.2,.7,.2,1)}
+  aside.hide{margin-left:0;transform:translateX(-105%);box-shadow:none}
+  main{position:absolute;inset:0}
+  #open{top:calc(10px + env(safe-area-inset-top,0px));left:10px}
+  .bar{top:calc(10px + env(safe-area-inset-top,0px));right:10px;padding:5px 9px;gap:6px}#clock{font-size:17px!important}.bar .ct small,.bar .ct i{font-size:9px}
+  #card,#apc{left:8px;right:8px;top:auto;bottom:calc(66px + env(safe-area-inset-bottom,0px));width:auto;max-height:58%;transform:translateY(130%)}#card.show,#apc.show{transform:none}
+  #rp{left:8px;right:62px;bottom:calc(8px + env(safe-area-inset-bottom,0px));gap:8px;padding:7px 10px}
+  #thn{max-width:calc(100% - 140px);white-space:normal;text-align:center;font-size:11px;top:60px}
+  #toast{left:8px;right:8px;transform:none;top:60px;align-items:stretch}.tm{min-width:0;max-width:none}
+  .mdl .bx,#lb .bx,#dy .bx,#emgm .bx,#stt .bx{width:96%!important;max-height:92%!important}
+  #tour .tip{width:min(300px,calc(100vw - 24px))}
+  #welcome .wc{padding:22px 16px 18px}#welcome .wg9{gap:6px}#welcome .wg9 button{padding:8px 2px;font-size:12px}
+  #lbx{padding:56px 8px 56px}#lbx .ln{width:36px}#lbx .lz{right:56px}
+  .leaflet-control-zoom{display:none}
+  #webBar{bottom:auto!important;top:60px!important;max-width:calc(100% - 20px)!important;padding:8px 12px!important;font-size:12px!important;gap:6px!important}#toast{top:118px!important}
+  #sx{display:inline-flex!important}
+}
+#sx{display:none;margin-left:8px;flex:none}
 </style></head>
 <body><div id="app">
-<aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
+<aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button class="ib" id="sx" aria-label="Close menu">✕</button><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
 <div class="sec"><div class="lbl">Data</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Live</button></div><div id="st"></div></div>
 <div class="sec"><div class="lbl">Mode</div><div class="btns"><button id="mNorm" class="on">Normal</button><button id="mSpot">Plane spotter</button></div>
 <div class="btns wrap" style="margin-top:8px"><button id="bDiary">📓 Flight diary</button><button id="bAlerts">🔔 Alerts</button><button id="bOver">📍 Overhead</button><button id="bSet">⚙ Settings</button></div>

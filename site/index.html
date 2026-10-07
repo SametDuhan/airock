@@ -135,6 +135,8 @@ h3{margin:0 0 6px;font-size:18px}
 .code button{position:absolute;right:8px;top:8px;height:30px;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:6px;font-size:12px;cursor:pointer;padding:0 10px}
 .code button:hover{color:var(--accent);border-color:var(--accent)}
 @media (max-width:900px){.dl{grid-template-columns:1fr}}
+html,body{overflow-x:clip;max-width:100%} /* the decorative plane, engine and tower stick out of the page on a phone and made it zoom out */
+.dl>*,.grid>*,.feat>*{min-width:0}.code pre{white-space:pre-wrap;word-break:break-all}@media (max-width:560px){.box{padding:20px 16px}.code pre{font-size:12.5px;padding-right:60px}}
 .os{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
 .os span{border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:12.5px;color:var(--muted)}
 .os span.on{border-color:var(--accent);color:var(--accent)}
@@ -217,8 +219,9 @@ header{position:sticky;top:0;z-index:20}
 .langw{position:relative;display:inline-flex}
 .lsw{display:flex;align-items:center;gap:4px;height:34px;padding:2px 9px 2px 2px;border:1px solid var(--line);border-radius:17px;background:var(--panel);cursor:pointer;color:var(--muted);transition:border-color .2s}.lsw:hover,.lsw[aria-expanded=true]{border-color:var(--accent);color:var(--accent)}
 .lsw .lc{font:700 12px ui-monospace,Consolas,monospace;font-style:normal;letter-spacing:.08em;min-width:38px;height:28px;line-height:28px;text-align:center;border-radius:14px;background:linear-gradient(135deg,var(--g1),var(--accent));color:var(--accent-ink);box-shadow:0 0 12px var(--glow)}.lsw svg{transition:transform .25s}.lsw[aria-expanded=true] svg{transform:rotate(180deg)}
-#lmenu{position:absolute;right:0;top:calc(100% + 8px);z-index:60;min-width:176px;padding:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 38px var(--shadow);display:flex;flex-direction:column;gap:2px}#lmenu[hidden]{display:none}
-#lmenu button{display:flex;align-items:center;gap:10px;background:transparent;border:0;border-radius:8px;padding:7px 9px;color:var(--text);cursor:pointer;font:600 14px system-ui,sans-serif;text-align:left}#lmenu button:hover{background:var(--panel2)}
+#lmenu{position:absolute;right:0;top:calc(100% + 8px);z-index:60;width:max-content;max-width:calc(100vw - 24px);padding:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 38px var(--shadow);display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:2px 6px}#lmenu[hidden]{display:none}
+[dir=rtl] #lmenu{right:auto;left:0}[dir=rtl] #lmenu button{text-align:right}
+#lmenu button{display:flex;align-items:center;gap:8px;white-space:nowrap;background:transparent;border:0;border-radius:8px;padding:7px 9px;color:var(--text);cursor:pointer;font:600 14px system-ui,sans-serif;text-align:left}#lmenu button:hover{background:var(--panel2)}
 #lmenu button i{font:700 11px ui-monospace,Consolas,monospace;font-style:normal;letter-spacing:.08em;width:36px;height:24px;line-height:24px;text-align:center;border-radius:12px;background:var(--panel2);color:var(--muted);flex:none}#lmenu button.on i{background:linear-gradient(135deg,var(--g1),var(--accent));color:var(--accent-ink)}#lmenu button.on{color:var(--accent)}
 </style>
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
@@ -285,7 +288,7 @@ header{position:sticky;top:0;z-index:20}
     <div><b data-i18n="st.freeb">Free</b><span data-i18n="st.free">Open source, MIT license</span></div>
     <div><b data-i18n="st.nokey">No key</b><span data-i18n="st.nokeyd">No account, no API key</span></div>
     <div><b>3,700</b><span data-i18n="st.planes">aircraft drawn in about 8 ms</span></div>
-    <div><b>9</b><span data-i18n="st.lang">interface languages</span></div>
+    <div><b>15</b><span data-i18n="st.lang">interface languages</span></div>
   </div>
 </div>
 
@@ -444,7 +447,7 @@ header{position:sticky;top:0;z-index:20}
   <div class="grid reveal">
     <div class="card"><h3 data-i18n="m.spot">Plane spotter mode</h3><p data-i18n="m.spotp">A logbook, “new aircraft” and “new type” badges, extra details and CSV export. Off by default.</p></div>
     <div class="card"><h3 data-i18n="m.demo">Demo mode</h3><p data-i18n="m.demop">45 simulated flights, no internet needed. Time runs 30× faster.</p></div>
-    <div class="card"><h3 data-i18n="m.lang">Nine languages</h3><p data-i18n="m.langp">Switch the whole interface between English, Turkish, Spanish, German, French, Arabic, Chinese, Japanese and Korean.</p></div>
+    <div class="card"><h3 data-i18n="m.lang">Fifteen languages</h3><p data-i18n="m.langp">Switch the whole interface between English, Turkish, Spanish, German, French, Arabic, Chinese, Japanese, Korean, Italian, Russian, Portuguese, Polish, Persian and Swahili.</p></div>
     <div class="card"><h3 data-i18n="m.fast">Fast with many planes</h3><p data-i18n="m.fastp">All aircraft are drawn on one canvas. About 3,700 aircraft over Europe draw in around 8 ms.</p></div>
   </div>
 </div></section>
@@ -523,6 +526,7 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
 
 <script src="lang.js"></script>
 <script src="lang-more.js"></script>
+<script src="lang-more2.js"></script>
 <script>
 (() => {
   const TR = {
@@ -577,7 +581,7 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
     'e.l1':'Dakikada bir güncellenen gece ve gündüz','e.l2':'Standart, açık ve koyu harita stilleri','e.l3':'Menünün herhangi bir bölümünü, uçak listesi dahil, katla. SkyTrack neyi kapattığını hatırlar.',
     'm.spot':'Uçak gözlemci modu','m.spotp':'Günlük, “yeni uçak” ve “yeni tip” rozetleri, ek bilgiler ve CSV dışa aktarma. Varsayılan olarak kapalı.',
     'm.demo':'Demo modu','m.demop':'İnternet gerektirmeyen 45 sanal uçuş. Zaman 30 kat hızlı akar.',
-    'm.lang':'Dokuz dil','m.langp':'Tüm arayüzü İngilizce, Türkçe, İspanyolca, Almanca, Fransızca, Arapça, Çince, Japonca ve Korece arasında değiştir.',
+    'm.lang':'On beş dil','m.langp':'Tüm arayüzü İngilizce, Türkçe, İspanyolca, Almanca, Fransızca, Arapça, Çince, Japonca, Korece, İtalyanca, Rusça, Portekizce, Lehçe, Farsça ve Svahili arasında değiştir.',
     'm.fast':'Çok uçakta da hızlı','m.fastp':'Tüm uçaklar tek bir tuvalde çizilir. Avrupa üzerindeki yaklaşık 3.700 uçak yaklaşık 8 ms\'de çizilir.',
     'dl.eyebrow':'İndir','dl.h2':'SkyTrack\'i bir dakikada edin','dl.sub':'Sana uygun yolu seç. İkisi de ücretsiz, hesap gerekmez.',
     'dl.win':'Tek tık, sonra kurulumu çalıştır','dl.winp':'Kurulum dosyasını indir ve çalıştır. SkyTrack hemen açılır.','dl.btn':'Windows için indir (.exe)',
@@ -603,13 +607,13 @@ npm start</pre><button id="copyCmd" data-i18n="dl.copy">Copy</button></div>
   const meta = { title: document.title, desc: $('meta[name=description]').content };
   const TRM = { title: 'SkyTrack — Türbülansı Uçmadan Önce Bil', desc: 'SkyTrack, herhangi bir uçuşun önündeki yolda türbülans olup olmadığını sade bir dille söyler: yeşil, sarı ya da kırmızı. Ücretsiz ve açık kaynak. Web demosunu dene ya da masaüstü uygulamasını indir. Hesap ya da API anahtarı gerekmez.' };
   let lang = 'en';
-  const LANGS = [['en', 'English', 'en-US'], ['tr', 'Türkçe', 'tr-TR'], ['es', 'Español', 'es-ES'], ['de', 'Deutsch', 'de-DE'], ['fr', 'Français', 'fr-FR'], ['ar', 'العربية', 'ar-AE-u-nu-latn'], ['zh', '中文', 'zh-CN'], ['ja', '日本語', 'ja-JP'], ['ko', '한국어', 'ko-KR']];
+  const LANGS = [['en', 'English', 'en-US'], ['tr', 'Türkçe', 'tr-TR'], ['es', 'Español', 'es-ES'], ['de', 'Deutsch', 'de-DE'], ['fr', 'Français', 'fr-FR'], ['ar', 'العربية', 'ar-AE-u-nu-latn'], ['zh', '中文', 'zh-CN'], ['ja', '日本語', 'ja-JP'], ['ko', '한국어', 'ko-KR'], ['it', 'Italiano', 'it-IT'], ['ru', 'Русский', 'ru-RU'], ['pt', 'Português', 'pt-PT'], ['pl', 'Polski', 'pl-PL'], ['fa', 'فارسی', 'fa-IR-u-ca-gregory-nu-latn'], ['sw', 'Kiswahili', 'sw-KE']];
   const I18 = window.SKY_I18N || { dicts: {}, meta: {}, words: {} };
   const DICT = { tr: TR, ...I18.dicts }, METAS = { tr: TRM, ...I18.meta };
   const W = k => (I18.words[lang] || I18.words.en || {})[k] || '';
   const LOCALE = () => LANGS.find(x => x[0] === lang)[2];
   function setLang(l, save) {
-    lang = l; document.documentElement.lang = l; document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr'; const D = DICT[l];
+    lang = l; document.documentElement.lang = l; document.documentElement.dir = l === 'ar' || l === 'fa' ? 'rtl' : 'ltr'; const D = DICT[l];
     $$('[data-i18n]').forEach(e => { e.innerHTML = D && D[e.dataset.i18n] != null ? D[e.dataset.i18n] : e._en; });
     const M = METAS[l]; document.title = M ? M.title : meta.title; $('meta[name=description]').content = M ? M.desc : meta.desc;
     $('#langBtn .lc').textContent = l.toUpperCase(); $$('#lmenu button').forEach(b => b.classList.toggle('on', b.dataset.l === l));
