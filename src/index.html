@@ -217,6 +217,7 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
    The scene is drawn 60 px high and scaled down; the motion is done in renderer.js (gsMotion) and follows the ground speed */
 .rt>.fl{outline:1px solid transparent;outline-offset:-1px;transition:height .7s ease,margin-top .7s ease,border-radius .7s ease,outline-color .7s ease}.fl::before,.fl>i{transition:opacity .7s ease}
 .rt>.fl.nt,.rt>.fl.nt *,.rt>.fl.nt::before{transition:none!important}
+.rt>.fl.sw{cursor:var(--ptr)}
 .rt>.fl.g{height:32px;margin-top:2px;border-radius:7px;outline-color:#ffffff1f}.fl.g::before,.fl.g>i{opacity:0}
 .fl .gsi{position:absolute;left:0;top:0;width:192%;height:60px;transform:scale(.52);transform-origin:0 0;opacity:0;visibility:hidden;transition:opacity .7s ease,visibility 0s .7s}.fl.g .gsi{opacity:1;visibility:visible;transition:opacity .7s ease}
 .gsi .gl{position:absolute;left:0;display:block;will-change:transform}.gsi .far{top:0}.gsi .mid{bottom:12px}

@@ -569,3 +569,9 @@ Object.assign(DICT.tr, { '✕ Remove overhead spot': '✕ Tepemdeki konumu kald�
 Object.assign(DICT.es, { '✕ Remove overhead spot': '✕ Quitar el punto de «Sobre mí»', 'Remove my spot': 'Quitar mi punto', 'Your spot': 'Tu punto', 'Overhead spot removed': 'Punto de «Sobre mí» quitado' });
 Object.assign(DICT.de, { '✕ Remove overhead spot': '✕ Standort von „Über mir“ entfernen', 'Remove my spot': 'Meinen Standort entfernen', 'Your spot': 'Dein Standort', 'Overhead spot removed': 'Standort von „Über mir“ entfernt' });
 Object.assign(DICT.fr, { '✕ Remove overhead spot': '✕ Retirer le point « Au-dessus de moi »', 'Remove my spot': 'Retirer mon point', 'Your spot': 'Votre point', 'Overhead spot removed': 'Point « Au-dessus de moi » retiré' });
+
+// Flight card: switch between the animation and the dashed line
+Object.assign(DICT.tr, { 'Click to switch between the animation and the dashed line': 'Animasyon ile kesikli çizgi arasında geçiş yapmak için tıkla' });
+Object.assign(DICT.es, { 'Click to switch between the animation and the dashed line': 'Haz clic para alternar entre la animación y la línea de puntos' });
+Object.assign(DICT.de, { 'Click to switch between the animation and the dashed line': 'Klicken, um zwischen Animation und gestrichelter Linie zu wechseln' });
+Object.assign(DICT.fr, { 'Click to switch between the animation and the dashed line': 'Cliquez pour passer de l\'animation à la ligne pointillée' });

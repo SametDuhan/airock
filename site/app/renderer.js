@@ -609,9 +609,9 @@ function renderCard(full) {
       + (landed ? ' · ' + landedText(f) : f.ground ? ' · ' + t('on ground') : ''); // on the ground within 25 km of its destination: landed, and how long ago
     // on the ground the scene takes the place of the flying plane on the dashed line
     const fl = $('fl');
-    // the scene is left above 5500 ft and entered again only below 5200 ft (no flicker around the limit); the change itself is a cross-fade (CSS): the scene fades out as the dashed line fades in
+    // the scene is eligible until 5500 ft and again only below 5200 ft (no flicker around the limit); the user can switch it off (flPref); the change itself is a cross-fade (CSS): the scene fades out as the dashed line fades in
     if (fl && !fl._init) { fl._init = 1; fl.classList.add('nt'); requestAnimationFrame(() => requestAnimationFrame(() => fl.classList.remove('nt'))); } // a card that has just opened shows its state at once, without fading in from the other one
-    if (fl) { const kt = f.spd * 1.944, pose = SkyGeo.scenePose(f.alt * 3.281, f.vr * 196.85, kt, f.ground, !landed); const show = f.ground || f.alt * 3.281 < (fl.classList.contains('g') ? 5500 : 5200); fl.classList.toggle('g', show); gsMotion(f, fl, kt, show); if (show) gsPose(f, fl, pose); }
+    if (fl) { const kt = f.spd * 1.944, pose = SkyGeo.scenePose(f.alt * 3.281, f.vr * 196.85, kt, f.ground, !landed); const eligible = f.ground || f.alt * 3.281 < (fl._el ? 5500 : 5200), show = eligible && flPref === 'scene'; fl._el = eligible; fl.classList.toggle('sw', eligible); fl.classList.toggle('g', show); gsMotion(f, fl, kt, show); if (show) gsPose(f, fl, pose); }
   }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
@@ -700,11 +700,14 @@ function gsMotion(f, el, kt, scene) {
 function routeHtml(f) {
   if (!f.route) return `<div class="rtx" style="margin-top:12px">${t({ loading: 'Loading route info…', none: 'Route info not found', err: 'Couldn\'t load route info' }[f.rs] || '')}</div>`;
   const { org, dst } = f.route;
-  return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(org.name)}</small></div><span class="fl" id="fl"><i>✈</i>${GS_HTML}</span>`
+  return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(org.name)}</small></div><span class="fl" id="fl" role="button" title="${esc(t('Click to switch between the animation and the dashed line'))}"><i>✈</i>${GS_HTML}</span>`
     + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(dst.name)}</small></div></div><div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
 }
+// The user picks what the strip between the airport codes shows: the animated scene or the dashed line with the flying plane (click it to switch; remembered). Above ~5500 ft there is only the line.
+let flPref = LS('sky.fl', 'scene');
 $('card').onclick = e => {
   if (e.target.id === 'cx') return select(null);
+  { const fl = e.target.closest('#fl'); if (fl && fl.classList.contains('sw')) { flPref = flPref === 'scene' ? 'line' : 'scene'; save('sky.fl', flPref); renderCard(); return; } }
   if (X.click(e)) return;
   if (e.target.id === 'pp' || e.target.id === 'pn') { const f = flights.get(selected), n = f?.pics?.length; if (!n) return;
     f.pi = ((f.pi || 0) + (e.target.id === 'pn' ? 1 : n - 1)) % n; return renderCard(true); }
