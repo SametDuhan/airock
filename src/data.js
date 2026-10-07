@@ -46,14 +46,16 @@
   const FEEDS = ALL_FEEDS.filter(f => f.on !== false);
   const feedPause = {}; // feed name → time until which we skip it (after a 429 or an error)
   // Hedged request: the preferred feed gets HEDGE_MS to answer; if it is slow, the next feed is asked as well and the first good answer wins.
-  // A 429 pauses that feed for as long as it asks (Retry-After), otherwise 30 s.
-  const HEDGE_MS = 2500; let rot = 0;
+  // A 429 pauses that feed for as long as it asks (Retry-After), otherwise 8 s.
+  const HEDGE_MS = 2500, GAP_MS = 1100; let rot = 0;
+  // Per-feed gate: requests to one feed are spaced GAP_MS apart (they used to go out almost together and the feeds answered 429 to most of them)
+  const gate = {}; const slot = name => { const at = Math.max(Date.now(), gate[name] || 0); gate[name] = at + GAP_MS; return sleep(at - Date.now()); };
   async function fromFeeds(first, fetchUrl, delayMs) {
     await sleep(delayMs); const errs = [], live = FEEDS.map((_, k) => FEEDS[(first + k) % FEEDS.length]).filter(f => Date.now() >= (feedPause[f.name] || 0));
     FEEDS.forEach(f => { if (!live.includes(f)) errs.push(f.name + ': paused'); });
     if (!live.length) throw new Error(errs.join(', '));
-    const ask = async f => { const r = await get(fetchUrl(f), 7000);
-      if (r.status === 429) { feedPause[f.name] = Date.now() + Math.min(120, Math.max(10, +r.headers.get('retry-after') || 30)) * 1000; throw new Error(f.name + ': rate limited (429)'); }
+    const ask = async f => { await slot(f.name); const r = await get(fetchUrl(f), 7000);
+      if (r.status === 429) { feedPause[f.name] = Date.now() + Math.min(120, Math.max(5, +r.headers.get('retry-after') || 8)) * 1000; throw new Error(f.name + ': rate limited (429)'); }
       if (!r.ok) throw new Error(f.name + ': HTTP ' + r.status); const j = await r.json(); return { name: f.name, ac: j.ac || j.aircraft || [] }; };
     return new Promise((resolve, reject) => {
       let next = 0, pending = 0, done = false, timer = null;
