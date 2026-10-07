@@ -12,6 +12,7 @@ const load = src => new Promise((ok, no) => { const s = document.createElement('
   await load('i18n.js');
   await load('langs.js');
   await load('airports.js');
+  await load('airports-more.js');
   await load('renderer.js');
   await load('extras.js');
   await load('layers.js');
