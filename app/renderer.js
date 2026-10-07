@@ -129,6 +129,28 @@ const kindOf = f => { const c = acCode(f), cat = f.cat || '';
   const k = cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : TWIN_RE.test(c) || /^A[345]$/.test(cat) ? 'air2' : 'gen';
   f._kk = c + cat; return f._k = k; };
 map.createPane('planes').style.zIndex = 450;
+/* ---------- thinning out crowded areas when zoomed out ---------- */
+// Over a busy area at continent scale thousands of overlapping icons are unreadable and slow to draw. Above THIN_FROM visible aircraft we keep one per grid cell (the most
+// interesting one) and make the cells just big enough to land near thinTarget(n): 500 aircraft -> ~325, 2000 -> ~775, at most 900. Zooming in leaves fewer aircraft on the
+// screen, so they all come back by themselves. Favorites, watched aircraft, emergencies and the selected one are never hidden. Only the drawing is thinned: the data,
+// the list, the search and the alerts still see every aircraft.
+const THIN_FROM = 250; let thinOn = LS('sky.thin', true), thinCell = 16;
+const thinTarget = n => n <= THIN_FROM ? n : Math.min(900, Math.round(THIN_FROM + (n - THIN_FROM) * .3));
+const hash01 = id => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0; return (h >>> 0) % 997 / 997; };
+const thinScore = f => (f.ground ? 0 : 4) + (/^[A-Z]{3}\d/.test(f.cs) ? 1.5 : 0) + Math.min(1, f.alt / 12000) + ({ air4: 1, air2: .6, heli: .4 }[kindOf(f)] || 0) + (f._kept ? .6 : 0) + (f._h01 ??= hash01(f.id)) * .3; // _kept: a little stickiness, so icons do not flicker
+const mustShow = f => fav.has(f.id) || watch.has(f.id) || isEmg(f);
+function thinOut(cand) {
+  const must = cand.filter(mustShow), rest = cand.filter(f => !mustShow(f)), target = Math.max(0, thinTarget(cand.length) - must.length);
+  const cells = c => { const m = new Map(); for (const f of rest) { const k = Math.floor(f._p.x / c) * 4096 + Math.floor(f._p.y / c), sc = thinScore(f), b = m.get(k); if (!b || sc > b.sc) m.set(k, { f, sc }); } return m; };
+  let m = cells(thinCell); // start from the last cell size: the view changes little from one frame to the next
+  for (let i = 0; i < 8 && m.size > target; i++) m = cells(thinCell *= 1.15);
+  for (let i = 0; i < 8 && thinCell > 12; i++) { const s = cells(thinCell / 1.15); if (s.size > target) break; thinCell /= 1.15; m = s; }
+  const keep = must.concat([...m.values()].map(b => b.f)); cand.forEach(f => { f._kept = false; }); keep.forEach(f => { f._kept = true; });
+  cand.forEach(f => { if (!f._kept) f._p = null; }); // hidden: not drawn and not hoverable
+  return keep;
+}
+const thnEl = document.createElement('div'); thnEl.id = 'thn'; map.getContainer().appendChild(thnEl);
+const setThn = (shown, total) => { const txt = shown < total ? t('Showing {0} of {1} aircraft · zoom in for all', shown, total) : ''; if (thnEl._t !== txt) { thnEl._t = txt; thnEl.textContent = txt; thnEl.style.display = txt ? 'block' : 'none'; } };
 const PlaneLayer = L.Layer.extend({
   onAdd(m) {
     this._c = L.DomUtil.create('canvas', 'planes leaflet-zoom-hide', m.getPane('planes')); this._ctx = this._c.getContext('2d');
@@ -151,14 +173,19 @@ const PlaneLayer = L.Layer.extend({
         for (let i = 0; i < pts.length; i += st) { const p = map.latLngToContainerPoint([pts[i][0], nearLon(pts[i][1], cLon)]); i ? path.lineTo(p.x, p.y) : path.moveTo(p.x, p.y); p0 = p; }
         const q = map.latLngToContainerPoint([f.lat, nearLon(f.lon, cLon)]); path.lineTo(q.x, q.y); n++; });
       ctx.save(); ctx.lineWidth = 1.5; ctx.lineJoin = 'round'; ctx.globalAlpha = .55; paths.forEach((pa, col) => { ctx.strokeStyle = col; ctx.stroke(pa); }); ctx.restore(); ctx.lineWidth = .7; ctx.strokeStyle = '#000'; }
+    const cand = [];
     flights.forEach(f => {
       f._p = null; if (f.gone || !vis(f)) return;
       const [lat, lon, hdg] = f.rp || [f.lat, f.lon, f.hdg], p = map.latLngToContainerPoint([lat, nearLon(lon, cLon)]); // nearest world copy at the date line
       if (p.x < -20 || p.y < -20 || p.x > s.x + 20 || p.y > s.y + 20) return;
       f._p = p; f._h = hdg; if (f.id === selected) { sel = f; return; }
+      cand.push(f);
+    });
+    const shown = thinOn && cand.length > THIN_FROM ? thinOut(cand) : cand; setThn(shown.length + (sel ? 1 : 0), cand.length + (sel ? 1 : 0));
+    shown.forEach(f => {
       if (f.seen && Date.now() - f.seen > 45000) ctx.globalAlpha = .5; // not reported for a while: shown fainter, still moving
-      icon(ctx, p, hdg, (f.ground ? 16 : 24) * k, f.ground ? '#9aa0a6' : color(f.alt), kindOf(f));
-      ctx.globalAlpha = 1; rings(ctx, f, p, (f.ground ? 16 : 24) * k);
+      icon(ctx, f._p, f._h, (f.ground ? 16 : 24) * k, f.ground ? '#9aa0a6' : color(f.alt), kindOf(f));
+      ctx.globalAlpha = 1; rings(ctx, f, f._p, (f.ground ? 16 : 24) * k);
     });
     if (sel) { ctx.shadowColor = '#f2c230'; ctx.shadowBlur = 12; icon(ctx, sel._p, sel._h, 30, '#fff', kindOf(sel)); ctx.shadowBlur = 0; rings(ctx, sel, sel._p, 30); }
   }
@@ -340,9 +367,19 @@ function saveCache() { if (Date.now() - cacheAt < 60000) return; cacheAt = Date.
   const a = [...flights.values()].filter(f => !f.gone && v.contains([f.lat, f.lon])).slice(0, 700).map(f => ({ id: f.id, cs: f.cs, reg: f.reg, type: f.type, country: f.country, lat: +f.lat.toFixed(4), lon: +f.lon.toFixed(4), ground: f.ground, alt: Math.round(f.alt), spd: Math.round(f.spd), hdg: Math.round(f.hdg), vr: f.vr, sq: f.sq, emg: f.emg, cat: f.cat }));
   save('sky.cache', { t: Date.now(), c: [map.getCenter().lat, map.getCenter().lng, map.getZoom()], f: a }); }
 function loadCache() { const c = LS('sky.cache', null); if (!c || Date.now() - c.t > 1800e3) return; (c.f || []).forEach(d => { if (!flights.has(d.id)) upsert({ ...d, stale: true }); }); redraw(); }
-// The free feeds answer one circle (250 nm at most) per request and allow about one request a second each. A Dubai-sized view needs ~20 circles, so the normal refresh
-// (6 circles every few seconds) would take ~40 s to fill it. After the map jumped somewhere new we instead ask batch after batch, nearest the center first, and draw each
-// answer at once (2 circles, then 4 at a time, at most FILL_MAX): the center is on screen in ~1-2 s and the rest follows in ~10 s. Stops if the map moves again.
+// The free feeds answer one circle (250 nm at most) per request and allow about one request a second each. A Europe-sized view needs dozens of circles, so the normal
+// refresh (6 circles every few seconds) would take a minute to fill it. So SkyTrack remembers which circles answered lately (`got`) and, whenever the visible map is not
+// covered by them (a zoom out, a far jump, a long drag), fills the gap batch after batch, nearest the center first, skipping circles that are still fresh, and draws every
+// answer at once (fillView). A new view cancels the old one, including its queued requests (see slot() in data.js).
+const got = [], quiet = [], COVER_MS = 120000, FRESH_MS = 25000; // got: [lat, lon, radius km, time] of circles that answered; quiet: [s, n, w, e, until] areas that came back empty
+const noteCov = cov => { const now = Date.now(); (cov || []).forEach(c => got.push([c[0], c[1], c[2], now])); while (got.length && (now - got[0][3] > COVER_MS || got.length > 220)) got.shift(); };
+// How many of 25 sample points over the view are in no circle that answered within COVER_MS (and not in an area that just came back empty)
+function uncovered(v) {
+  const now = Date.now(), cs = got.filter(c => now - c[3] < COVER_MS), qs = quiet.filter(q => q[4] > now); let n = 0;
+  for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) { const la = v.getSouth() + (v.getNorth() - v.getSouth()) * i / 4, lo = v.getWest() + (v.getEast() - v.getWest()) * j / 4;
+    if (!cs.some(c => km(la, lo, c[0], c[1]) <= c[2]) && !qs.some(q => la >= q[0] && la <= q[1] && lo >= q[2] && lo <= q[3])) n++; }
+  return n;
+}
 // Where the community has few receivers (the Gulf, Africa, oceans) a complete answer still has few aircraft: say so instead of leaving people wondering
 // (about 20 per million km² in the Gulf, ~900 over Europe; the limit is 60)
 function thin() {
@@ -350,40 +387,46 @@ function thin() {
   const area = (v.getEast() - v.getWest()) * 111.2 * Math.cos(map.getCenter().lat * Math.PI / 180) * (v.getNorth() - v.getSouth()) * 111.2 / 1e6;
   return area > .5 && n / area < 60 ? ' · ' + t('Thin ADS-B coverage here: some aircraft may be missing') : '';
 }
-const FILL_MAX = 24; let filling = 0; // reqId of the fill that is running (0 = none)
+const FILL_MAX = 48; let filling = 0, fillBox = null, lastSrc = ''; // filling: reqId of the fill that is running (0 = none), fillBox: the area it is filling
 async function fillView(bb, id) {
-  let from = 0, total = 99, n = 0, dry = 0; const src = new Set(), ids = new Set();
+  const now = Date.now(), fresh = got.filter(c => now - c[3] < FRESH_MS).map(c => c.slice(0, 3)); // fixed for the whole fill, so the batch numbers stay valid
+  let from = 0, total = 99, n = 0, dry = 0; const src = new Set(), ids = new Set(), res = () => ({ n, src: [...src].join(' + ') || lastSrc });
   while (from < Math.min(total, FILL_MAX)) {
-    const k = from ? 4 : 2, rf = await DATA.flights(bb, { from, count: k });
-    if (!live || id !== reqId) return { n, done: false, src: [...src].join(' + ') };
-    if (!rf.ok) break; // rate limited or offline: what we have stays, the normal refresh goes on from here
-    total = rf.total ?? total; n++; String(rf.src || '').split(' + ').forEach(x => x && src.add(x)); rf.flights.forEach(upsert); redraw(); from += k;
-    // Where the community has few receivers (the Gulf, Africa, oceans) the outer circles come back empty: two batches in a row with (almost) nothing new end the fill early
-    const before = ids.size; rf.flights.forEach(a => ids.add(a.id)); dry = from > 2 && ids.size - before < 3 ? dry + 1 : 0; if (dry >= 2) return { n, done: true, src: [...src].join(' + ') };
+    const k = from === 0 ? 1 : from < 3 ? 2 : 4, rf = await DATA.flights(bb, { from, count: k, fresh }); // 1 circle first (the first aircraft appear after ~1 s), then 2, then 4 at a time
+    if (!live || id !== reqId) return { ...res(), done: false };
+    if (!rf.ok) break; // rate limited or offline: what we have stays; the next refresh asks again for whatever is still uncovered
+    total = rf.total ?? total; n++; String(rf.src || '').split(' + ').forEach(x => x && src.add(x)); rf.flights.forEach(upsert); noteCov(rf.cov); redraw(); from += k;
+    // Where the community has few receivers (the Gulf, Africa, oceans) the outer circles come back empty: two batches in a row with (almost) nothing new end the fill early,
+    // and that area is left alone for a while instead of being asked again at every refresh
+    const before = ids.size; rf.flights.forEach(a => ids.add(a.id)); dry = from > 2 && ids.size - before < 3 ? dry + 1 : 0;
+    if (total === 0) { quiet.push([+bb.s, +bb.n, +bb.w, +bb.e, Date.now() + 30000]); return { ...res(), done: true }; } // every circle here is fresh already: nothing to ask for
+    if (dry >= 2) { quiet.push([+bb.s, +bb.n, +bb.w, +bb.e, Date.now() + 90000]); if (quiet.length > 8) quiet.shift(); return { ...res(), done: true }; }
     $('st').textContent = t('loading…') + ` ${Math.min(from, total)}/${Math.min(total, FILL_MAX)}`;
   }
-  return { n, done: from >= Math.min(total, FILL_MAX) && total <= FILL_MAX, src: [...src].join(' + ') };
+  return { ...res(), done: from >= Math.min(total, FILL_MAX) && total <= FILL_MAX };
 }
 async function poll(force) {
-  if (!live) return; const v = map.getBounds();
-  if (!force && fetchedBox && fetchedBox.contains(v) && Date.now() - fetchedAt < LIVE_MS) return;
+  if (!live) return; const v = map.getBounds(), need = uncovered(v) >= 3; // need: part of the visible map has no fresh answer (a search, a far jump, a long drag, a zoom out)
+  if (!force && !need && Date.now() - fetchedAt < LIVE_MS) return;
   { const gap = Date.now() - lastReq; if (!force && gap < 1200) { clearTimeout(moveTimer); moveTimer = setTimeout(() => poll(), 1250 - gap); return; } } lastReq = Date.now(); // at least 1.2 s between pan-triggered requests (the data layer spreads the load over several servers)
-  const jump = !fetchedBox || !fetchedBox.contains(v.getCenter()); // the map went somewhere the last answer did not cover (a search, a click on a far airport, a long drag)
-  if (filling && !jump) return; // a fill is running for this area: the regular refresh would cancel it, so it waits
+  if (filling && (!need || (fillBox && fillBox.contains(v)))) return; // a fill is running for this view: starting another one (or a regular refresh) would cancel it
   const b = v.pad(.25), id = ++reqId, cl = (x, m) => Math.max(-m, Math.min(m, x)).toFixed(2), bb = { s: cl(b.getSouth(), 85), n: cl(b.getNorth(), 85), w: cl(b.getWest(), 180), e: cl(b.getEast(), 180) };
-  fetchedBox = b; fetchedAt = Date.now(); $('st').textContent = t('loading…');
-  // After a jump, fill the view circle by circle instead of waiting for one big answer (see fillView): the aircraft show up as they arrive
-  if (jump) { filling = id; const vb = v.pad(.08), fv = await fillView({ s: cl(vb.getSouth(), 85), n: cl(vb.getNorth(), 85), w: cl(vb.getWest(), 180), e: cl(vb.getEast(), 180) }, id).finally(() => { if (filling === id) filling = 0; }); if (!live || id !== reqId) return; // only just beyond the screen: no circles wasted off-screen
-    if (fv.n) { fetchedBox = vb; // if the fill stopped early the regular refreshes (which sweep the surrounding circles) take over from here pollMs = LIVE_MS; $('st').title = '';
+  fetchedAt = Date.now(); $('st').textContent = t('loading…');
+  // Fill the uncovered view circle by circle instead of waiting for one big answer (see fillView): the aircraft show up as they arrive
+  if (need) { filling = id; const vb = v.pad(.08); fillBox = vb; // only just beyond the screen: no circles wasted off-screen
+    const fv = await fillView({ s: cl(vb.getSouth(), 85), n: cl(vb.getNorth(), 85), w: cl(vb.getWest(), 180), e: cl(vb.getEast(), 180) }, id).finally(() => { if (filling === id) { filling = 0; fillBox = null; } });
+    if (!live || id !== reqId) return;
+    if (fv.n) { pollMs = LIVE_MS; $('st').title = ''; lastSrc = fv.src;
       $('st').textContent = `${fv.src} · ${t('last updated')} ${new Date().toLocaleTimeString(LOC(), TF())}${fv.done ? thin() : ' · ' + t('wide view: center only, zoom in')}`; saveCache(); pumpRoutes(); return; } }
   const r = await DATA.flights(bb);
   if (!live) return;
   if (id !== reqId) { if (r.ok) { r.flights.forEach(upsert); redraw(); } return; } // the map moved again meanwhile: the aircraft are still valid, so keep them, but do not touch the "fetched" area
-  if (!r.ok) { pollMs = 25000; fetchedBox = null; const busy = /429|rate|paused|credit|limit/i.test(r.error || '');
+  if (!r.ok) { pollMs = 25000; const busy = /429|rate|paused|credit|limit/i.test(r.error || '');
     $('st').textContent = t(busy ? 'Data sources are busy, retrying shortly. Showing the last known positions.' : 'No connection to the data sources. Showing the last known positions.') + (flights.size ? '' : ' ' + t('You can also try Demo mode.')); $('st').title = r.error || ''; return; }
   $('st').title = '';
-  // If the source covered only part of the area (adsb.lol, wide view), count only the covered area as "fetched"; otherwise edges left empty won't load when panning
-  if (r.covered) fetchedBox = L.latLngBounds([r.covered.s, r.covered.w], [r.covered.n, r.covered.e]);
+  // Remember which circles answered (a fill skips them while they are fresh, and the view counts as covered where they are). OpenSky answers cover the whole requested area.
+  if (r.cov) noteCov(r.cov); if ((r.src || '').includes('OpenSky') && !r.partial) { const c = b.getCenter(); noteCov([[c.lat, c.lng, km(b.getSouth(), b.getWest(), b.getNorth(), b.getEast()) / 2]]); }
+  lastSrc = r.src || lastSrc;
   const seen = new Set(r.flights.map(d => d.id));
   // An aircraft that one answer does not mention is NOT removed at once: free feeds skip aircraft now and then, and partial answers miss everything outside
   // the covered area. It keeps flying (dead reckoning) and is dropped only after GRACE_MS without a sighting, and only if the area it is in was really covered.
@@ -405,7 +448,7 @@ async function trackSelected() { const f = flights.get(selected); if (!live || r
 setInterval(trackSelected, 5000);
 map.on('moveend', () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => { poll(); pumpRoutes(); }, 250); }); // when zooming/panning ends, request the new area right away
 function setMode(l) {
-  live = l; save('sky.live', l); ts = l ? 1 : 30; exitReplay(); $('mLive').classList.toggle('on', l); $('mDemo').classList.toggle('on', !l); clearAll(); fetchedBox = null;
+  live = l; save('sky.live', l); ts = l ? 1 : 30; exitReplay(); $('mLive').classList.toggle('on', l); $('mDemo').classList.toggle('on', !l); clearAll(); fetchedBox = null; got.length = 0; quiet.length = 0;
   if (l) poll(true); else { seedDemo(); $('st').textContent = t('demo (30x speed)'); }
   redraw();
 }
