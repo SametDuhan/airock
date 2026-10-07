@@ -609,7 +609,7 @@ function renderCard(full) {
       + (landed ? ' · ' + landedText(f) : f.ground ? ' · ' + t('on ground') : ''); // on the ground within 25 km of its destination: landed, and how long ago
     // on the ground the scene takes the place of the flying plane on the dashed line
     const fl = $('fl');
-    if (fl) { const kt = f.spd * 1.944, pose = SkyGeo.scenePose(f.alt * 3.281, f.vr * 196.85, kt, f.ground); fl.classList.toggle('g', pose.show); gsMotion(f, fl, kt, pose.show); if (pose.show) gsPose(f, fl, pose); }
+    if (fl) { const kt = f.spd * 1.944, pose = SkyGeo.scenePose(f.alt * 3.281, f.vr * 196.85, kt, f.ground, !landed); fl.classList.toggle('g', pose.show); gsMotion(f, fl, kt, pose.show); if (pose.show) gsPose(f, fl, pose); }
   }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],
@@ -662,15 +662,28 @@ const cloud = (x, y, k, f, o) => `<g transform="translate(${x} ${y}) scale(${k})
 const GS_C1 = cloud(35, 20, .55, '#dbe8f5', .75) + cloud(120, 12, .45, '#dbe8f5', .7) + cloud(205, 26, .6, '#dbe8f5', .75) + cloud(280, 15, .5, '#dbe8f5', .7);
 const GS_C2 = cloud(70, 40, 1, '#ffffff', .94) + cloud(190, 33, 1.25, '#ffffff', .95) + cloud(285, 47, .9, '#ffffff', .92);
 // layers: sky (gradient + clouds, fades in with altitude) / ground (the airport and the taxi line, sinks out of the scene with altitude) / plane (rises and pitches, gear folds up)
-const GS_HTML = `<div class="gsi"><div class="sky">${gsLayer('c1', 320, 60, GS_C1)}${gsLayer('c2', 320, 60, GS_C2)}</div><div class="gnd">${gsLayer('far', 320, 44, GS_FAR)}${gsLayer('mid', 320, 26, GS_MID)}<div class="near"><b class="nl"></b></div></div>${GS_PLANE}</div>`;
+const STARS = Array.from({ length: 16 }, (_, i) => `<circle cx="${(i * 47 + 13) % 160}" cy="${(i * 29 + 7) % 34}" r="${i % 3 ? .7 : 1.1}"/>`).join('');
+// layers, back to front: background (night sky; day sky on top of it by the sun's height; stars, sun, moon) / clouds (appear after take-off) / ground (the airport and the taxi line, sinks out of
+// the scene as the plane climbs) / plane (its nose comes up and down with the vertical rate, the gear folds up)
+const GS_HTML = `<div class="gsi"><div class="bg"><div class="bgn"></div><div class="bgd"></div><svg class="stars" viewBox="0 0 160 60" preserveAspectRatio="none" fill="#fff" aria-hidden="true">${STARS}</svg>`
+  + `<div class="body sun"></div><svg class="body moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 2.5 A8 8 0 1 0 17.5 14 A6.4 6.4 0 0 1 13 2.5Z" fill="#f2efe4"/></svg></div>`
+  + `<div class="sky">${gsLayer('c1', 320, 60, GS_C1)}${gsLayer('c2', 320, 60, GS_C2)}</div><div class="gnd">${gsLayer('far', 320, 44, GS_FAR)}${gsLayer('mid', 320, 26, GS_MID)}<div class="near"><b class="nl"></b></div></div>${GS_PLANE}</div>`;
 // The scene loops while the plane moves and its speed follows the plane's: slow like a taxiing plane (15 knots = one pass of the nearest layer in 2 s), faster while rolling out after
 // touchdown, paused when the plane stands still. Playback rate changes keep the position, and the position is kept on the flight when the card is rebuilt.
 const NO_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
-// Where things are in the scene for this moment of the flight (SkyGeo.scenePose): the ground sinks out, the sky and clouds fade in, the plane rises and pitches, the gear folds up.
-// CSS transitions (about a second) smooth the once-a-second updates.
+// Where things are in the scene for this moment of the flight (SkyGeo.scenePose): the ground sinks out, clouds fade in, the plane rises and pitches, the gear folds up; and the look of the sky
+// follows the sun at the airport the plane is at (the nearer of departure / arrival): day = bright sky and the sun, night = dark sky, stars and the moon. CSS transitions (about a second)
+// smooth the once-a-second updates.
 function gsPose(f, el, p) {
-  el.querySelector('.gnd').style.transform = `translateY(${(p.t * 72).toFixed(1)}px)`; el.querySelector('.sky').style.opacity = p.t.toFixed(2);
-  el.querySelector('.plane').style.transform = `translateY(${(-p.rise).toFixed(1)}px) rotate(${(-p.pitch).toFixed(1)}deg)`; el.querySelector('.gear').classList.toggle('up', !p.gear);
+  const $q = n => el.querySelector(n);
+  $q('.gnd').style.transform = `translateY(${(p.g * 90).toFixed(1)}px)`; $q('.sky').style.opacity = p.cl.toFixed(2);
+  $q('.plane').style.transform = `translateY(${(-p.rise).toFixed(1)}px) rotate(${(-p.pitch).toFixed(1)}deg)`; $q('.gear').classList.toggle('up', !p.gear);
+  const o = f.route.org, d = f.route.dst, ap = km(f.lat, f.lon, o.lat, o.lon) <= km(f.lat, f.lon, d.lat, d.lon) ? o : d;
+  const elev = SkyGeo.sunElevation(ap.lat, ap.lon), hr = SkyGeo.solarHour(ap.lon), day = Math.max(0, Math.min(1, (elev + 2) / 10));
+  const df = Math.max(0, Math.min(1, (hr - 6) / 12)), nf = (hr >= 18 ? hr - 18 : hr + 6) / 12; // how far through the day / the night: the sun and the moon cross the sky from left to right
+  $q('.bgd').style.opacity = day.toFixed(2); $q('.stars').style.opacity = (Math.max(0, 1 - day * 1.6) * .9).toFixed(2); el.querySelector('.gsi').classList.toggle('day', day > .5);
+  const sun = $q('.sun'), moon = $q('.moon'); sun.style.opacity = day.toFixed(2); sun.style.left = (12 + 76 * df).toFixed(1) + '%'; sun.style.top = (40 - 30 * Math.sin(Math.PI * df)).toFixed(1) + 'px';
+  moon.style.opacity = (1 - day).toFixed(2); moon.style.left = (12 + 76 * nf).toFixed(1) + '%'; moon.style.top = (36 - 26 * Math.sin(Math.PI * nf)).toFixed(1) + 'px';
 }
 function gsMotion(f, el, kt, scene) {
   if (!el._an) {

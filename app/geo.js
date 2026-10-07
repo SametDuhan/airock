@@ -58,16 +58,23 @@
     const rel = ((brg(lat, lon, s.lat, s.lon) - hdg + 540) % 360) - 180;
     return { elev, side: Math.abs(rel) < 25 || Math.abs(rel) > 155 ? null : rel > 0 ? 'right' : 'left' };
   }
-  // How the flight-card scene looks for a given moment of the flight (see gsPose in renderer.js). Inputs: altitude (ft), vertical rate (ft/min), ground speed (kt), on the ground or not.
-  //  t     0 = airport at night on the ground ... 1 = clouds and open sky (square root of altitude / 5000 ft: the first few hundred feet already change a lot)
-  //  rise  how far the plane has lifted in the scene (px), pitch  its nose-up angle (deg: climbing up to 12, descending down to -6, rotating on the runway 5)
+  // Sun height above the horizon (degrees, negative = night) at a place, and the local mean solar time (hours, 12 = the sun is highest): for the day / night look of the flight-card scene
+  const sunElevation = (lat, lon, date = new Date()) => { const s = sun(date); return 90 - km(lat, lon, s.lat, s.lon) / 6371 / R; };
+  const solarHour = (lon, date = new Date()) => { const s = sun(date); return (12 + (((lon - s.lon + 540) % 360) - 180) / 15 + 24) % 24; };
+  // How the flight-card scene looks for a given moment of the flight (see gsPose in renderer.js). Inputs: altitude (ft), vertical rate (ft/min), ground speed (kt), on the ground or not,
+  // and rolloutOk = false right after landing (the nose is down then, whatever the speed).
+  //  g     0 = on the ground ... 1 = the airport has sunk out of the scene (at 700 ft there is nothing of it left: only sky and clouds)
+  //  cl    clouds: none on the ground, fully there at 750 ft
+  //  rise  how far the plane has lifted in the scene (px, the nose-up angle does most of the "taking off"), pitch  nose-up angle (deg): climbing (vertical rate > 0) 8 to 14, descending 4 to 8 nose down,
+  //        level 0; on the runway the nose comes up for rotation (110 kt and more, 10) except right after landing; the first few hundred feet at speed also count as climbing
   //  gear  landing gear down (on the ground, in the first 250 ft, or descending below 3000 ft)
   //  show  the scene is shown (on the ground or below 5500 ft); above it the flying plane on the dashed line is shown
-  function scenePose(altFt, vsFpm, kt, ground) {
-    const c = (v, lo, hi) => Math.max(lo, Math.min(hi, v)), a = ground ? 0 : Math.max(0, altFt || 0), t = Math.sqrt(c(a / 5000, 0, 1));
-    return { show: !!ground || a < 5500, t, rise: t * 14, pitch: ground ? (kt > 110 ? 5 : 0) : c((vsFpm || 0) / 2500 * 12, -6, 12), gear: !!ground || a < 250 || ((vsFpm || 0) < -300 && a < 3000) };
+  function scenePose(altFt, vsFpm, kt, ground, rolloutOk = true) {
+    const c = (v, lo, hi) => Math.max(lo, Math.min(hi, v)), a = ground ? 0 : Math.max(0, altFt || 0), vs = vsFpm || 0;
+    const pitch = ground ? (kt > 110 && rolloutOk ? 10 : 0) : vs > 100 || (vs > -100 && a < 300 && kt > 100) ? 8 + c(vs / 500, 0, 6) : vs < -100 ? -(4 + c(-vs / 250, 0, 4)) : 0;
+    return { show: !!ground || a < 5500, g: c(a / 700, 0, 1), cl: c((a - 50) / 700, 0, 1), rise: c(a / 1500, 0, 1) * 10, pitch, gear: !!ground || a < 250 || (vs < -300 && a < 3000) };
   }
-  const api = { scenePose, R, brg, km, gc, unwrap, nearLon, regCountry, ahead, sun, night, sunSide };
+  const api = { scenePose, sunElevation, solarHour, R, brg, km, gc, unwrap, nearLon, regCountry, ahead, sun, night, sunSide };
   root.SkyGeo = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
