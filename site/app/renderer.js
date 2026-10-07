@@ -93,14 +93,22 @@ const airIs = (f, a) => { const c = airCode(f), n = (f.route?.airline || AIRLINE
   return c === a || (f.route?.airlineIata || '').toUpperCase() === a || (a.length > 2 && n.includes(a)); };
 const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (flt.maxSpd >= 600 || f.spd * 1.944 <= flt.maxSpd) && (!flt.fav || fav.has(f.id))
   && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)) && (!flt.type || typeIs(f, flt.type)) && (!flt.air || airIs(f, flt.air)); };
-function toast(msg, id) {
+// toastEv: toasts about events the user didn't ask for (alerts, take-offs, emergencies, turbulence...): Settings → "In-app notifications" turns them off. Plain toast() is feedback for
+// something the user just did and always shows. At most 3 are on screen at once (the oldest goes first), so zooming into a crowded area can't pile them up.
+const toastEv = (msg, id) => toast(msg, id, !LS('sky.toast', true));
+function toast(msg, id, hidden) { // hidden: no pop-up in the app, only the desktop notification (if that is on)
+  if (hidden) return desktopNote(msg, id);
   const emg = msg.startsWith('⚠'), d = document.createElement('div'); d.className = 'tm' + (emg ? ' emg' : '') + (id ? ' go' : ''); d.style.setProperty('--d', emg ? '8s' : '4s');
   d.innerHTML = `<i class="ti">${emg ? '⚠' : '✓'}</i><span></span><button class="tx" aria-label="Close"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"/></svg></button>`;
-  d.querySelector('span').textContent = emg ? msg.slice(1).trim() : msg; $('toast').appendChild(d);
+  d.querySelector('span').textContent = emg ? msg.slice(1).trim() : msg; $('toast').appendChild(d); while ($('toast').children.length > 3) $('toast').firstChild.remove();
   d.onclick = e => { if (!e.target.closest('.tx') && id && flights.has(id)) select(id); d.remove(); };
   setTimeout(() => d.remove(), emg ? 8000 : 4000);
-  if (LS('sky.notif', true)) try { const n = new Notification('SkyTrack', { body: msg }); n.onclick = () => { try { window.api?.show?.(); } catch {} if (id && flights.has(id)) select(id); }; } catch {}
+  desktopNote(msg, id);
 }
+
+const desktopNote = (msg, id) => {
+  if (LS('sky.notif', true)) try { const n = new Notification('SkyTrack', { body: msg }); n.onclick = () => { try { window.api?.show?.(); } catch {} if (id && flights.has(id)) select(id); }; } catch {}
+};
 
 /* ---------- aircraft: single canvas layer ---------- */
 // Instead of a separate HTML element per aircraft, all are drawn on one canvas: stays smooth with thousands of aircraft
@@ -367,7 +375,7 @@ setInterval(() => {
     const dist = f.spd * ts, h = f.hdg * R;
     f.lat += Math.cos(h) * dist / 111320; f.lon += Math.sin(h) * dist / (111320 * Math.cos(f.lat * R));
     if (f.lon > 180) f.lon -= 360; else if (f.lon < -180) f.lon += 360;
-    if (zone) { const inn = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); if (inn && (f.in === false || (f.in === undefined && tick > 1))) toast(t('{0} entered the alert zone', f.cs)); f.in = inn; }
+    if (zone) { const inn = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); if (inn && (f.in === false || (f.in === undefined && tick > 1))) toastEv(t('{0} entered the alert zone', f.cs)); f.in = inn; }
     if (tick % 5 === 0) { f.tr.push([f.lat, f.lon]); if (f.tr.length > 360) f.tr.shift(); } // each aircraft's last ~30 min trail
   });
   const s = flights.get(selected); if (s && !replay) { drawTrail(s); if (s.route) { const p = routePts(s); setRoute(p.done, p.rest); } if (tick % 30 === 0) loadTrace(s); }

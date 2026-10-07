@@ -7,14 +7,14 @@ const HEX6 = /^[0-9a-f]{6}$/i;
 /* ---------- emergencies + watchlist events (called after every position update) ---------- */
 const emgSeen = new Set(), wlState = new Map(); // wlState: id → { ground, t } (survives the aircraft leaving the map)
 X.event = f => {
-  if (live && isEmg(f) && !emgSeen.has(f.id + emgCode(f))) { emgSeen.add(f.id + emgCode(f)); toast(`⚠ ${f.cs}: ${t(EMG[emgCode(f)])} (${emgCode(f)})`, f.id); }
+  if (live && isEmg(f) && !emgSeen.has(f.id + emgCode(f))) { emgSeen.add(f.id + emgCode(f)); toastEv(`⚠ ${f.cs}: ${t(EMG[emgCode(f)])} (${emgCode(f)})`, f.id); }
   if (watch.has(f.id)) {
     const st = wlState.get(f.id);
-    if (st && st.ground !== f.ground) toast(t(f.ground ? '{0} landed' : '{0} took off', f.cs));
+    if (st && st.ground !== f.ground) toastEv(t(f.ground ? '{0} landed' : '{0} took off', f.cs));
     wlState.set(f.id, { ground: f.ground, t: Date.now() });
   }
 };
-X.arrive = f => { if (watch.has(f.id)) toast(t('{0} landed', f.cs)); }; // demo flights "land" when they reach their destination
+X.arrive = f => { if (watch.has(f.id)) toastEv(t('{0} landed', f.cs)); }; // demo flights "land" when they reach their destination
 
 /* ---------- watchlist ---------- */
 const saveWatch = () => save('sky.watch', [...watch]);

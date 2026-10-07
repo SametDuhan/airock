@@ -54,8 +54,8 @@ async function tbWatchTick() {
     const f = flights.get(id); if (!f || f.ground || f.gone) { tbLast.delete(id); continue; }
     await loadTurb(f); if (f.tbs !== 'ok') continue;
     const lv = f.tb.level, prev = tbLast.get(id) ?? 0, w = watch.get(id);
-    if (lv >= 2 && lv > prev) toast((lv >= 3 ? '⚠ ' : '') + (lv >= 3 ? t('{0}: high turbulence risk ahead (~{1}). Keep your seat belt fastened.', w.cs, fmtDist(f.tb.km || 0)) : t('{0}: moderate turbulence possible ahead (~{1}). Keep your seat belt fastened.', w.cs, fmtDist(f.tb.km || 0))), id);
-    else if (lv === 0 && prev >= 2) toast(t('{0}: nothing reported on the route ahead any more', w.cs), id);
+    if (lv >= 2 && lv > prev) toastEv((lv >= 3 ? '⚠ ' : '') + (lv >= 3 ? t('{0}: high turbulence risk ahead (~{1}). Keep your seat belt fastened.', w.cs, fmtDist(f.tb.km || 0)) : t('{0}: moderate turbulence possible ahead (~{1}). Keep your seat belt fastened.', w.cs, fmtDist(f.tb.km || 0))), id);
+    else if (lv === 0 && prev >= 2) toastEv(t('{0}: nothing reported on the route ahead any more', w.cs), id);
     tbLast.set(id, lv);
   }
 }
@@ -77,7 +77,7 @@ async function checkPending() {
     const r = await DATA.find(w.cs); if (!r.ok) continue;
     const f = r.flights.find(x => x.cs.toUpperCase() === w.cs && !x.ground); if (!f) continue;
     watch.delete(key); watch.set(f.id, { cs: f.cs, reg: f.ac?.reg || f.reg || '' }); wlState.set(f.id, { ground: false, t: Date.now() }); saveWatch(); upsert(f); redraw(); renderWatch(); renderAlerts();
-    toast(t('{0} is in the air: watching', f.cs), f.id);
+    toastEv(t('{0} is in the air: watching', f.cs), f.id);
   }
 }
 setInterval(checkPending, 45000);

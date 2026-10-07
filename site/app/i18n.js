@@ -46,7 +46,7 @@ const TR = {
   'NEW AIRCRAFT': 'YENİ UÇAK', 'NEW TYPE': 'YENİ TİP', '✓ Logged': '✓ Kaydedildi', '📓 Log sighting': '📓 Gözlemi kaydet',
   // flight diary, share image, profile, settings, airport board
   'Vert. speed': 'Dikey hız', 'SkyTrack keeps running in the tray when you close the window': 'Pencereyi kapatınca SkyTrack tepside çalışmaya devam eder', '📓 Flight diary': '📓 Uçuş günlüğü',
-  'Keep running in the tray': 'Tepside çalışmaya devam et', 'Desktop notifications': 'Masaüstü bildirimleri', 'Flight diary': 'Uçuş günlüğü', 'Flights': 'Uçuşlar', 'Distance': 'Mesafe', 'Around the Earth': 'Dünya turu',
+  'Keep running in the tray': 'Tepside çalışmaya devam et', 'Desktop notifications': 'Masaüstü bildirimleri', 'In-app notifications': 'Uygulama içi bildirimler',  'Flight diary': 'Uçuş günlüğü', 'Flights': 'Uçuşlar', 'Distance': 'Mesafe', 'Around the Earth': 'Dünya turu',
   '(est.)': '(tahmini)', 'From': 'Nereden', 'To': 'Nereye', 'Flight no.': 'Uçuş no', 'Add': 'Ekle',
   'Your diary is empty. Add a flight above, or open a flight on the map and press “Add to diary”.': 'Günlüğün boş. Yukarıdan uçuş ekle ya da haritada bir uçuş açıp “Günlüğe ekle”ye bas.',
   'Unknown airport: use an IATA or ICAO code, e.g. IST or LTFM': 'Bilinmeyen havalimanı: IATA veya ICAO kodu kullan, örn. IST veya LTFM', 'Share image': 'Görsel paylaş', 'Add to diary': 'Günlüğe ekle', 'Added to your diary': 'Günlüğüne eklendi',
