@@ -601,7 +601,6 @@ function renderCard(full) {
     $('card').innerHTML = `<div class="ch">${iata ? `<img class="logo" src="https://images.kiwi.com/airlines/64/${esc(iata)}.png" alt="" onerror="this.remove()">` : ''}`
       + `<div class="cn"><h2>${esc(f.cs)}</h2><small>${esc(sub)}</small></div>${flagHtml(ac.reg || f.reg)}<button id="cx" class="ib" title="${t('Close')}">✕</button></div>${X.top(f)}${photo}${routeHtml(f)}<div id="kvs"></div>${X.bottom(f)}<div class="bt"><button id="fv"></button><button id="wt"></button></div>${X.bottom2(f)}`;
   }
-  if (full) { const h = $('card').querySelector('h2'); if (h) for (let px = 26; px > 14 && h.scrollWidth > h.clientWidth; px--) h.style.fontSize = px + 'px'; } // long callsigns: shrink the font until the whole name fits
   if (f.route && $('pgb')) { const { org, dst } = f.route, a = km(org.lat, org.lon, f.lat, f.lon), b = km(f.lat, f.lon, dst.lat, dst.lon);
     const landed = f.ground && b < 25;
     $('pgb').style.width = Math.min(100, a / (a + b) * 100).toFixed(1) + '%';
@@ -628,6 +627,7 @@ function renderCard(full) {
   for (const n of ['Altitude', 'Speed', 'Vertical speed']) { const k = rows.findIndex(r => r[0] === n); if (k >= 0) rows.splice(k, 1); }
   $('kvs').innerHTML = tl + rows.map(r => r[2] ? `<div class="kv tbr ${r[2]}"><b>${esc(r[1])}</b></div>` : `<div class="kv${r[3] ? ' xr' : ''}"><span>${t(r[0])}</span><b>${esc(r[1])}</b>${r[3] || ''}</div>`).join('');
   $('fv').textContent = fav.has(f.id) ? t('★ Favorited') : t('☆ Favorite'); X.sync(f);
+  if (full) fitTitle(); // last, when the card has all its rows: only then is it known whether a scrollbar takes room from the title
 }
 // "landed 12 min ago": from the trace when it has the touchdown time, else from when we saw it touch down; otherwise just "landed"
 function landedText(f) {
@@ -699,6 +699,16 @@ function gsMotion(f, el, kt, scene) {
 }
 // The name under an airport code is at most 10 characters (9 and an ellipsis when longer; the full name is in the tooltip): long names ("Fuerteventura Island") used to eat the room of the scene between the two codes
 const short10 = n => { const c = [...String(n || '')]; return c.length > 10 ? c.slice(0, 9).join('') + '…' : c.join(''); };
+// Long callsigns: shrink the font of the title until the whole name fits (down to 12 px). The room changes after the card is built, e.g. when the photo and the aircraft details make the card
+// scroll and a scrollbar takes 12 px of its width, so this also runs whenever the width of the card changes (see the observer below).
+function fitTitle() {
+  const h = $('card').querySelector('h2'); if (!h || !h.clientWidth) return;
+  // scrollWidth and clientWidth are whole numbers (and scrollWidth is never smaller than clientWidth): a name that is 0.4 px too wide looks like it fits and still gets its "…". So the width of the
+  // text is measured exactly (a range over it) and 2 px of room are kept; screens scaled to 125 % / 150 % need it most.
+  const r = document.createRange(); r.selectNodeContents(h);
+  h.style.fontSize = ''; for (let px = 24; px > 12 && r.getBoundingClientRect().width > h.clientWidth - 2; px--) h.style.fontSize = px + 'px';
+}
+{ let lastW = 0; new ResizeObserver(() => { const w = $('card').clientWidth; if (w !== lastW) { lastW = w; fitTitle(); } }).observe($('card')); }
 function routeHtml(f) {
   if (!f.route) return `<div class="rtx" style="margin-top:12px">${t({ loading: 'Loading route info…', none: 'Route info not found', err: 'Couldn\'t load route info' }[f.rs] || '')}</div>`;
   const { org, dst } = f.route;
