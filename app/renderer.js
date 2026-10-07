@@ -697,13 +697,13 @@ function gsMotion(f, el, kt, scene) {
   if (el._k !== k || el._on !== on) { for (const a of [...el._an, ...el._wh]) { if (el._k !== k) a.updatePlaybackRate(k); if (el._on !== on) { if (on) a.play(); else a.pause(); } } el._k = k; el._on = on; }
   if (el._an[0]) f._gsT = el._an[0].currentTime;
 }
-// The name under an airport code is at most 7 characters (6 and an ellipsis when longer; the full name is in the tooltip): long names ("Fuerteventura Island") used to eat the room of the scene between the two codes
-const short7 = n => { const c = [...String(n || '')]; return c.length > 7 ? c.slice(0, 6).join('') + '…' : c.join(''); };
+// The name under an airport code is at most 10 characters (9 and an ellipsis when longer; the full name is in the tooltip): long names ("Fuerteventura Island") used to eat the room of the scene between the two codes
+const short10 = n => { const c = [...String(n || '')]; return c.length > 10 ? c.slice(0, 9).join('') + '…' : c.join(''); };
 function routeHtml(f) {
   if (!f.route) return `<div class="rtx" style="margin-top:12px">${t({ loading: 'Loading route info…', none: 'Route info not found', err: 'Couldn\'t load route info' }[f.rs] || '')}</div>`;
   const { org, dst } = f.route;
-  return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(short7(org.name))}</small></div><span class="fl" id="fl" role="button" title="${esc(t('Click to switch between the animation and the dashed line'))}"><i>✈</i>${GS_HTML}</span>`
-    + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(short7(dst.name))}</small></div></div><div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
+  return `<div class="rt"><div><b>${esc(org.code)}</b><small title="${esc(org.name)}">${esc(short10(org.name))}</small></div><span class="fl" id="fl" role="button" title="${esc(t('Click to switch between the animation and the dashed line'))}"><i>✈</i>${GS_HTML}</span>`
+    + `<div><b>${esc(dst.code)}</b><small title="${esc(dst.name)}">${esc(short10(dst.name))}</small></div></div><div class="pg"><i id="pgb"></i></div><div class="rtx" id="pgt"></div>`;
 }
 // The user picks what the strip between the airport codes shows: the animated scene or the dashed line with the flying plane (click it to switch; remembered). Above ~5500 ft there is only the line.
 let flPref = LS('sky.fl', 'scene');
