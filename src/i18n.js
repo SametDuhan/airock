@@ -152,7 +152,8 @@ const TR = {
 // Languages: English (default texts), Turkish (TR below), Spanish / German / French (DICT in langs.js), Arabic / Chinese / Japanese / Korean (langs-more.js)
 const LANGS = [{ c: 'en', n: 'English', loc: 'en-US' }, { c: 'tr', n: 'Türkçe', loc: 'tr-TR' }, { c: 'es', n: 'Español', loc: 'es-ES' }, { c: 'de', n: 'Deutsch', loc: 'de-DE' }, { c: 'fr', n: 'Français', loc: 'fr-FR' }, { c: 'ar', n: 'العربية', loc: 'ar-AE-u-nu-latn' }, { c: 'zh', n: '中文', loc: 'zh-CN' }, { c: 'ja', n: '日本語', loc: 'ja-JP' }, { c: 'ko', n: '한국어', loc: 'ko-KR' }];
 const DICT = { tr: TR };
-let LANG = (() => { try { const v = JSON.parse(localStorage.getItem('sky.lang')); if (LANGS.some(l => l.c === v)) return v; } catch {} const b = (navigator.language || '').toLowerCase().slice(0, 2); return LANGS.some(l => l.c === b) ? b : 'en'; })();
+let LANG = (() => { try { const v = JSON.parse(localStorage.getItem('sky.lang')); if (LANGS.some(l => l.c === v)) return v; } catch {} if (!localStorage.getItem('sky.tour')) return 'en'; // first run: English until the person picks a language in the welcome screen
+  const b = (navigator.language || '').toLowerCase().slice(0, 2); return LANGS.some(l => l.c === b) ? b : 'en'; })();
 const t = (s, ...a) => ((LANG !== 'en' && DICT[LANG]?.[s]) || s).replace(/\{(\d)\}/g, (_, i) => a[i]);
 const LOC = () => LANGS.find(l => l.c === LANG).loc;
 // Translates the static page text (menu, placeholders, tooltips). The originals are kept on the nodes so switching back and forth is lossless.

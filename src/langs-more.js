@@ -1443,3 +1443,43 @@ Object.assign(DICT.ar, { "Open the source page": "فتح صفحة المصدر" 
 Object.assign(DICT.zh, { "Open the source page": "打开来源页面" });
 Object.assign(DICT.ja, { "Open the source page": "ソースページを開く" });
 Object.assign(DICT.ko, { "Open the source page": "원본 페이지 열기" });
+Object.assign(DICT.tr, {
+  "Thank you for choosing SkyTrack.": "SkyTrack'i tercih ettiğin için teşekkür ederiz.",
+  "Choose your language": "Dilini seç",
+  "Continue": "Devam et"
+});
+Object.assign(DICT.es, {
+  "Thank you for choosing SkyTrack.": "Gracias por elegir SkyTrack.",
+  "Choose your language": "Elige tu idioma",
+  "Continue": "Continuar"
+});
+Object.assign(DICT.de, {
+  "Thank you for choosing SkyTrack.": "Danke, dass du dich für SkyTrack entschieden hast.",
+  "Choose your language": "Wähle deine Sprache",
+  "Continue": "Weiter"
+});
+Object.assign(DICT.fr, {
+  "Thank you for choosing SkyTrack.": "Merci d'avoir choisi SkyTrack.",
+  "Choose your language": "Choisissez votre langue",
+  "Continue": "Continuer"
+});
+Object.assign(DICT.ar, {
+  "Thank you for choosing SkyTrack.": "شكرًا لاختيارك SkyTrack.",
+  "Choose your language": "اختر لغتك",
+  "Continue": "متابعة"
+});
+Object.assign(DICT.zh, {
+  "Thank you for choosing SkyTrack.": "感谢你选择 SkyTrack。",
+  "Choose your language": "选择你的语言",
+  "Continue": "继续"
+});
+Object.assign(DICT.ja, {
+  "Thank you for choosing SkyTrack.": "SkyTrack をお選びいただきありがとうございます。",
+  "Choose your language": "言語を選択",
+  "Continue": "続ける"
+});
+Object.assign(DICT.ko, {
+  "Thank you for choosing SkyTrack.": "SkyTrack을 선택해 주셔서 감사합니다.",
+  "Choose your language": "언어를 선택하세요",
+  "Continue": "계속"
+});

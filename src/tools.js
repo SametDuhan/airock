@@ -157,7 +157,15 @@ function tourClick(e) { const a = e.target.closest('[data-a]')?.dataset.a; if (!
   if (a === 'skip' || (a === 'next' && tourI === TOUR.length - 1)) { tourEl.remove(); tourEl = null; save('sky.tour', true); return; }
   tourI += a === 'next' ? 1 : -1; showTour(); }
 addEventListener('resize', () => { if (tourEl) showTour(); });
-if (!LS('sky.tour', false)) setTimeout(() => { if (!LS('sky.tour', false)) startTour(); }, 1800);
+// First run: a welcome screen in English with the language choice (the tour then speaks the chosen language), then the tour
+function showWelcome(done) {
+  const w = document.createElement('div'); w.id = 'welcome';
+  const draw = () => { w.innerHTML = `<div class="wc"><div class="wl">SKYTRACK</div><h3>${t('Welcome to SkyTrack')}</h3><p>${t('Thank you for choosing SkyTrack.')}</p><div class="wq">${t('Choose your language')}</div>`
+    + `<div class="wg9">${LANGS.map(l => `<button data-l="${l.c}" class="${l.c === LANG ? 'on' : ''}" lang="${l.c}">${esc(l.n)}</button>`).join('')}</div><button class="go" data-go>${t('Continue')}</button></div>`; w.querySelector('[data-go]').focus(); };
+  w.onclick = e => { const b = e.target.closest('[data-l]'); if (b) { setLang(b.dataset.l); draw(); return; } if (e.target.closest('[data-go]')) { save('sky.lang', LANG); w.remove(); done(); } };
+  draw(); document.body.appendChild(w);
+}
+if (!LS('sky.tour', false)) setTimeout(() => { if (!LS('sky.tour', false)) showWelcome(startTour); }, 1200);
 
 /* ---------- update bar ---------- */
 const upd = $('upd');
