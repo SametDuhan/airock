@@ -31,3 +31,13 @@ test('sun / night: solstice subsolar point and terminator', () => {
   assert.ok(Math.abs(s.lat - 23.4) < 0.3 && Math.abs(s.lon) < 5, JSON.stringify(s));
   const n = night(new Date('2026-06-21T12:00:00Z')); assert.ok(n.length > 300 && n.at(-1)[0] === -90, 'night over the south pole in northern summer');
 });
+
+test('sunSide: sun to the right when flying north at noon-west of the sun, none at night', () => {
+  const G = require('../src/geo.js'), date = new Date(Date.UTC(2026, 5, 21, 12, 0, 0)); // June solstice, noon UTC
+  const s = G.sun(date);
+  // 20° of longitude west of the subsolar point, same latitude, flying north: the sun is to the east = right side
+  const r = G.sunSide(s.lat, s.lon - 20, 0, date); assert.equal(r.side, 'right'); assert.ok(r.elev > 40);
+  assert.equal(G.sunSide(s.lat, s.lon + 20, 0, date).side, 'left');
+  assert.equal(G.sunSide(s.lat, s.lon - 20, 90, date).side, null); // flying straight at the sun
+  assert.equal(G.sunSide(-s.lat, s.lon + 180, 0, date).side, null); // night side
+});

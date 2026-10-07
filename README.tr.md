@@ -13,6 +13,10 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 - **Canlı uçuşlar**: uçak konumları 15 saniyede bir yenilenir. Haritayı kaydırınca ya da yakınlaştırınca yeni bölge hemen yüklenir.
 - **Demo modu**: internet gerektirmeyen 45 sanal uçuş. Zaman 30 kat hızlı akar.
 - **Web demosu**: SkyTrack'i tarayıcıda dene: [sametduhan.github.io/airock/app/](https://sametduhan.github.io/airock/app/). Uçuşlar ve türbülans alanları sanaldır; canlı veri için masaüstü uygulaması gerekir. Yeniden derlemek için `npm run build:web` (çıktı `site/app/` içinde).
+- **Rota kontrolü**: iki havalimanı seç (**Mod → 🧭 Rota kontrolü**); FL280, FL340 ve FL390'da yol boyunca bildirilen türbülansı, ilk görüldüğü yeri ve haritada çizgiyi gör.
+- **Takip ettiğin uçuşlar için türbülans uyarısı**: takip listendeki bir uçuşun önündeki yol sallantılı olunca (ve düzelince) SkyTrack haber verir. **🔔 Uyarılar → Bir uçuşu takip et**, kalkıştan önce `TK1` gibi bir uçuş numarası alır ve havalanınca izlemeye başlar.
+- **Koltuk ipuçları**: uçuş kartı güneşin uçağın hangi tarafında olduğunu (gerçek güneş konumundan) ve türbülans varsa kabinde en az nerede hissedildiğini söyler.
+- **Takip bağlantısı**: canlı bir uçuşta **🔗 Takip bağlantısını kopyala**, bir arkadaşın ya da yakının açabileceği bir sayfa verir (`site/track/`). `proxy/` içindeki proxy'yi gerektirir; `src/data.js` içinde `PROXY_URL` ayarlanana kadar kapalı kalır.
 - **Uçuş bilgisi**: bir uçağa tıklayınca şunları görürsün:
   - havayolu ve logosu, uçak tipi, tescil ve (varsa) fotoğraf
   - rota (kalkış → varış), ilerleme çubuğu, kalan mesafe ve tahmini kalan süre

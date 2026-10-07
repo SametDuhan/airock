@@ -29,6 +29,14 @@ export default {
       urls = UP.map(u => ({ name: u.name, url: u.point(la, lo, r) })); url.pathname = `/v2/point/${la}/${lo}/${r}`;
     } else if (/^\/v2\/(hex|callsign|reg|type)\/[A-Za-z0-9,-]{2,400}$/.test(url.pathname)) {
       urls = UP.map(u => ({ name: u.name, url: u.other(url.pathname) })); ttl = 3;
+    } else if (/^\/awx\/api\/data\/(isigmet|gairmet|pirep|metar|taf)$/.test(url.pathname) && url.search.length < 300) {
+      // aviationweather.gov (no CORS headers): turbulence advisories, pilot reports, METAR / TAF. Shared for a minute.
+      const key = new Request(url.origin + url.pathname + url.search), cache = caches.default, hit = await cache.match(key); if (hit) return hit;
+      try { const r = await fetch('https://aviationweather.gov' + url.pathname.slice(4) + url.search, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(9000) });
+        if (!r.ok && r.status !== 204) return json(JSON.stringify({ error: 'aviationweather: HTTP ' + r.status }), 502);
+        const res = new Response(await r.text(), { status: r.status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'cache-control': 'public, max-age=60' } });
+        ctx.waitUntil(cache.put(key, res.clone())); return res; }
+      catch (e) { return json(JSON.stringify({ error: e.message }), 502); }
     } else return json('{"error":"not found"}', 404);
     const key = new Request(url.origin + url.pathname), cache = caches.default, hit = await cache.match(key);
     if (hit) return hit;

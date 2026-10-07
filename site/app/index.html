@@ -212,13 +212,15 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 .emgn{margin:0 0 12px;padding:8px 12px;border-radius:8px;background:#ff3b3022;border:1px solid #ff3b3066;color:#ff8a80;font-weight:600;font-size:13px}
 #st{font-size:11px;line-height:1.4}
 .sat-tiles{mix-blend-mode:screen}
+.dots{display:inline-flex;flex:none}.dots i{width:12px;height:12px;border-radius:50%;background:#888}.dots .g{background:#4ade80}.dots .y{background:#facc15}.dots .r{background:#f87171}
+.mdl .rcf{grid-template-columns:1fr 1fr auto}.mdl .wff{grid-template-columns:1fr auto}.mdl .rcr{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}.mdl .rcr b{width:54px;flex:none;font:700 12px ui-monospace,monospace}.mdl .ch2 button{margin:6px 6px 0 0}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
 <div class="sec"><div class="lbl">Data</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Live</button></div><div id="st"></div></div>
 <div class="sec"><div class="lbl">Mode</div><div class="btns"><button id="mNorm" class="on">Normal</button><button id="mSpot">Plane spotter</button></div>
 <div class="btns wrap" style="margin-top:8px"><button id="bDiary">📓 Flight diary</button><button id="bAlerts">🔔 Alerts</button><button id="bOver">📍 Overhead</button><button id="bSet">⚙ Settings</button></div>
-<div class="btns" style="margin-top:8px"><button id="bStats">📊 Stats</button></div></div>
+<div class="btns" style="margin-top:8px"><button id="bStats">📊 Stats</button><button id="bRoute">🧭 Route check</button></div></div>
 <div class="sec" id="spt" style="display:none"></div>
 <div class="sec"><div class="lbl">Map</div><div class="btns seg" id="tiles"><button data-t="osm">Standard</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div><div class="btns wrap" style="margin-top:8px"><button id="bAp" class="on">Airports</button><button id="bZ">Alert zone</button><button id="bRd" title="Rain radar">Radar</button><button id="bTb" title="Turbulence advisories (SIGMET / G-AIRMET)">Turbulence</button><button id="bWd" title="Wind arrows">Wind</button><button id="bNt" title="Day / night">Night</button><button id="bCl" title="Satellite imagery with clouds (NASA, latest daily image)">Clouds</button><button id="bTr" title="Aircraft trails">Trails</button></div><select id="wdLv" style="display:none;width:100%;margin-top:6px"><option value="0">Wind: FL050</option><option value="1">Wind: FL100</option><option value="2">Wind: FL180</option><option value="3">Wind: FL300</option><option value="4" selected>Wind: FL340</option><option value="5">Wind: FL390</option></select>
 <label class="zr"><span>Zone radius</span> <input id="zR" type="number" min="3" max="500" step="1" value="100"> <span>km</span></label>
@@ -240,7 +242,7 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 <div class="sec" id="srch"><div class="lbl">Aircraft</div><input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></div><div id="upd" hidden></div><div id="ver">SkyTrack</div></aside>
 <main><div id="map"></div>
 <button id="open" class="ib" title="Close menu" aria-label="Menu"><b></b><b></b><b></b></button><div class="bar"><span class="cdot"></span><div class="ct"><span id="clock"></span><small id="cdate"></small></div></div>
-<div id="stm" class="mdl"></div><div id="stt" class="mdl"></div><div id="alm" class="mdl"></div><div id="ovp"></div><div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
+<div id="stm" class="mdl"></div><div id="stt" class="mdl"></div><div id="alm" class="mdl"></div><div id="rcm" class="mdl"></div><div id="ovp"></div><div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
 <div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span><div id="rpTip"></div></div></main></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="geo.js"></script>
@@ -253,4 +255,5 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 <script src="extras.js"></script>
 <script src="layers.js"></script>
 <script src="features.js"></script>
-<script src="tools.js"></script></body></html>
+<script src="tools.js"></script>
+<script src="trip.js"></script></body></html>

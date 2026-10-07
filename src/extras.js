@@ -26,7 +26,7 @@ function renderWatch() {
   const el = $('wls'); el.style.display = watch.size ? '' : 'none'; if (!watch.size) return;
   el.innerHTML = `<div class="lbl">${t('Watchlist')}</div>` + [...watch].map(([id, w]) => {
     const f = flights.get(id), st = wlState.get(id);
-    const s = f ? (f.ground ? t('on ground') : ft(f.alt)) : st ? t('last seen {0} min ago', Math.max(1, Math.round((Date.now() - st.t) / 60000))) : t('not seen yet');
+    const s = w.pending ? t('waiting for departure') : f ? (f.ground ? t('on ground') : ft(f.alt)) : st ? t('last seen {0} min ago', Math.max(1, Math.round((Date.now() - st.t) / 60000))) : t('not seen yet');
     return `<div class="wr" data-w="${esc(id)}"><b>${esc(w.cs)}${w.reg ? ' · ' + esc(w.reg) : ''}</b><span>${esc(s)}</span><button class="wx2" data-rm="${esc(id)}" title="${t('Remove')}">✕</button></div>`; }).join('');
 }
 $('wls').onclick = e => {

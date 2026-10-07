@@ -47,6 +47,10 @@
   // Own cache proxy (proxy/worker.js on Cloudflare Workers). Empty = off. Tried first: it is shared by all users, so it is faster and avoids rate limits.
   const PROXY_URL = '';
   if (PROXY_URL) ALL_FEEDS.unshift({ name: 'proxy', point: (la, lo, r) => `${PROXY_URL}/v2/point/${la}/${lo}/${r}`, hex: h => `${PROXY_URL}/v2/hex/${h}`, by: (k, v) => `${PROXY_URL}/v2/${k}/${v}` });
+  // Weather advisories / METAR also go through the proxy when it is on (aviationweather.gov sends no CORS headers, so web pages can only reach it this way)
+  const AWX = PROXY_URL ? PROXY_URL + '/awx' : 'https://aviationweather.gov';
+  // Tracking links (site/track/) need the proxy to read live flights from a web page: the app only offers them when it is on
+  const SHARE_BASE = PROXY_URL ? 'https://sametduhan.github.io/airock/track/' : '';
   const FEEDS = ALL_FEEDS.filter(f => f.on !== false);
   const feedPause = {}; // feed name → time until which we skip it (after a 429 or an error)
   // Hedged request: the preferred feed gets HEDGE_MS to answer; if it is slow, the next feed is asked as well and the first good answer wins.
@@ -284,10 +288,10 @@
     lat = +lat; lon = +lon; if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return { ok: false, error: 'invalid position' };
     const text = async url => { const r = await get(url, 10000); if (!r.ok && r.status !== 204) throw new Error('HTTP ' + r.status); const t = await r.text(); return t.trim() ? JSON.parse(t) : []; };
     try {
-      const list = await text(`https://aviationweather.gov/api/data/metar?format=json&bbox=${lat - .4},${lon - .4},${lat + .4},${lon + .4}`);
+      const list = await text(`${AWX}/api/data/metar?format=json&bbox=${lat - .4},${lon - .4},${lat + .4},${lon + .4}`);
       const m = list.filter(x => x.rawOb && typeof x.lat === 'number').sort((a, b) => km(lat, lon, a.lat, a.lon) - km(lat, lon, b.lat, b.lon))[0];
       if (!m) return { ok: true, metar: null, taf: null };
-      let taf = null; try { taf = (await text(`https://aviationweather.gov/api/data/taf?format=json&ids=${encodeURIComponent(m.icaoId)}`))[0]?.rawTAF || null; } catch {}
+      let taf = null; try { taf = (await text(`${AWX}/api/data/taf?format=json&ids=${encodeURIComponent(m.icaoId)}`))[0]?.rawTAF || null; } catch {}
       return { ok: true, taf, metar: { icao: m.icaoId, raw: m.rawOb, cat: m.fltCat || '', obs: m.obsTime || 0, name: m.name || '', dist: Math.round(km(lat, lon, m.lat, m.lon)) } };
     } catch (e) { return { ok: false, error: e.message }; }
   }
@@ -317,7 +321,7 @@
   // Current turbulence SIGMETs (worldwide) and G-AIRMETs (USA): [{sev 2|3, base, top (ft), poly, name}]
   async function advisories() {
     const now = Date.now() / 1000;
-    const [is, ga] = await Promise.allSettled([text('https://aviationweather.gov/api/data/isigmet?format=json'), text('https://aviationweather.gov/api/data/gairmet?type=tango&format=json')]);
+    const [is, ga] = await Promise.allSettled([text(`${AWX}/api/data/isigmet?format=json`), text(`${AWX}/api/data/gairmet?type=tango&format=json`)]);
     if (is.status !== 'fulfilled' && ga.status !== 'fulfilled') throw new Error('no data');
     const adv = [], P = c => c.map(q => [+q.lat, +q.lon]);
     if (is.status === 'fulfilled') for (const x of is.value) if (x.hazard === 'TURB' && Array.isArray(x.coords) && x.coords.length > 2 && now >= x.validTimeFrom - 1800 && now <= x.validTimeTo)
@@ -330,7 +334,7 @@
   async function turb(pts, altFt) {
     if (!Array.isArray(pts) || pts.length < 1 || pts.length > 80 || !pts.every(p => Array.isArray(p) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 540) || !Number.isFinite(+altFt)) return { ok: false, error: 'invalid input' };
     const lats = pts.map(p => p[0]), lons = pts.map(p => p[1]), pad = 1.5, bb = [Math.min(...lats) - pad, Math.min(...lons) - pad, Math.max(...lats) + pad, Math.max(...lons) + pad].map(v => +v.toFixed(2));
-    const [ad, pi] = await Promise.allSettled([advisories(), text(`https://aviationweather.gov/api/data/pirep?format=json&age=2&bbox=${bb[0]},${bb[1]},${bb[2]},${bb[3]}`)]);
+    const [ad, pi] = await Promise.allSettled([advisories(), text(`${AWX}/api/data/pirep?format=json&age=2&bbox=${bb[0]},${bb[1]},${bb[2]},${bb[3]}`)]);
     if (ad.status !== 'fulfilled' && pi.status !== 'fulfilled') return { ok: false, error: 'no data' };
     const adv = ad.status === 'fulfilled' ? ad.value : [], peps = [];
     if (pi.status === 'fulfilled') for (const x of pi.value) { const sev = Math.max(sevOf(x.tbInt1), sevOf(x.tbInt2)), ft = (x.fltLvl ?? ((x.tbBas1 + x.tbTop1) / 2)) * 100;
@@ -355,7 +359,7 @@
     } catch (e) { return { ok: false, error: e.message }; }
   }
 
-  const api = { flights, find, setOpenSky, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
+  const api = { shareBase: SHARE_BASE, flights, find, setOpenSky, route, aircraft, photos, trace, airport, watch, legs, splitLegs, metar, radar, cityName, turb, turbMap, turbAssess, wind, legOf, cover, bounds };
   root.SkyData = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

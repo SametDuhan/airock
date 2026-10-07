@@ -50,7 +50,15 @@
     for (let lon = -540; lon <= 540; lon += 3) pts.push([Math.atan(-Math.cos((lon - s.lon) * R) / Math.tan(dec * R)) / R, lon]);
     const pole = dec > 0 ? -90 : 90; pts.push([pole, 540], [pole, -540]); return pts;
   }
-  const api = { R, brg, km, gc, unwrap, nearLon, regCountry, ahead, sun, night };
+  // Where the sun is relative to an aircraft: the sun's azimuth is the bearing to the subsolar point, its elevation is 90° minus the angular distance to it.
+  // side: 'left' / 'right' of the nose, or null when the sun is below 3° or almost straight ahead / behind (within 25°)
+  function sunSide(lat, lon, hdg, date = new Date()) {
+    const s = sun(date), d = km(lat, lon, s.lat, s.lon) / 6371 / R, elev = 90 - d;
+    if (elev < 3) return { elev, side: null };
+    const rel = ((brg(lat, lon, s.lat, s.lon) - hdg + 540) % 360) - 180;
+    return { elev, side: Math.abs(rel) < 25 || Math.abs(rel) > 155 ? null : rel > 0 ? 'right' : 'left' };
+  }
+  const api = { R, brg, km, gc, unwrap, nearLon, regCountry, ahead, sun, night, sunSide };
   root.SkyGeo = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
