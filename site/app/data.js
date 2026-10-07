@@ -14,7 +14,11 @@
   const MAX_NM = 250, CELL_KM = 600, MAX_CIRCLES = 2;
   function cover(b, maxCircles = MAX_CIRCLES, sweep = -1) {
     const s = +b.s, n = +b.n, w = +b.w, e = +b.e, mLat = (s + n) / 2, mLon = (w + e) / 2;
-    const ny = Math.max(1, Math.ceil((n - s) * 111.2 / CELL_KM)), nx = Math.max(1, Math.ceil((e - w) * 111.2 * Math.cos(Math.min(Math.abs(s), Math.abs(n)) * Math.PI / 180) / CELL_KM));
+    // Fewest cells (= requests) such that a circle of at most MAX_NM around a cell's center still reaches its corners: half the cell diagonal <= REACH km.
+    // Cells are not forced to be square (a fixed 600 km grid needed 12 circles for a Dubai-sized view, this needs about 8). Very wide views fall back to the fixed grid.
+    const W = (e - w) * 111.2 * Math.cos(Math.min(Math.abs(s), Math.abs(n)) * Math.PI / 180), H = (n - s) * 111.2, REACH = MAX_NM * 1.852 / 1.05 * .99;
+    let nx = Math.max(1, Math.ceil(W / CELL_KM)), ny = Math.max(1, Math.ceil(H / CELL_KM)), bestN = Infinity, bestD = Infinity;
+    for (let i = 1; i <= 12; i++) for (let j = 1; j <= 12; j++) { const dg = Math.hypot(W / i, H / j) / 2; if (dg <= REACH && (i * j < bestN || (i * j === bestN && dg < bestD))) { bestN = i * j; bestD = dg; nx = i; ny = j; } }
     const cells = [];
     for (let i = 0; i < ny; i++) for (let j = 0; j < nx; j++) {
       const cs = s + (n - s) * i / ny, cn = s + (n - s) * (i + 1) / ny, cw = w + (e - w) * j / nx, ce = w + (e - w) * (j + 1) / nx;
@@ -74,8 +78,11 @@
       start();
     });
   }
-  async function adsbLol(b) {
-    rot++; const { circles, partial, covered } = cover(b, MAX_CIRCLES * FEEDS.length * 3 / 2 | 0, rot), seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
+  async function adsbLol(b, o = { from: 0, count: 0 }) {
+    // o.count = n: a batch of n circles starting at the o.from-th nearest the center (the renderer asks batch by batch after the map jumped, so aircraft appear as they come)
+    rot++; const budget = MAX_CIRCLES * FEEDS.length * 3 / 2 | 0, cv = o.count ? cover(b, o.from + o.count) : cover(b, budget, rot), circles = o.count ? cv.circles.slice(o.from) : cv.circles, { partial, covered } = cv,
+      seen = new Map(), used = new Set(), good = []; let okN = 0, lastErr = '';
+    if (!circles.length) return { src: '', flights: [], partial, covered, cov: [], total: cv.total };
     await Promise.all(circles.map(async (c, i) => {
       try {
         const r = await fromFeeds((i + rot) % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 150);
@@ -85,7 +92,7 @@
     if (!okN) throw new Error(lastErr || 'no response');
     const part = partial || okN < circles.length;
     // cov: the circles that really answered [lat, lon, radius km]: only aircraft inside them can be called "gone" when an answer does not list them
-    return { src: [...used].join(' + '), flights: [...seen.values()].map(fromAdsb), partial: part, covered: part ? covered : undefined, cov: good.map(c => [c.lat, c.lon, c.r * 1.852]) };
+    return { src: [...used].join(' + '), flights: [...seen.values()].map(fromAdsb), partial: part, total: cv.total, covered: part ? covered : undefined, cov: good.map(c => [c.lat, c.lon, c.r * 1.852]) };
   }
   // Watchlist: current state of specific aircraft anywhere in the world (one request for all of them)
   async function watch(hexes) {
@@ -137,8 +144,11 @@
     if (o.s > o.n || o.w > o.e) throw new Error('invalid bounds');
     return o;
   }
-  async function flights(b) {
+  // opts (optional, from the renderer): { from: k, count: n } answers from n circles only, starting at the k-th nearest the center (no OpenSky); see fillView() in renderer.js
+  async function flights(b, opts) {
     try { b = bounds(b); } catch (e) { return { ok: false, error: e.message }; }
+    const num = (x, m) => Math.max(0, Math.min(m, Math.floor(+x) || 0)), o = { from: num(opts?.from, 40), count: num(opts?.count, 6) };
+    if (o.count) { try { const r = await adsbLol(b, o); return { ok: true, src: r.src, ...r }; } catch (e) { return { ok: false, error: 'adsb: ' + e.message }; } }
     const os = async () => ({ partial: false, flights: await openSky(b) });
     if (!cover(b).partial) { // zoomed in: the community feeds cover the whole area; OpenSky only as a backup
       const errs = [];
@@ -147,14 +157,14 @@
     }
     // Wide view: the community feeds cover only the center, OpenSky covers everything. Ask both at the same time and merge (the community data wins),
     // so aircraft do not appear and disappear when the source changes from one request to the next.
-    const [a, o] = await Promise.allSettled([adsbLol(b), os()]);
-    if (a.status === 'fulfilled' && o.status === 'fulfilled') {
-      const m = new Map(o.value.flights.map(f => [f.id, f])); a.value.flights.forEach(f => m.set(f.id, f));
+    const [a, osr] = await Promise.allSettled([adsbLol(b), os()]);
+    if (a.status === 'fulfilled' && osr.status === 'fulfilled') {
+      const m = new Map(osr.value.flights.map(f => [f.id, f])); a.value.flights.forEach(f => m.set(f.id, f));
       return { ok: true, src: a.value.src + ' + OpenSky', partial: false, flights: [...m.values()] };
     }
     if (a.status === 'fulfilled') return { ok: true, src: a.value.src, ...a.value };
-    if (o.status === 'fulfilled') return { ok: true, src: 'OpenSky', ...o.value };
-    return { ok: false, error: `adsb: ${a.reason?.message} · OpenSky: ${o.reason?.message}` };
+    if (osr.status === 'fulfilled') return { ok: true, src: 'OpenSky', ...osr.value };
+    return { ok: false, error: `adsb: ${a.reason?.message} · OpenSky: ${osr.reason?.message}` };
   }
 
   /* ---------- adsbdb.com: route (by callsign) and aircraft info (by ICAO24 code) ---------- */

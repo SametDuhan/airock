@@ -340,13 +340,43 @@ function saveCache() { if (Date.now() - cacheAt < 60000) return; cacheAt = Date.
   const a = [...flights.values()].filter(f => !f.gone && v.contains([f.lat, f.lon])).slice(0, 700).map(f => ({ id: f.id, cs: f.cs, reg: f.reg, type: f.type, country: f.country, lat: +f.lat.toFixed(4), lon: +f.lon.toFixed(4), ground: f.ground, alt: Math.round(f.alt), spd: Math.round(f.spd), hdg: Math.round(f.hdg), vr: f.vr, sq: f.sq, emg: f.emg, cat: f.cat }));
   save('sky.cache', { t: Date.now(), c: [map.getCenter().lat, map.getCenter().lng, map.getZoom()], f: a }); }
 function loadCache() { const c = LS('sky.cache', null); if (!c || Date.now() - c.t > 1800e3) return; (c.f || []).forEach(d => { if (!flights.has(d.id)) upsert({ ...d, stale: true }); }); redraw(); }
+// The free feeds answer one circle (250 nm at most) per request and allow about one request a second each. A Dubai-sized view needs ~20 circles, so the normal refresh
+// (6 circles every few seconds) would take ~40 s to fill it. After the map jumped somewhere new we instead ask batch after batch, nearest the center first, and draw each
+// answer at once (2 circles, then 4 at a time, at most FILL_MAX): the center is on screen in ~1-2 s and the rest follows in ~10 s. Stops if the map moves again.
+// Where the community has few receivers (the Gulf, Africa, oceans) a complete answer still has few aircraft: say so instead of leaving people wondering
+// (about 20 per million km² in the Gulf, ~900 over Europe; the limit is 60)
+function thin() {
+  if (map.getZoom() > 7) return ''; const v = map.getBounds(), n = [...flights.values()].filter(f => !f.gone && !f.ground && v.contains([f.lat, f.lon])).length;
+  const area = (v.getEast() - v.getWest()) * 111.2 * Math.cos(map.getCenter().lat * Math.PI / 180) * (v.getNorth() - v.getSouth()) * 111.2 / 1e6;
+  return area > .5 && n / area < 60 ? ' · ' + t('Thin ADS-B coverage here: some aircraft may be missing') : '';
+}
+const FILL_MAX = 24; let filling = 0; // reqId of the fill that is running (0 = none)
+async function fillView(bb, id) {
+  let from = 0, total = 99, n = 0, dry = 0; const src = new Set(), ids = new Set();
+  while (from < Math.min(total, FILL_MAX)) {
+    const k = from ? 4 : 2, rf = await DATA.flights(bb, { from, count: k });
+    if (!live || id !== reqId) return { n, done: false, src: [...src].join(' + ') };
+    if (!rf.ok) break; // rate limited or offline: what we have stays, the normal refresh goes on from here
+    total = rf.total ?? total; n++; String(rf.src || '').split(' + ').forEach(x => x && src.add(x)); rf.flights.forEach(upsert); redraw(); from += k;
+    // Where the community has few receivers (the Gulf, Africa, oceans) the outer circles come back empty: two batches in a row with (almost) nothing new end the fill early
+    const before = ids.size; rf.flights.forEach(a => ids.add(a.id)); dry = from > 2 && ids.size - before < 3 ? dry + 1 : 0; if (dry >= 2) return { n, done: true, src: [...src].join(' + ') };
+    $('st').textContent = t('loading…') + ` ${Math.min(from, total)}/${Math.min(total, FILL_MAX)}`;
+  }
+  return { n, done: from >= Math.min(total, FILL_MAX) && total <= FILL_MAX, src: [...src].join(' + ') };
+}
 async function poll(force) {
   if (!live) return; const v = map.getBounds();
   if (!force && fetchedBox && fetchedBox.contains(v) && Date.now() - fetchedAt < LIVE_MS) return;
   { const gap = Date.now() - lastReq; if (!force && gap < 1200) { clearTimeout(moveTimer); moveTimer = setTimeout(() => poll(), 1250 - gap); return; } } lastReq = Date.now(); // at least 1.2 s between pan-triggered requests (the data layer spreads the load over several servers)
-  const b = v.pad(.25), id = ++reqId, cl = (x, m) => Math.max(-m, Math.min(m, x)).toFixed(2);
+  const jump = !fetchedBox || !fetchedBox.contains(v.getCenter()); // the map went somewhere the last answer did not cover (a search, a click on a far airport, a long drag)
+  if (filling && !jump) return; // a fill is running for this area: the regular refresh would cancel it, so it waits
+  const b = v.pad(.25), id = ++reqId, cl = (x, m) => Math.max(-m, Math.min(m, x)).toFixed(2), bb = { s: cl(b.getSouth(), 85), n: cl(b.getNorth(), 85), w: cl(b.getWest(), 180), e: cl(b.getEast(), 180) };
   fetchedBox = b; fetchedAt = Date.now(); $('st').textContent = t('loading…');
-  const r = await DATA.flights({ s: cl(b.getSouth(), 85), n: cl(b.getNorth(), 85), w: cl(b.getWest(), 180), e: cl(b.getEast(), 180) });
+  // After a jump, fill the view circle by circle instead of waiting for one big answer (see fillView): the aircraft show up as they arrive
+  if (jump) { filling = id; const vb = v.pad(.08), fv = await fillView({ s: cl(vb.getSouth(), 85), n: cl(vb.getNorth(), 85), w: cl(vb.getWest(), 180), e: cl(vb.getEast(), 180) }, id).finally(() => { if (filling === id) filling = 0; }); if (!live || id !== reqId) return; // only just beyond the screen: no circles wasted off-screen
+    if (fv.n) { fetchedBox = vb; // if the fill stopped early the regular refreshes (which sweep the surrounding circles) take over from here pollMs = LIVE_MS; $('st').title = '';
+      $('st').textContent = `${fv.src} · ${t('last updated')} ${new Date().toLocaleTimeString(LOC(), TF())}${fv.done ? thin() : ' · ' + t('wide view: center only, zoom in')}`; saveCache(); pumpRoutes(); return; } }
+  const r = await DATA.flights(bb);
   if (!live) return;
   if (id !== reqId) { if (r.ok) { r.flights.forEach(upsert); redraw(); } return; } // the map moved again meanwhile: the aircraft are still valid, so keep them, but do not touch the "fetched" area
   if (!r.ok) { pollMs = 25000; fetchedBox = null; const busy = /429|rate|paused|credit|limit/i.test(r.error || '');
@@ -362,7 +392,7 @@ async function poll(force) {
       if ((age > GRACE_MS && inCov(f)) || age > 600000) { flights.delete(id); if (selected === id) select(null); } }); }
   r.flights.forEach(upsert); redraw(); saveCache();
   pollMs = r.partial || (r.src || '').includes('+ OpenSky') ? 12000 : LIVE_MS;
-  $('st').textContent = `${r.src} · ${t('last updated')} ${new Date().toLocaleTimeString(LOC(), TF())}${r.partial ? ' · ' + t('wide view: center only, zoom in') : ''}${r.partial && osSet === false ? ' · ' + t('Tip: add a free OpenSky account in Settings to fill the wide view') : ''}`;
+  $('st').textContent = `${r.src} · ${t('last updated')} ${new Date().toLocaleTimeString(LOC(), TF())}${r.partial ? ' · ' + t('wide view: center only, zoom in') : thin()}${r.partial && osSet === false ? ' · ' + t('Tip: add a free OpenSky account in Settings to fill the wide view') : ''}`;
   pumpRoutes();
 }
 // Self-scheduling refresh: 6 s normally, slower for wide views (more requests) and after errors, so the free feeds are not pushed into their rate limits

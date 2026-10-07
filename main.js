@@ -68,7 +68,7 @@ function createWindow() {
 }
 
 // Live data: adsb.lol (primary) and OpenSky (fallback / wide view) — details in src/data.js
-ipcMain.handle('flights', (_, b) => data.flights(b));
+ipcMain.handle('flights', (_, b, o) => data.flights(b, o));
 // Flight route (by callsign) and aircraft info (by ICAO24 code): adsbdb.com
 ipcMain.handle('route', (_, cs) => data.route(cs));
 ipcMain.handle('aircraft', (_, hex) => data.aircraft(hex));

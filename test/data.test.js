@@ -84,3 +84,17 @@ test('legOf: a gap at altitude that the aircraft could not have flown through is
   const cruise = [[0, 48, 16, 36000, 450], [60, 47.9, 16.1, 36000, 450], [4000, 30, 40, 36000, 450], [4060, 29.9, 40.1, 36000, 450]]; // a real coverage hole at cruise (~3000 km in 1.1 h)
   assert.equal(D.legOf(cruise).length, 4);
 });
+
+test('cover: every point of the area is inside some circle, and no circle is bigger than the API allows', () => {
+  const geo = require('../src/geo.js');
+  for (const b of [{ s: 21, n: 29.5, w: 49, e: 63 }, { s: 44, n: 54, w: 0, e: 18 }, { s: 35, n: 43, w: 24, e: 40 }, { s: -5, n: 8, w: 100, e: 112 }]) {
+    const c = D.cover(b, 99); assert.equal(c.partial, false);
+    assert.ok(c.circles.every(x => x.r <= 250), 'radius over 250 nm');
+    for (let la = b.s; la <= b.n; la += 0.5) for (let lo = b.w; lo <= b.e; lo += 0.5)
+      assert.ok(c.circles.some(x => geo.km(la, lo, x.lat, x.lon) <= x.r * 1.852), `uncovered ${la},${lo} in ${JSON.stringify(b)}`);
+  }
+});
+
+test('cover: a Dubai-sized view needs far fewer circles than a fixed 600 km grid did', () => {
+  assert.ok(D.cover({ s: 21, n: 29.5, w: 49, e: 63 }, 99).circles.length <= 4);
+});

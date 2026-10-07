@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld('api', {
   onUpdate: cb => ipcRenderer.on('update', (_, d) => cb(d)),
   installUpdate: () => ipcRenderer.invoke('installUpdate'),
   checkUpdate: () => ipcRenderer.invoke('checkUpdate'),
-  flights: bounds => ipcRenderer.invoke('flights', bounds),
+  flights: (bounds, o) => ipcRenderer.invoke('flights', bounds, o),
   route: cs => ipcRenderer.invoke('route', cs),
   aircraft: hex => ipcRenderer.invoke('aircraft', hex),
   photos: hex => ipcRenderer.invoke('photos', hex),

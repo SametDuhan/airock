@@ -410,6 +410,7 @@ DICT.fr = {
 
 // Trip tools (seat tips, route check, watch a flight, tracking link)
 Object.assign(DICT.tr, {
+  'Thin ADS-B coverage here: some aircraft may be missing': 'Burada ADS-B alıcı ağı seyrek: bazı uçaklar eksik olabilir',
   'Seat tip': 'Koltuk ipucu',
   'Sun side': 'Güneş tarafı',
   'Over the wings you feel turbulence least, the back rows most.': 'Kanat üstünde türbülansı en az, arka sıralarda en çok hissedersin.',
@@ -443,6 +444,7 @@ Object.assign(DICT.tr, {
   'Tracking link copied': 'Takip bağlantısı kopyalandı'
 });
 Object.assign(DICT.es, {
+  'Thin ADS-B coverage here: some aircraft may be missing': 'Cobertura ADS-B escasa aquí: pueden faltar aviones',
   'Seat tip': 'Consejo de asiento',
   'Sun side': 'Lado del sol',
   'Over the wings you feel turbulence least, the back rows most.': 'Sobre las alas se nota menos la turbulencia, en las filas traseras más.',
@@ -476,6 +478,7 @@ Object.assign(DICT.es, {
   'Tracking link copied': 'Enlace de seguimiento copiado'
 });
 Object.assign(DICT.de, {
+  'Thin ADS-B coverage here: some aircraft may be missing': 'Dünne ADS-B-Abdeckung hier: Flugzeuge können fehlen',
   'Seat tip': 'Sitzplatz-Tipp',
   'Sun side': 'Sonnenseite',
   'Over the wings you feel turbulence least, the back rows most.': 'Über den Tragflächen spürt man Turbulenzen am wenigsten, in den hinteren Reihen am meisten.',
@@ -509,6 +512,7 @@ Object.assign(DICT.de, {
   'Tracking link copied': 'Tracking-Link kopiert'
 });
 Object.assign(DICT.fr, {
+  'Thin ADS-B coverage here: some aircraft may be missing': 'Couverture ADS-B faible ici : des avions peuvent manquer',
   'Seat tip': 'Conseil de siège',
   'Sun side': 'Côté du soleil',
   'Over the wings you feel turbulence least, the back rows most.': 'Au-dessus des ailes, on ressent le moins les turbulences, dans les rangées arrière le plus.',
