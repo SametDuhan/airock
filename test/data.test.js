@@ -118,3 +118,13 @@ test('landedOf: touchdown time is the first ground point of the trailing run of 
   assert.equal(D.landedOf([[0, 1, 1, 'ground'], [40, 2, 2, 5000], [90, 3, 3, 'ground']], 0), 90); // took off and landed again: the last touchdown
   assert.equal(D.landedOf([], 5), null);
 });
+
+test('arrivalOf: the flight an aircraft just completed (legOf only has the taxi points once it is on the ground)', () => {
+  // taxi at LHR, take off, cruise, land at VIE, taxi at VIE
+  const tr = [[0, 51.47, -0.46, 'ground'], [60, 51.48, -0.40, 'ground'], [120, 51.5, -0.3, 1500], [700, 50.5, 4, 25000], [1300, 49.5, 8, 33000], [1900, 49.4, 10, 36000], [2500, 49.2, 12, 36000], [3100, 49, 14, 34000], [3700, 48.6, 15.5, 20000], [4000, 48.3, 16.3, 3000], [4100, 48.12, 16.56, 'ground'], [4200, 48.11, 16.57, 'ground']];
+  const a = D.arrivalOf(tr); assert.deepEqual(a.start, [51.48, -0.40]); // the last ground point before the climb
+  assert.equal(a.pts.length, 9); assert.deepEqual(a.pts[a.pts.length - 1], [48.3, 16.3]);
+  assert.equal(D.legOf(tr).length, 1); // what the old code gave for a plane on the ground: just its last point, nothing of the flight
+  assert.equal(D.arrivalOf([[0, 1, 1, 'ground'], [60, 1, 1, 'ground']]), null); // never flew
+  assert.equal(D.arrivalOf([[0, 1, 1, 'ground'], [60, 2, 2, 3000], [90, 3, 3, 20000]]), null); // still flying
+});

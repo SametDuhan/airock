@@ -107,6 +107,7 @@ The repository is named `airock`; the app itself is SkyTrack. Your filters and a
 | Aircraft positions, zoomed in | [adsb.lol](https://adsb.lol) and [adsb.fi](https://adsb.fi) | Free, no key. Both have strict rate limits, so SkyTrack spreads its requests over the two and falls back to the other one on an error. A wide view covers about twice as much as with one source. |
 | Aircraft positions, wide view or backup | [OpenSky Network](https://opensky-network.org) | Covers a large area in one request. Has a low daily limit for anonymous users. |
 | Route, aircraft type, registration, photo | [adsbdb.com](https://www.adsbdb.com) | Free, no key. Some flights may be missing or out of date. |
+| Airport names and positions (to check a flight's route against what the aircraft really did) | [OurAirports](https://ourairports.com/data/) | Public domain, bundled in `src/airports.js`. |
 | Airline logos | images.kiwi.com | |
 | Airport weather, wind at flight levels | [Open-Meteo](https://open-meteo.com) | Free, no key. |
 | METAR and TAF, turbulence advisories, pilot reports | [aviationweather.gov](https://aviationweather.gov) | Free, no key. Turbulence "none" means none reported or forecast, not a guarantee. |

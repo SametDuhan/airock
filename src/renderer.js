@@ -257,17 +257,25 @@ async function loadRoute(f) {
     const res = await DATA.route(f.cs); if (!res.ok) { failed(f, 'rs'); return showRoute(f); } e = { v: res.route, t: Date.now() }; routeCache.set(f.cs, e); }
   f.routeDb = e.v; f.route = e.v; f.rs = e.v ? 'ok' : 'none'; if (e.v) { addAp(e.v.org); addAp(e.v.dst); reconcileRoute(f); } showRoute(f);
 }
-// The route database knows a callsign, not this one flight: airlines reuse callsigns, aircraft get swapped, flights divert. So the route is checked against what the aircraft
-// really did, using the trace of its current flight: (1) if it took off more than 60 km from the route's origin, the origin is the airport it took off from; (2) if it is on the
-// ground (6 km from an airport) after a flight that began more than 30 km away, that airport is the destination. Anything else stays as the database says. Returns true if changed.
+// The route database knows a callsign, not this one flight: airlines reuse callsigns, aircraft get swapped, flights divert, and after landing the crew often sets the callsign of the
+// NEXT flight. So the route is checked against what the aircraft really did, from the trace of its flight:
+//  - in the air: if the flight took off more than 60 km from the route's origin, the origin is the airport it took off from;
+//  - just landed (on the ground, touchdown less than 25 min ago): the flight it has just completed is judged, its origin from the trace, its destination the airport it sits at.
+// Aircraft that have been on the ground for longer are about to depart: the database route is the right one then. Anything else stays as the database says.
+// Airports are looked up among the ones we know and then in the list of all airports with scheduled service (airports.js). Returns true if the airports changed.
+const BIGAP = (window.AIRPORTS || '').split(';').filter(Boolean).map(a => { const [code, icao, name, lat, lon] = a.split('|'); return { code, icao, name, lat: +lat, lon: +lon }; });
+function nearAirport(lat, lon, maxKm) {
+  let best = null, bd = maxKm; knownAps.forEach(a => { const d = km(lat, lon, a.lat, a.lon); if (d < bd) { bd = d; best = a; } });
+  if (best) return best; for (const a of BIGAP) { const d = km(lat, lon, a.lat, a.lon); if (d < bd) { bd = d; best = a; } } return best;
+}
 function reconcileRoute(f) {
   const r0 = f.routeDb; if (!r0) return false;
-  const near = (lat, lon, maxKm) => { let best = null, bd = maxKm; knownAps.forEach(a => { const d = km(lat, lon, a.lat, a.lon); if (d < bd) { bd = d; best = a; } }); return best; };
-  const st = f.flown?.length > 1 ? f.flown[0] : null; let org = r0.org, dst = r0.dst;
-  if (st && km(st[0], st[1], org.lat, org.lon) > 60) { const a = near(st[0], st[1], 20); if (a) org = a; }
-  if (f.ground && st && km(st[0], st[1], f.lat, f.lon) > 30) { const a = near(f.lat, f.lon, 6); if (a && a.code !== org.code) dst = a; }
+  const t0 = f.landedAt ? f.landedAt * 1000 : f.gAt || 0, justLanded = !!(f.ground && f.arr && (!t0 || Date.now() - t0 < 25 * 60e3));
+  const st = justLanded ? f.arr.start : !f.ground && f.flown?.length > 1 ? f.flown[0] : null; let org = r0.org, dst = r0.dst;
+  if (st && km(st[0], st[1], org.lat, org.lon) > 60) { const a = nearAirport(st[0], st[1], 25); if (a) org = a; }
+  if (justLanded && km(st[0], st[1], f.lat, f.lon) > 30) { const a = nearAirport(f.lat, f.lon, 8); if (a && a.code !== org.code) dst = a; }
   const was = f.route; f.route = org === r0.org && dst === r0.dst ? r0 : { ...r0, org, dst, fixed: true };
-  return !was || was.org.code !== f.route.org.code || was.dst.code !== f.route.dst.code; // did the airports change (not just the object)
+  return !was || was.org.code !== f.route.org.code || was.dst.code !== f.route.dst.code;
 }
 function showRoute(f) { if (f.id !== selected) return; if (!replay) drawRoute(f); renderCard(true); }
 // Departure → aircraft → arrival, as great-circle arcs
@@ -283,7 +291,8 @@ const routePts = f => { const { org, dst } = f.route, p = [f.lat, f.lon], fl = f
 async function loadTrace(f) {
   if (!live || f.trAt && Date.now() - f.trAt < 60000) return; f.trAt = Date.now();
   const res = await DATA.trace(f.id); if (!res.ok) return;
-  f.flown = res.points; f.prof = res.prof; f.landedAt = res.landedAt || 0; const fixed = reconcileRoute(f); if (fixed && f.id === selected) renderCard(true); if (f.id === selected && $('prf')) X.sync(f); if (f.id === selected && !replay && f.route) { const p = routePts(f); setRoute(p.done, p.rest); }
+  f.arr = res.arrival || null; f.flown = f.ground && f.arr ? f.arr.pts : res.points; // on the ground: draw the flight it just completed, not the taxi points
+  f.prof = res.prof; f.landedAt = res.landedAt || 0; const fixed = reconcileRoute(f); if (fixed && f.id === selected) renderCard(true); if (f.id === selected && $('prf')) X.sync(f); if (f.id === selected && !replay && f.route) { const p = routePts(f); setRoute(p.done, p.rest); }
 }
 function drawRoute(f) {
   routeEnds.clearLayers();
@@ -595,11 +604,12 @@ function renderCard(full) {
     const landed = f.ground && b < 25;
     $('pgb').style.width = Math.min(100, a / (a + b) * 100).toFixed(1) + '%';
     $('pgt').textContent = t('{0} flown · {1} to go', fmtDist(a), fmtDist(b)) + (f.spd > 30 ? ' · ~' + eta(b / (f.spd * 3.6)) + ' · ' + t('arrives {0}', new Date(Date.now() + b / (f.spd * 3.6) * 3600e3).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' })) : '')
-      + (landed ? ' · ' + landedText(f) : ''); // on the ground within 25 km of its destination: landed, and how long ago
-    // landed: a runway instead of the dashed line, and the plane rolls out along it once (a rebuilt card continues the same roll-out instead of restarting or jumping to the end)
-    // gr: on the ground but not landed (waiting to depart): the plane stays put at the start
-    const fl = $('card').querySelector('.rt .fl');
-    if (fl) { fl.classList.toggle('rw', landed); fl.classList.toggle('gr', f.ground && !landed); if (landed) { f._rolled = f._rolled || Date.now(); const el = Date.now() - f._rolled; if (el < 2600) { fl.classList.add('roll'); fl.style.setProperty('--rd', -el + 'ms'); } } }
+      + (landed ? ' · ' + landedText(f) : f.ground ? ' · ' + t('on ground') : ''); // on the ground within 25 km of its destination: landed, and how long ago
+    // on the ground: a runway instead of the dashed line. Landed: the plane rolls out along it once and stops (a rebuilt card continues the same roll-out instead of restarting or jumping
+    // to the end). On the ground but not landed: it taxis slowly along it while it moves, and waits at the start when it stands still. In the air the plane flies along the dashed line.
+    const fl = $('card').querySelector('.rt .fl'), moving = f.spd * 1.944 > 3;
+    if (fl) { fl.classList.toggle('rw', f.ground); fl.classList.toggle('park', f.ground && !landed && !moving); fl.classList.toggle('tx', f.ground && !landed && moving);
+      if (landed) { f._rolled = f._rolled || Date.now(); const el = Date.now() - f._rolled; if (el < 2600) { fl.classList.add('roll'); fl.style.setProperty('--rd', -el + 'ms'); } } else fl.classList.remove('roll'); }
     if (!landed) f._rolled = 0; }
   const rows = [
     ['Aircraft type', ac.type || f.type || (f.as === 'loading' ? '…' : '—')], ['Registration', ac.reg || f.reg || '—'],

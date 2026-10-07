@@ -224,7 +224,9 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 .fl.rw.roll i{animation:roll 2.6s cubic-bezier(.1,.75,.2,1) var(--rd,0s) both}@keyframes roll{from{transform:translateX(calc(-100% + 26px))}to{transform:none}}
 @media (prefers-reduced-motion:reduce){.fl.rw.roll i{animation:none}}
 #ovp .ovrm:hover,#ovRm:hover{border-color:#f87171;color:#f87171}.ovpop{display:flex;flex-direction:column;gap:6px;align-items:stretch;font:600 12px system-ui,sans-serif}.ovpop button{cursor:pointer;background:#fff;border:1px solid #d33;color:#d33;border-radius:6px;padding:5px 9px;font:600 12px system-ui,sans-serif}.ovm{cursor:pointer}
-.fl.gr i{animation:none;transform:none;text-align:left;padding-left:2px}
+.fl.rw.park i{animation:none;transform:none;text-align:left;padding-left:9px;padding-right:0}
+.fl.rw.tx i{animation:taxi 9s linear infinite}@keyframes taxi{from{transform:translateX(calc(-100% + 26px))}to{transform:translateX(0)}}
+@media (prefers-reduced-motion:reduce){.fl.rw.tx i{animation:none}}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
@@ -262,6 +264,7 @@ input[type=text],input[type=search],input:not([type]),input[type=number]{cursor:
 <script src="webdemo.js"></script>
 <script src="i18n.js"></script>
 <script src="langs.js"></script>
+<script src="airports.js"></script>
 <script src="renderer.js"></script>
 <script src="extras.js"></script>
 <script src="layers.js"></script>
