@@ -203,7 +203,9 @@
   const ap = a => ({ code: a.iata_code || a.icao_code, icao: a.icao_code, name: cityName(a.municipality) || a.name, lat: a.latitude, lon: a.longitude });
   async function adsbdb(path) {
     const r = await get('https://api.adsbdb.com/v0/' + path, 10000);
-    if (r.status === 404) return null;
+    // 404 = unknown. 400 = not a thing it can look up: airports are full of ground vehicles and control positions (TWR, GND, AOPS...) whose "callsigns" it rejects like that.
+    // Neither is a failure of the service, so neither may start the pause after errors.
+    if (r.status === 404 || r.status === 400) return null;
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return (await r.json()).response;
   }

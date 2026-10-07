@@ -251,9 +251,11 @@ const canLoad = (f, k) => !f[k] || (f[k] === 'err' && Date.now() - f[k + 'At'] >
 const failed = (f, k) => { f[k] = 'err'; f[k + 'At'] = Date.now(); dbPause = Date.now() + BACKOFF_MS; };
 async function loadRoute(f) {
   if (!canLoad(f, 'rs')) return;
-  if (f.cs === f.id.toUpperCase()) { f.rs = 'none'; return showRoute(f); } // no callsign (fell back to hex): nothing to look up
+  // no callsign (fell back to hex), or one without a digit (TWR, GND, AOPS: control positions and ground vehicles, not flights): nothing to look up
+  if (f.cs === f.id.toUpperCase() || !/\d/.test(f.cs)) { f.rs = 'none'; return showRoute(f); }
   f.rs = 'loading'; let e = fresh(routeCache, f.cs);
-  if (!e) { if (Date.now() < dbPause) { f.rs = 'err'; f.rsAt = Date.now(); return showRoute(f); }
+  // the pause after errors protects the service from background lookups; the aircraft the user just clicked is asked for anyway
+  if (!e) { if (Date.now() < dbPause && f.id !== selected) { f.rs = 'err'; f.rsAt = Date.now(); return showRoute(f); }
     const res = await DATA.route(f.cs); if (!res.ok) { failed(f, 'rs'); return showRoute(f); } e = { v: res.route, t: Date.now() }; routeCache.set(f.cs, e); }
   f.routeDb = e.v; f.route = e.v; f.rs = e.v ? 'ok' : 'none'; if (e.v) { addAp(e.v.org); addAp(e.v.dst); reconcileRoute(f); } showRoute(f);
 }
@@ -333,7 +335,7 @@ const turbRow = f => { if (f.ground) return null;
 async function loadAircraft(f) {
   if (!canLoad(f, 'as')) return;
   f.as = 'loading'; let e = fresh(acCache, f.id);
-  if (!e) { if (Date.now() < dbPause) { f.as = 'err'; f.asAt = Date.now(); return; }
+  if (!e) { if (Date.now() < dbPause && f.id !== selected) { f.as = 'err'; f.asAt = Date.now(); return; }
     const res = await DATA.aircraft(f.id); if (!res.ok) return failed(f, 'as'); e = { v: res.aircraft, t: Date.now() }; acCache.set(f.id, e); }
   f.ac = e.v; f.as = e.v ? 'ok' : 'none'; if (f.id === selected) renderCard(true);
   loadPhotos(f);

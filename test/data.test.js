@@ -128,3 +128,14 @@ test('arrivalOf: the flight an aircraft just completed (legOf only has the taxi 
   assert.equal(D.arrivalOf([[0, 1, 1, 'ground'], [60, 1, 1, 'ground']]), null); // never flew
   assert.equal(D.arrivalOf([[0, 1, 1, 'ground'], [60, 2, 2, 3000], [90, 3, 3, 20000]]), null); // still flying
 });
+
+test('route: a 400 or 404 from adsbdb means "no route" (airports are full of TWR / GND vehicles), only real failures are errors', async () => {
+  const real = globalThis.fetch; const answer = status => { globalThis.fetch = async () => ({ status, ok: status >= 200 && status < 300, json: async () => ({ response: { flightroute: null } }) }); };
+  try {
+    answer(400); assert.deepEqual(await D.route('TWR1'), { ok: true, route: null });
+    answer(404); assert.deepEqual(await D.route('AFR45KP'), { ok: true, route: null });
+    answer(429); assert.equal((await D.route('BAW1')).ok, false);
+    answer(500); assert.equal((await D.route('BAW1')).ok, false);
+    answer(400); assert.equal((await D.aircraft('~abcdef')).ok, true); // a TIS-B style id: unknown, not a failure
+  } finally { globalThis.fetch = real; }
+});
