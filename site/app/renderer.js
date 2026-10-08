@@ -156,10 +156,14 @@ const TWIN_RE = /^(A2\d\d|A3\w\w|A\d\d[NK]|B7[0-9A-Z]{2}|B3[7-9][A-Z0-9]|MD1[01]
 // airline-style callsign (3 letters + digits) or fast / high -> airliner; otherwise a light aircraft. The guess is part of the cache key so it updates when the aircraft speeds up or climbs.
 const guessAir = f => { const kt = (f.spd || 0) * 1.944, ft = (f.alt || 0) * 3.281, line = /^[A-Z]{3}\d{1,4}[A-Z]{0,2}$/.test(f.cs || '');
   return !f.ground && (kt >= 190 || ft >= 18000) || line && (kt >= 120 || ft >= 5000) ? 'F' : f.ground && line ? 'F' : ''; };
+// Airport service positions that feeds list like aircraft: control tower, ground, apron, fire / rescue, tugs, buses... (and ADS-B emitter categories C1-C3: ground vehicles / obstacles). Not aircraft:
+// drawn as a small box, and no photo or registry lookup (a photo search for "TWR" returned a security camera).
+const SVC_RE = /^(TWR|TOWER|GND|GRND|GROUND|APP|DEP|ATIS|AOPS|OPS|FIRE|CAT\d?|SEC|SAFE|BUS|TUG|VEH|SVC|MAINT|CREW|FUEL|RAMP|RESCUE|AMB|POLICE|SNOW|FOLLOW\w*|MARSHAL|SWEEP\w*|AIRPORT|APRON|TRK|TRUCK|CLR|DEL|DELIVERY|OBST\w*|UNKN\w*)\d{0,2}$/i;
+const isSvc = f => /^C[123]$/.test(f.cat || '') || SVC_RE.test(f.cs || '') || SVC_RE.test(f.reg || '') || SVC_RE.test(f.type || '') || SVC_RE.test(f.ac?.icaoType || '');
 const kindOf = f => { const c = acCode(f), cat = f.cat || '', g = !c && !cat ? guessAir(f) : '';
-  if (f._kk === c + cat + g) return f._k;
-  const k = /^C[123]$/.test(cat) ? 'veh' : cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : PROP_RE.test(c) ? 'prop' : TWIN_RE.test(c) || /^A[345]$/.test(cat) || g ? 'air2' : 'gen';
-  f._kk = c + cat + g; return f._k = k; };
+  if (f._kk === c + cat + g + f.cs) return f._k;
+  const k = isSvc(f) ? 'veh' : cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : PROP_RE.test(c) ? 'prop' : TWIN_RE.test(c) || /^A[345]$/.test(cat) || g ? 'air2' : 'gen';
+  f._kk = c + cat + g + f.cs; return f._k = k; };
 // Size class by aircraft type: big airliners draw larger, small ones smaller. The difference fades out when zoomed far out so crowded areas stay readable.
 const XL_RE = /^(A38\w|B74\w|B77[WL]|B778|B779|B77\w|A35K|A346|A345|A124|A225|C5M?|IL96|B748)$/, WIDE_RE = /^(B78\w|B76\w|A33\w|A35\w|A30B|A310|A306|A3ST|B75\w|MD11|DC10|L101|IL86)$/, SMALL_RE = /^(CRJ\w|CR\d|AT\d\d|DH8\w|SF34|B190|E1[34]\w|J328|D328|F50|F27|SB20|JS\d\d|DHC\d|PC12|C208|TBM\d|BE\d\d|PA\d\d|C1\d\d|C2\d\d|SR2\d|DA\d\d|M20\w|P28\w)/;
 const sizeOf = f => { const k = kindOf(f); if (f._sk !== f._kk) { const c = acCode(f); f._sk = f._kk;
@@ -387,6 +391,7 @@ const turbRow = f => { if (f.ground) return null;
 
 /* ---------- aircraft info (type, registration, photo) ---------- */
 async function loadAircraft(f) {
+  if (isSvc(f)) { f.as = 'none'; f.pics = []; if (f.id === selected) renderCard(true); return; } // a service position, not an aircraft: nothing to look up
   if (!canLoad(f, 'as')) return;
   f.as = 'loading'; let e = fresh(acCache, f.id);
   if (!e) { if (Date.now() < dbPause && f.id !== selected) { f.as = 'err'; f.asAt = Date.now(); return; }
@@ -396,7 +401,7 @@ async function loadAircraft(f) {
 }
 // Photos: planespotters (448 px, possibly several) first, then the full-size adsbdb photo (or its thumbnail as a last resort)
 async function loadPhotos(f) {
-  if (f.pics) return; let e = fresh(picCache, f.id);
+  if (f.pics || isSvc(f)) return; let e = fresh(picCache, f.id);
   if (!e) { const res = await DATA.photos(f.id, f.ac?.reg || f.reg); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok && !res.partial) picCache.set(f.id, e); }
   const ac = f.ac || {}, extra = ac.photo || ac.thumb;
   // 3 photos at most (quicker to load and to flip through). The first one comes from planespotters when there is one: its CDN is fast, Commons makes big thumbnails slowly. Then the sharper
