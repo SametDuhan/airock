@@ -67,7 +67,7 @@ const zoneR = () => zone?.r || ZONE_R;
 const APO = AP.map(a => ({ code: a[0], name: a[1], lat: a[2], lon: a[3] }));
 const { R, brg, km, gc, unwrap, nearLon } = window.SkyGeo;
 const flights = new Map(), routeCache = new Map(), acCache = new Map(), picCache = new Map(), fav = new Set(LS('sky.fav', [])), hist = [],
-watch = new Map(LS('sky.watch', [])), flt = { alt: 0, maxAlt: 45000, spd: 0, maxSpd: 600, fav: false, ground: true, dep: '', arr: '', type: '', air: '', ph: '', em: false, co: '' };
+watch = new Map(LS('sky.watch', [])), flt = { alt: 0, maxAlt: 45000, spd: 0, maxSpd: 600, fav: false, ground: true, dep: [], arr: [], type: [], air: [], ph: '', em: false, co: [] };
 // Hooks filled in by extras.js (watchlist, today's flights, spotter logbook): they keep this file focused on the map itself
 const X = { top: () => '', bottom: () => '', bottom2: () => '', rows: () => {}, sync: () => {}, click: () => false, event: () => {}, arrive: () => {}, sel: () => {} };
 const EMG = { 7500: 'Hijacking', 7600: 'Radio failure', 7700: 'General emergency' }; // squawk codes
@@ -100,8 +100,10 @@ const countryOf = f => { if (f.country) return f.country; if (f.ac?.country) ret
   for (let n = 3; n > 0; n--) { const c = REGM.get(r.slice(0, n)); if (c) return c; } return ''; };
 const COUNTRIES = [...new Set([...REGM.values()].flatMap(v => v.split(' ').length > 1 && /^(Türkiye Turkey)$/.test(v) ? ['Türkiye', 'Turkey'] : [v]))].sort();
 $('coList').innerHTML = COUNTRIES.map(c => `<option value="${c}">`).join('');
+// Multi-value filter fields: the values added with "+" (chips); the text currently typed counts as one more value
+const CH = { fDep: [], fArr: [], fAl: [], fTp: [], fCo: [] };
 const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (flt.maxSpd >= 600 || f.spd * 1.944 <= flt.maxSpd) && (!flt.fav || fav.has(f.id))
-  && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)) && (!flt.type || typeIs(f, flt.type)) && (!flt.air || airIs(f, flt.air)) && (!flt.ph || phaseIs(f, flt.ph)) && (!flt.em || isEmg(f)) && (!flt.co || countryOf(f).toLowerCase().includes(flt.co)); };
+  && (!flt.dep.length || flt.dep.some(d => apIs(f.route?.org, d))) && (!flt.arr.length || flt.arr.some(d => apIs(f.route?.dst, d))) && (!flt.type.length || flt.type.some(x => typeIs(f, x))) && (!flt.air.length || flt.air.some(x => airIs(f, x))) && (!flt.ph || phaseIs(f, flt.ph)) && (!flt.em || isEmg(f)) && (!flt.co.length || flt.co.some(x => countryOf(f).toLowerCase().includes(x))); };
 // toastEv: toasts about events the user didn't ask for (alerts, take-offs, emergencies, turbulence...): Settings → "In-app notifications" turns them off. Plain toast() is feedback for
 // something the user just did and always shows. At most 3 are on screen at once (the oldest goes first), so zooming into a crowded area can't pile them up.
 const toastEv = (msg, id) => toast(msg, id, !LS('sky.toast', true));
@@ -872,7 +874,7 @@ function renderList() {
   const emgN = [...flights.values()].filter(f => !f.gone && isEmg(f)).length;
   $('meta').textContent = `${arr.length} / ${flights.size} ${t('FLIGHTS')}` + (emgN ? ` · ⚠ ${emgN}` : '');
   let st = '';
-  if (live && (flt.dep || flt.arr)) { const v = map.getBounds(), inV = [...flights.values()].filter(f => !f.ground && v.contains([f.lat, f.lon]));
+  if (live && (flt.dep.length || flt.arr.length)) { const v = map.getBounds(), inV = [...flights.values()].filter(f => !f.ground && v.contains([f.lat, f.lon]));
     const done = inV.filter(f => f.rs && f.rs !== 'loading').length; if (done < inV.length) st = t('loading route info · {0} / {1} aircraft', done, inV.length); }
   $('apSt').textContent = st;
   $('list').innerHTML = (window.searchExtra ? searchExtra($('q').value, arr) : '') + (arr.length || !$('q').value.trim() ? '' : `<div class="none" style="padding:12px 16px;color:var(--mut);font-size:12px">${t('Nothing matches')}</div>`) + arr.map(f => { const k = kindOf(f), sh = SHAPES[k] || SHAPES.gen, col = f.ground ? '#9aa0a6' : color(f.alt), rot = k === 'heli' ? '' : '';
@@ -892,11 +894,13 @@ const applyF = e => {
   const sa = $('fS'), sm = $('fSM'); // same two-handle bar for speed
   if (+sa.value > +sm.value) { if (e && e.target === sm) sm.value = sa.value; else sa.value = sm.value; }
   flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.maxSpd = +$('fSM').value; flt.fav = $('fF').checked; flt.ground = $('fG').checked;
-  flt.co = $('fCo').value.trim().toLowerCase(); $('fCo').classList.toggle('set', !!flt.co); flt.em = $('fE').checked; flt.ph = document.querySelector('#fPh .on')?.dataset.p || '';
-  flt.dep = apCode($('fDep').value); flt.arr = apCode($('fArr').value); flt.type = $('fTp').value.trim().toUpperCase(); $('fTp').classList.toggle('set', !!flt.type); flt.air = $('fAl').value.trim().toUpperCase(); $('fAl').classList.toggle('set', !!flt.air);
-  $('fDep').classList.toggle('set', !!flt.dep); $('fArr').classList.toggle('set', !!flt.arr); pumpRoutes();
-  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, sm: $('fSM').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value, al: $('fAl').value, co: $('fCo').value, e: flt.em, ph: flt.ph });
-  { const n = (flt.alt > 0 || flt.maxAlt < 45000) + (flt.spd > 0 || flt.maxSpd < 600) + !!flt.dep + !!flt.arr + !!flt.air + !!flt.type + !!flt.co + !!flt.ph + flt.em + flt.fav + !flt.ground;
+  const vals = (id, fn) => [...new Set([...CH[id], $(id).value].map(x => fn(x.trim())).filter(Boolean))];
+  flt.em = $('fE').checked; flt.ph = document.querySelector('#fPh .on')?.dataset.p || '';
+  flt.co = vals('fCo', x => x.toLowerCase()); flt.dep = vals('fDep', apCode); flt.arr = vals('fArr', apCode); flt.type = vals('fTp', x => x.toUpperCase()); flt.air = vals('fAl', x => x.toUpperCase());
+  for (const id of Object.keys(CH)) { const el = $(id), w = el.parentElement, has = !!el.value.trim(); el.classList.toggle('set', has || !!CH[id].length); w.classList.toggle('hasv', has); w.classList.toggle('hasany', has || !!CH[id].length); renderChips(id); }
+  pumpRoutes();
+  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, sm: $('fSM').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value, al: $('fAl').value, co: $('fCo').value, ch: CH, e: flt.em, ph: flt.ph });
+  { const n = (flt.alt > 0 || flt.maxAlt < 45000) + (flt.spd > 0 || flt.maxSpd < 600) + !!flt.dep.length + !!flt.arr.length + !!flt.air.length + !!flt.type.length + !!flt.co.length + !!flt.ph + flt.em + flt.fav + !flt.ground;
     for (const id of ['fCnt', 'fCnt2']) { $(id).textContent = n; } $('fCnt').hidden = !n; $('fRst').hidden = !n; }
   a.style.zIndex = flt.alt > 22500 ? 3 : 1; // so "min" can still be grabbed at the right end when the handles overlap
   $('dr').style.setProperty('--a', flt.alt / 450 + '%'); $('dr').style.setProperty('--b', flt.maxAlt / 450 + '%');
@@ -905,12 +909,18 @@ const applyF = e => {
   redraw(); renderList();
 };
 ['fA', 'fM', 'fS', 'fSM', 'fF', 'fG', 'fE', 'fDep', 'fArr', 'fTp', 'fAl', 'fCo'].forEach(i => $(i).oninput = applyF);
+const renderChips = id => { $('c' + id.slice(1)).innerHTML = CH[id].map((v, i) => `<span class="chip">${esc(v)}<b data-f="${id}" data-i="${i}" role="button" aria-label="Remove">×</b></span>`).join(''); };
+const addChip = id => { const v = $(id).value.trim(); if (!v) return; if (!CH[id].some(x => x.toLowerCase() === v.toLowerCase())) CH[id].push(v); $(id).value = ''; applyF(); $(id).focus(); };
+document.querySelector('.flt').addEventListener('click', e => {
+  const p = e.target.closest('.fp'), x = e.target.closest('.fx'), c = e.target.closest('.chip b');
+  if (p) addChip(p.dataset.f); else if (x) { CH[x.dataset.f] = []; $(x.dataset.f).value = ''; applyF(); $(x.dataset.f).focus(); } else if (c) { CH[c.dataset.f].splice(+c.dataset.i, 1); applyF(); } });
+Object.keys(CH).forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addChip(id); } }));
 { const v = LS('sky.flt', null); // restore the filters from the last session
-  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fSM').value = v.sm ?? 600; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; $('fCo').value = v.co || ''; $('fE').checked = !!v.e; document.querySelectorAll('#fPh button').forEach(b => b.classList.toggle('on', b.dataset.p === (v.ph || ''))); } }
+  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fSM').value = v.sm ?? 600; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; $('fCo').value = v.co || ''; if (v.ch) for (const k of Object.keys(CH)) CH[k] = Array.isArray(v.ch[k]) ? v.ch[k].filter(x => typeof x === 'string') : []; $('fE').checked = !!v.e; document.querySelectorAll('#fPh button').forEach(b => b.classList.toggle('on', b.dataset.p === (v.ph || ''))); } }
 $('fPh').onclick = e => { const b = e.target.closest('button'); if (!b) return; document.querySelectorAll('#fPh button').forEach(x => x.classList.toggle('on', x === b)); applyF(); };
-$('fRst').onclick = () => { $('fA').value = 0; $('fM').value = 45000; $('fS').value = 0; $('fSM').value = 600; $('fF').checked = false; $('fE').checked = false; $('fG').checked = true; for (const i of ['fDep', 'fArr', 'fTp', 'fAl', 'fCo']) $(i).value = ''; document.querySelectorAll('#fPh button').forEach(x => x.classList.toggle('on', !x.dataset.p)); applyF(); };
+$('fRst').onclick = () => { $('fA').value = 0; $('fM').value = 45000; $('fS').value = 0; $('fSM').value = 600; $('fF').checked = false; $('fE').checked = false; $('fG').checked = true; for (const i of Object.keys(CH)) { $(i).value = ''; CH[i] = []; } document.querySelectorAll('#fPh button').forEach(x => x.classList.toggle('on', !x.dataset.p)); applyF(); };
 $('fSw').onclick = () => {
-  const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; applyF();
+  const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; [CH.fDep, CH.fArr] = [CH.fArr, CH.fDep]; applyF();
   for (const el of [$('fSw'), $('fDep'), $('fArr')]) { el.classList.remove('spin', 'flash'); void el.offsetWidth; el.classList.add(el === $('fSw') ? 'spin' : 'flash'); }
 };
 
@@ -930,7 +940,7 @@ function apCode(v) {
 // In live mode route info only arrives when an aircraft is clicked; while a filter is active, load the routes of on-screen aircraft in the background (at most 3 at a time)
 let routeJobs = 0, pumpT = null;
 function pumpRoutes() {
-  if (!live || (!flt.dep && !flt.arr)) return; const v = map.getBounds();
+  if (!live || (!flt.dep.length && !flt.arr.length)) return; const v = map.getBounds();
   if (Date.now() < dbPause) { clearTimeout(pumpT); pumpT = setTimeout(pumpRoutes, dbPause - Date.now() + 100); return; } // wait after 429/error
   for (const f of flights.values()) {
     if (routeJobs >= 3) return;

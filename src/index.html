@@ -280,12 +280,12 @@ html:is([lang=ar],[lang=fa]) #side .brand{direction:ltr} /* the title and the la
 .apr input{background:#1c1c1c;border-color:#4a4740;color:#f4f1e8;font:600 13px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.02em}
 .apr input::placeholder{color:#a9a395;opacity:1;font-weight:500}
 .apr input:hover{border-color:#6b665a}.apr input:focus{border-color:var(--ac);box-shadow:0 0 0 3px #f2c23026}
-.apr .ib{position:relative;flex:none;width:32px;height:32px;border-radius:50%;font-size:17px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;border-color:#4a4740;color:var(--ac);transition:transform .35s cubic-bezier(.3,1.5,.5,1),background .2s,color .2s,box-shadow .2s}
-.apr .ib:hover{background:var(--ac);color:#111;border-color:var(--ac);box-shadow:0 0 14px #f2c23066;transform:scale(1.1)}
-.apr .ib:active{transform:scale(.92)}
-.apr .ib.spin{animation:swp .45s cubic-bezier(.3,1.4,.5,1)}
+.apd .ib{position:relative;flex:none;width:32px;height:32px;border-radius:50%;font-size:17px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;border-color:#4a4740;color:var(--ac);transition:transform .35s cubic-bezier(.3,1.5,.5,1),background .2s,color .2s,box-shadow .2s}
+.apd .ib:hover{background:var(--ac);color:#111;border-color:var(--ac);box-shadow:0 0 14px #f2c23066;transform:scale(1.1)}
+.apd .ib:active{transform:scale(.92)}
+.apd .ib.spin{animation:swp .45s cubic-bezier(.3,1.4,.5,1)}
 @keyframes swp{from{transform:rotate(0)}to{transform:rotate(180deg)}}
-.apr input.flash{animation:fl .45s ease-out}
+.apd input.flash,.apr input.flash{animation:fl .45s ease-out}
 @keyframes fl{from{background:#f2c23044;transform:translateY(-3px)}to{background:#1c1c1c;transform:none}}
 
 /* radius stepper */
@@ -385,6 +385,38 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 #side>.collapsed>.lbl::before{height:8px;margin-top:-4px;opacity:.35}
 #side>.collapsed{padding-bottom:0!important}#side>.collapsed>.lbl{margin-bottom:8px}
 #srch{margin-top:8px}
+
+/* round 5: multi-value fields (+ adds the typed value, × clears), chips, card for the aircraft list, thicker accent bar */
+.apd{display:grid;grid-template-columns:1fr 34px;grid-template-rows:auto auto;gap:6px 8px;margin-top:6px;align-items:start}
+.apd .apc1:first-child{grid-column:1;grid-row:1}.apd .apc1:last-child{grid-column:1;grid-row:2}
+.apd #fSw{grid-column:2;grid-row:1/3;align-self:center;width:34px;height:34px;margin:0}.apd #fSw span{display:block;transform:rotate(90deg)}
+.apr1{margin-top:6px}
+.fw{position:relative}
+.fw input{width:100%;box-sizing:border-box;padding:9px 62px 9px 11px;background:#1c1c1c;border:1px solid #4a4740;border-radius:8px;color:#f4f1e8;outline:0;font:600 13px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.02em;text-transform:none;transition:border-color .2s,box-shadow .2s,background .2s}
+.fw input#fDep,.fw input#fArr{text-transform:uppercase}.fw input::placeholder{text-transform:none;color:#a9a395;opacity:1;font-weight:500}
+.fw input:hover{border-color:#6b665a}.fw input:focus{border-color:var(--ac);box-shadow:0 0 0 3px #f2c23026}
+.fw input.set{border-color:#f2c23099;background:#f2c2300d;color:var(--ac)}
+.fw input[list]{background-image:none}.fw input::-webkit-calendar-picker-indicator{display:none!important}
+.fw input:-webkit-autofill,.fw input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 100px #1c1c1c inset;-webkit-text-fill-color:#f4f1e8}
+.fw button{position:absolute;top:50%;width:24px;height:24px;margin-top:-12px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;opacity:0;pointer-events:none;transform:scale(.6);transition:opacity .18s,transform .22s cubic-bezier(.3,1.6,.5,1),background .15s,color .15s}
+.fw button svg{width:11px;height:11px}
+.fw .fx{right:6px;background:#ffffff14;color:var(--fg)}.fw .fp{right:34px;background:#f2c23026;color:var(--ac)}
+.fw.hasv .fp,.fw.hasany .fx{opacity:1;pointer-events:auto;transform:none}
+.fw .fp:hover{background:var(--ac);color:#111}.fw .fx:hover{background:#ff6b5e;color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:5px}.chips:not(:empty){margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 4px 3px 9px;border-radius:999px;background:#f2c23022;border:1px solid #f2c23066;color:var(--ac);font:700 11px 'Segoe UI',system-ui,sans-serif;animation:chin .2s cubic-bezier(.3,1.5,.5,1)}
+.chip b{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:#ffffff18;color:var(--fg);font-size:11px;line-height:1}.chip b:hover{background:#ff6b5e;color:#fff}
+@keyframes chin{from{opacity:0;transform:scale(.7)}}
+/* accent bar on every card title, bigger */
+#side>.sec>.lbl::before,#side>.flt>.lbl::before{width:4px;height:20px;margin-top:-10px;opacity:1;background:linear-gradient(180deg,#ffd75e,var(--ac))}
+#side>.collapsed>.lbl::before{height:12px;margin-top:-6px;opacity:.6}
+#side>.sec>.lbl,#side>.flt>.lbl{position:relative;padding-left:14px}
+/* aircraft list as a card too */
+#srch{margin:8px 10px 6px;background:#ffffff09;border:1px solid #ffffff1f!important;border-radius:12px;overflow:hidden;padding-top:4px}
+#srch>.lbl{padding-left:28px!important}#srch>.lbl::before{left:14px}
+#srch.collapsed{background:#ffffff06;border-color:var(--line)!important}
+/* slimmer dock */
+#foot{padding:4px 10px 5px}#foot .setb,#fb{padding:5px 8px!important}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button class="ib" id="sx" aria-label="Close menu">✕</button><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
@@ -403,13 +435,13 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 <div class="ff">Flight phase</div>
 <div class="btns seg" id="fPh" style="margin-top:6px"><button data-p="" class="on">All</button><button data-p="c">Climbing</button><button data-p="z">Cruise</button><button data-p="d">Descending</button></div>
 <div class="ff">Airport</div>
-<div class="apr"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button id="fSw" class="ib" title="Departure ↔ arrival">⇄</button><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"></div>
+<div class="apd"><div class="apc1"><div class="fw"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button type="button" class="fp" data-f="fDep" aria-label="Add"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M2.5 6h7M6 2.5v7"/></svg></button><button type="button" class="fx" data-f="fDep" aria-label="Remove"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div class="chips" id="cDep"></div></div><button id="fSw" class="ib" title="Departure ↔ arrival"><span>⇄</span></button><div class="apc1"><div class="fw"><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"><button type="button" class="fp" data-f="fArr" aria-label="Add"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M2.5 6h7M6 2.5v7"/></svg></button><button type="button" class="fx" data-f="fArr" aria-label="Remove"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div class="chips" id="cArr"></div></div></div>
 <div class="ff">Airline</div>
-<div class="apr"><input id="fAl" list="alList" placeholder="e.g. THY, Pegasus, Lufthansa" autocomplete="off"></div><datalist id="alList"></datalist>
+<div class="apr1"><div class="fw"><input id="fAl" list="alList" placeholder="e.g. THY, Pegasus, Lufthansa" autocomplete="off"><button type="button" class="fp" data-f="fAl" aria-label="Add"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M2.5 6h7M6 2.5v7"/></svg></button><button type="button" class="fx" data-f="fAl" aria-label="Remove"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div class="chips" id="cAl"></div></div><datalist id="alList"></datalist>
 <div class="ff">Aircraft type</div>
-<div class="apr"><input id="fTp" list="tpList" placeholder="e.g. B738, A320, boeing 777" autocomplete="off"></div><datalist id="tpList"></datalist>
+<div class="apr1"><div class="fw"><input id="fTp" list="tpList" placeholder="e.g. B738, A320, boeing 777" autocomplete="off"><button type="button" class="fp" data-f="fTp" aria-label="Add"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M2.5 6h7M6 2.5v7"/></svg></button><button type="button" class="fx" data-f="fTp" aria-label="Remove"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div class="chips" id="cTp"></div></div><datalist id="tpList"></datalist>
 <div class="ff">Country</div>
-<div class="apr"><input id="fCo" list="coList" placeholder="e.g. Türkiye, Germany, USA" autocomplete="off"></div><datalist id="coList"></datalist>
+<div class="apr1"><div class="fw"><input id="fCo" list="coList" placeholder="e.g. Türkiye, Germany, USA" autocomplete="off"><button type="button" class="fp" data-f="fCo" aria-label="Add"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M2.5 6h7M6 2.5v7"/></svg></button><button type="button" class="fx" data-f="fCo" aria-label="Remove"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div class="chips" id="cCo"></div></div><datalist id="coList"></datalist>
 <div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
 <div class="cks"><label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
 <label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label>
