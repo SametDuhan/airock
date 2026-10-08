@@ -110,8 +110,14 @@
     if (!circles.length) return { src: '', flights: [], partial, covered, cov: [], total };
     await Promise.all(circles.map(async (c, i) => {
       try {
-        const r = await fromFeeds((i + rot) % FEEDS.length, f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r), Math.floor(i / FEEDS.length) * 150, o.gen);
-        r.ac.forEach(a => a.lat != null && a.lon != null && seen.set(a.hex, a)); used.add(r.name); okN++; good.push(c);
+        // A small area (a close-up of an airport): ask every feed and merge. The feeds see different receivers and handle parked / taxiing aircraft differently (adsb.lol often leaves them out
+        // where adsb.fi has them), so one feed alone shows a half-empty apron. Big views keep one feed per circle, to stay within the rate limits.
+        const both = FEEDS.length > 1 && circles.length <= 2 && c.r <= 30, urlOf = f => f.point(c.lat.toFixed(3), c.lon.toFixed(3), c.r);
+        const rs = both ? (await Promise.allSettled(FEEDS.map((_, k) => fromFeeds((k + rot) % FEEDS.length, urlOf, 0, o.gen)))).filter(x => x.status === 'fulfilled').map(x => x.value)
+          : [await fromFeeds((i + rot) % FEEDS.length, urlOf, Math.floor(i / FEEDS.length) * 150, o.gen)];
+        if (!rs.length) throw new Error('no response');
+        for (const r of rs) { r.ac.forEach(a => { if (a.lat == null || a.lon == null) return; const old = seen.get(a.hex); if (!old || (a.seen_pos ?? 99) < (old.seen_pos ?? 99)) seen.set(a.hex, a); }); used.add(r.name); }
+        okN++; good.push(c);
       } catch (e) { lastErr = e.message; }
     }));
     if (!okN) throw new Error(lastErr || 'no response');

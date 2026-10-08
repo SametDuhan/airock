@@ -139,6 +139,7 @@ const SHAPES = {
     e: 'M9 15.9a0.7 0.7 0 0 1 1.4 0v1.8a0.7 0.7 0 0 1-1.4 0zM13.6 15.9a0.7 0.7 0 0 1 1.4 0v1.8a0.7 0.7 0 0 1-1.4 0z', s: 1 },
   prop: { b: 'M12 1.8 L12.8 2.8 L13 5 L13 10.4 L21.8 11.2 L21.8 13.2 L13 13.8 L12.9 18.8 L15.6 19.6 L15.6 21 L12.7 20.6 L12 21.2 L11.3 20.6 L8.4 21 L8.4 19.6 L11.1 18.8 L11 13.8 L2.2 13.2 L2.2 11.2 L11 10.4 L11 5 L11.2 2.8Z',
     e: 'M6.1 8.6a0.8 0.8 0 0 1 1.6 0v1.8a0.8 0.8 0 0 1-1.6 0zM16.3 8.6a0.8 0.8 0 0 1 1.6 0v1.8a0.8 0.8 0 0 1-1.6 0z', s: 1 }, // turboprop: straight wing, engines on the wing
+  veh: { b: 'M9.2 8.2h5.6a1.2 1.2 0 0 1 1.2 1.2v5.2a1.2 1.2 0 0 1-1.2 1.2H9.2A1.2 1.2 0 0 1 8 14.6V9.4a1.2 1.2 0 0 1 1.2-1.2z', s: .75 }, // ground vehicle (ADS-B category C1 / C2 / C3): a small box, not a plane
   heli: { b: 'M12 3.6c2.4 0 3.8 2 3.8 4.6 0 2.2-.8 3.7-1.6 4.6h-4.4c-.8-.9-1.6-2.4-1.6-4.6 0-2.6 1.4-4.6 3.8-4.6zM11.2 12.4h1.6v7.4h-1.6zM9.3 18.6h5.4l-.6 1.7H9.9zM11.35 19.8h1.3v2.4h-1.3z', // cabin, tail boom, stabilizer, tail fin
     e: 'M7.1 6.8h1v6.4h-1zM15.9 6.8h1v6.4h-1z', // skids
     d: 'M22 8.6a10 10 0 1 1-20 0a10 10 0 1 1 20 0z', // faint rotor disc (filled)
@@ -157,12 +158,12 @@ const guessAir = f => { const kt = (f.spd || 0) * 1.944, ft = (f.alt || 0) * 3.2
   return !f.ground && (kt >= 190 || ft >= 18000) || line && (kt >= 120 || ft >= 5000) ? 'F' : f.ground && line ? 'F' : ''; };
 const kindOf = f => { const c = acCode(f), cat = f.cat || '', g = !c && !cat ? guessAir(f) : '';
   if (f._kk === c + cat + g) return f._k;
-  const k = cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : PROP_RE.test(c) ? 'prop' : TWIN_RE.test(c) || /^A[345]$/.test(cat) || g ? 'air2' : 'gen';
+  const k = /^C[123]$/.test(cat) ? 'veh' : cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : PROP_RE.test(c) ? 'prop' : TWIN_RE.test(c) || /^A[345]$/.test(cat) || g ? 'air2' : 'gen';
   f._kk = c + cat + g; return f._k = k; };
 // Size class by aircraft type: big airliners draw larger, small ones smaller. The difference fades out when zoomed far out so crowded areas stay readable.
 const XL_RE = /^(A38\w|B74\w|B77[WL]|B778|B779|B77\w|A35K|A346|A345|A124|A225|C5M?|IL96|B748)$/, WIDE_RE = /^(B78\w|B76\w|A33\w|A35\w|A30B|A310|A306|A3ST|B75\w|MD11|DC10|L101|IL86)$/, SMALL_RE = /^(CRJ\w|CR\d|AT\d\d|DH8\w|SF34|B190|E1[34]\w|J328|D328|F50|F27|SB20|JS\d\d|DHC\d|PC12|C208|TBM\d|BE\d\d|PA\d\d|C1\d\d|C2\d\d|SR2\d|DA\d\d|M20\w|P28\w)/;
 const sizeOf = f => { const k = kindOf(f); if (f._sk !== f._kk) { const c = acCode(f); f._sk = f._kk;
-    f._sz = k === 'heli' ? .75 : k === 'gen' ? .7 : XL_RE.test(c) ? 1.35 : WIDE_RE.test(c) ? 1.15 : k === 'jet' || k === 'prop' || SMALL_RE.test(c) ? .8 : (f.cat === 'A5' ? 1.3 : f.cat === 'A4' ? 1.15 : f.cat === 'A1' ? .7 : f.cat === 'A2' ? .8 : 1); }
+    f._sz = k === 'veh' ? .8 : k === 'heli' ? .75 : k === 'gen' ? .7 : XL_RE.test(c) ? 1.35 : WIDE_RE.test(c) ? 1.15 : k === 'jet' || k === 'prop' || SMALL_RE.test(c) ? .8 : (f.cat === 'A5' ? 1.3 : f.cat === 'A4' ? 1.15 : f.cat === 'A1' ? .7 : f.cat === 'A2' ? .8 : 1); }
   return f._sz; };
 const sizeK = f => { const z = map.getZoom(), m = sizeOf(f); return 1 + (m - 1) * (z <= 4 ? 0 : z <= 6 ? .5 : 1); };
 map.createPane('planes').style.zIndex = 450;
@@ -203,7 +204,7 @@ const PlaneLayer = L.Layer.extend({
     L.DomUtil.setPosition(c, map.containerPointToLayerPoint([0, 0]));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, s.x, s.y); ctx.lineWidth = .7; ctx.strokeStyle = '#000';
     // Icons shrink as you zoom out so thousands of aircraft don't pile up at continent scale
-    const z = map.getZoom(), k = z <= 4 ? .55 : z <= 5 ? .65 : z <= 6 ? .8 : 1;
+    const z = map.getZoom(), k = z <= 4 ? .55 : z <= 5 ? .65 : z <= 6 ? .8 : z <= 12 ? 1 : z <= 13 ? 1.15 : z <= 14 ? 1.4 : z <= 15 ? 1.8 : z <= 16 ? 2.3 : 3; // zoomed right in (an airport apron) the aircraft grow towards their real size
     let sel = null; const cLon = map.getCenter().lng;
     if (TRAIL && !replay) { // fading-free, batched by color: one stroke per altitude color keeps thousands of trails cheap
       const N = TRAIL === 2 ? 360 : 60, paths = new Map(); let n = 0;
