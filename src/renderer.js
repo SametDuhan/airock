@@ -74,7 +74,11 @@ const EMG = { 7500: 'Hijacking', 7600: 'Radio failure', 7700: 'General emergency
 // A real emergency: squawk 7500 / 7600 / 7700, or the ADS-B emergency status that means the same (unlawful / nordo / general). Other status values
 // ("lifeguard", "minfuel", "downed", "reserved") and ordinary squawks such as 1000 (a normal IFR code in Europe) are NOT shown as emergencies.
 const EMG_STATUS = { unlawful: 7500, nordo: 7600, general: 7700 };
-const emgCode = f => EMG[f.sq] ? +f.sq : EMG_STATUS[f.emg] || 0;
+const emgRaw = f => EMG[f.sq] ? +f.sq : EMG_STATUS[f.emg] || 0;
+// A pilot turning the transponder knob passes through 7500 / 7600 / 7700 on the way to another code (e.g. 7000 -> 7600 -> 7700 -> ...): for a few seconds the aircraft "declares" an emergency it never did.
+// So a code only counts once it has been reported without a break for EMG_HOLD ms (tracked in upsert(): f._eAt = when this code was first seen; undefined = not tracked, e.g. demo / replay).
+const EMG_HOLD = 45000;
+const emgCode = f => { const c = emgRaw(f); return c && (f._eAt === undefined || (f._eC === c && f._eAt && Date.now() - f._eAt >= EMG_HOLD)) ? c : 0; };
 const isEmg = f => !!emgCode(f);
 let HSTEP = LS('sky.hstep', 5), TRAIL = LS('sky.trail', 0); // history: seconds per frame (720 frames: 1 h / 3 h / 6 h); trails: 0 off, 1 short, 2 long
 let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
@@ -265,7 +269,8 @@ function seedDemo() {
 function upsert(d) {
   let f = flights.get(d.id);
   if (!f) { f = { tr: [], gone: replay }; flights.set(d.id, f); } // an aircraft that arrives during replay wasn't in that frame
-  const was = f.ground; Object.assign(f, d); f.seen = d.stale ? Date.now() - 60000 : Date.now();
+  const was = f.ground; Object.assign(f, d); { const c = emgRaw(f); if (!c) f._eAt = 0; else if (f._eC !== c || !f._eAt) { f._eC = c; f._eAt = Date.now(); } }
+  f.seen = d.stale ? Date.now() - 60000 : Date.now();
   if (was === false && f.ground) f.gAt = Date.now(); else if (!f.ground) { f.gAt = 0; f.landedAt = 0; } // gAt: we saw it touch down (used when the trace does not say when)
   X.event(f); return f;
 }
