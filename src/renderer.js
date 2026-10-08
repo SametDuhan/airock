@@ -309,6 +309,10 @@ function nearAirport(lat, lon, maxKm) {
 function implausible(f, r) {
   if (!r || f.ground || !(f.lat != null)) return false;
   const dOD = km(r.org.lat, r.org.lon, r.dst.lat, r.dst.lon), dO = km(r.org.lat, r.org.lon, f.lat, f.lon), dD = km(f.lat, f.lon, r.dst.lat, r.dst.lon);
+  // The real trace says it did not start at this origin: it is already close to the "departure" airport, but the trace it flew begins far away in the air (an inbound leg of the same
+  // callsign, e.g. ESB→IST flown before IST→AMS). A real departure's trace starts at the origin; a long flight with a cut-off trace is far from its origin, so it does not match this.
+  const S = f.flown?.length > 1 ? f.flown[0] : null;
+  if (S) { const dS = km(S[0], S[1], f.lat, f.lon); if (dS > 120 && dS > 2 * dO + 50 && km(S[0], S[1], r.org.lat, r.org.lon) > 100) return true; }
   if (dOD < 150 || dO < 80 || dD < 80) return false;
   if ((dO + dD) / dOD > 1.45) return true;
   if (f.hdg != null && dD > 150 && dO > 150) { const d = Math.abs(((brg(f.lat, f.lon, r.dst.lat, r.dst.lon) - f.hdg) % 360 + 540) % 360 - 180); if (d > 110) return true; }
