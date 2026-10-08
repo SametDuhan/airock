@@ -278,6 +278,16 @@ function nearAirport(lat, lon, maxKm) {
   let best = null, bd = maxKm; knownAps.forEach(a => { const d = km(lat, lon, a.lat, a.lon); if (d < bd) { bd = d; best = a; } });
   if (best) return best; for (const a of BIGAP) { const d = km(lat, lon, a.lat, a.lon); if (d < bd) { bd = d; best = a; } } return best;
 }
+// A callsign can be flown on another leg than the one the database lists. In the air, a route is dropped when the aircraft is clearly not on it:
+// far off the line origin→destination, or flying away from the destination while far from both airports. (A wrong line is worse than none.)
+function implausible(f, r) {
+  if (!r || f.ground || !(f.lat != null)) return false;
+  const dOD = km(r.org.lat, r.org.lon, r.dst.lat, r.dst.lon), dO = km(r.org.lat, r.org.lon, f.lat, f.lon), dD = km(f.lat, f.lon, r.dst.lat, r.dst.lon);
+  if (dOD < 150 || dO < 80 || dD < 80) return false;
+  if ((dO + dD) / dOD > 1.45) return true;
+  if (f.hdg != null && dD > 150 && dO > 150) { const d = Math.abs(((brg(f.lat, f.lon, r.dst.lat, r.dst.lon) - f.hdg) % 360 + 540) % 360 - 180); if (d > 110) return true; }
+  return false;
+}
 function reconcileRoute(f) {
   const r0 = f.routeDb; if (!r0) return false;
   const t0 = f.landedAt ? f.landedAt * 1000 : f.gAt || 0, justLanded = !!(f.ground && f.arr && (!t0 || Date.now() - t0 < 25 * 60e3));
@@ -285,6 +295,7 @@ function reconcileRoute(f) {
   if (st && km(st[0], st[1], org.lat, org.lon) > 60) { const a = nearAirport(st[0], st[1], 25); if (a) org = a; }
   if (justLanded && km(st[0], st[1], f.lat, f.lon) > 30) { const a = nearAirport(f.lat, f.lon, 8); if (a && a.code !== org.code) dst = a; }
   const was = f.route; f.route = org === r0.org && dst === r0.dst ? r0 : { ...r0, org, dst, fixed: true };
+  if (implausible(f, f.route)) { f.route = null; f.rs = 'none'; } else if (f.rs === 'none' && f.route) f.rs = 'ok';
   return !was || was.org.code !== f.route.org.code || was.dst.code !== f.route.dst.code;
 }
 function showRoute(f) { if (f.id !== selected) return; if (!replay) drawRoute(f); renderCard(true); }
@@ -613,6 +624,9 @@ $('bZ').onclick = () => { if (zone) { zone = null; save('sky.zone', null); drawZ
 $('zR').value = zoneR();
 $('zR').onchange = function () { const r = Math.max(3, Math.min(500, Math.round(+this.value) || ZONE_R)); this.value = r; if (zone) { zone.r = r; save('sky.zone', zone); initIn(); drawZone(); } else zoneRDef = r; };
 let zoneRDef = ZONE_R; // radius chosen while there's no zone; applied to the next zone
+{ const zi = $('zR'), step = d => { const n = Math.round(+zi.value) || ZONE_R, v = Math.max(3, Math.min(500, n + d * (n >= 100 ? 10 : 5))); zi.value = v; zi.classList.remove('bump'); void zi.offsetWidth; zi.classList.add('bump'); zi.onchange(); };
+  for (const [id, d] of [['zM', -1], ['zP', 1]]) { const b = $(id); let h = 0, r = 0; const stop = () => { clearTimeout(h); clearInterval(r); };
+    b.onpointerdown = () => { step(d); h = setTimeout(() => { r = setInterval(() => step(d), 70); }, 400); }; b.onpointerup = b.onpointerleave = b.onpointercancel = stop; } }
 // When the zone changes, silently recompute whether each aircraft is "inside" (to avoid a flood of notifications)
 const initIn = () => flights.forEach(f => { if (zone) f.in = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); else delete f.in; });
 drawZone();
@@ -881,7 +895,10 @@ const applyF = e => {
 ['fA', 'fM', 'fS', 'fSM', 'fF', 'fG', 'fDep', 'fArr', 'fTp', 'fAl'].forEach(i => $(i).oninput = applyF);
 { const v = LS('sky.flt', null); // restore the filters from the last session
   if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fSM').value = v.sm ?? 600; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; } }
-$('fSw').onclick = () => { const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; applyF(); };
+$('fSw').onclick = () => {
+  const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; applyF();
+  for (const el of [$('fSw'), $('fDep'), $('fArr')]) { el.classList.remove('spin', 'flash'); void el.offsetWidth; el.classList.add(el === $('fSw') ? 'spin' : 'flash'); }
+};
 
 /* ---------- airport filter (departure / arrival) ---------- */
 // Known airports (suggestion list): the fixed list + route airports learned in live mode
@@ -926,3 +943,5 @@ map.on('click', e => {
   const f = hit(e.containerPoint); select(f ? f.id : null);
 });
 applyF(); setMode(LS('sky.live', true) && navigator.onLine !== false); if (live) { const c = LS('sky.cache', null); if (c?.c) map.setView([c.c[0], c.c[1]], c.c[2], { animate: false }); loadCache(); }
+
+$('fb').onclick = () => window.open('https://github.com/SametDuhan/airock/issues/new', '_blank', 'noopener');

@@ -624,6 +624,9 @@ $('bZ').onclick = () => { if (zone) { zone = null; save('sky.zone', null); drawZ
 $('zR').value = zoneR();
 $('zR').onchange = function () { const r = Math.max(3, Math.min(500, Math.round(+this.value) || ZONE_R)); this.value = r; if (zone) { zone.r = r; save('sky.zone', zone); initIn(); drawZone(); } else zoneRDef = r; };
 let zoneRDef = ZONE_R; // radius chosen while there's no zone; applied to the next zone
+{ const zi = $('zR'), step = d => { const n = Math.round(+zi.value) || ZONE_R, v = Math.max(3, Math.min(500, n + d * (n >= 100 ? 10 : 5))); zi.value = v; zi.classList.remove('bump'); void zi.offsetWidth; zi.classList.add('bump'); zi.onchange(); };
+  for (const [id, d] of [['zM', -1], ['zP', 1]]) { const b = $(id); let h = 0, r = 0; const stop = () => { clearTimeout(h); clearInterval(r); };
+    b.onpointerdown = () => { step(d); h = setTimeout(() => { r = setInterval(() => step(d), 70); }, 400); }; b.onpointerup = b.onpointerleave = b.onpointercancel = stop; } }
 // When the zone changes, silently recompute whether each aircraft is "inside" (to avoid a flood of notifications)
 const initIn = () => flights.forEach(f => { if (zone) f.in = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); else delete f.in; });
 drawZone();
@@ -940,3 +943,5 @@ map.on('click', e => {
   const f = hit(e.containerPoint); select(f ? f.id : null);
 });
 applyF(); setMode(LS('sky.live', true) && navigator.onLine !== false); if (live) { const c = LS('sky.cache', null); if (c?.c) map.setView([c.c[0], c.c[1]], c.c[2], { animate: false }); loadCache(); }
+
+$('fb').onclick = () => window.open('https://github.com/SametDuhan/airock/issues/new', '_blank', 'noopener');
