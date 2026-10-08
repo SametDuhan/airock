@@ -274,6 +274,19 @@ html:is([lang=ar],[lang=fa]) #side .brand{direction:ltr} /* the title and the la
   #sx{display:inline-flex!important}
 }
 #sx{display:none;margin-left:8px;flex:none}
+
+/* filter polish */
+.flt .ck{display:flex;flex-direction:row;align-items:center;gap:10px;margin:4px 0}
+.apr input{background:#1c1c1c;border-color:#4a4740;color:#f4f1e8;font:600 13px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.02em}
+.apr input::placeholder{color:#a9a395;opacity:1;font-weight:500}
+.apr input:hover{border-color:#6b665a}.apr input:focus{border-color:var(--ac);box-shadow:0 0 0 3px #f2c23026}
+.apr .ib{position:relative;flex:none;width:36px;height:36px;border-radius:50%;font-size:17px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;border-color:#4a4740;color:var(--ac);transition:transform .35s cubic-bezier(.3,1.5,.5,1),background .2s,color .2s,box-shadow .2s}
+.apr .ib:hover{background:var(--ac);color:#111;border-color:var(--ac);box-shadow:0 0 14px #f2c23066;transform:scale(1.1)}
+.apr .ib:active{transform:scale(.92)}
+.apr .ib.spin{animation:swp .45s cubic-bezier(.3,1.4,.5,1)}
+@keyframes swp{from{transform:rotate(0)}to{transform:rotate(180deg)}}
+.apr input.flash{animation:fl .45s ease-out}
+@keyframes fl{from{background:#f2c23044;transform:translateY(-3px)}to{background:#1c1c1c;transform:none}}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button class="ib" id="sx" aria-label="Close menu">✕</button><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
