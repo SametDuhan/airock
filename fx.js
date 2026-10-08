@@ -5,6 +5,16 @@
   const fine = matchMedia('(hover:hover) and (pointer:fine)').matches;
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
+  /* ---- theme switch: mirrors the current theme (the click handler itself lives in index.html) ---- */
+  const tb = $('#themeBtn'), docEl = document.documentElement;
+  if (tb) {
+    const isDark = () => docEl.dataset.theme ? docEl.dataset.theme === 'dark' : !matchMedia('(prefers-color-scheme: light)').matches;
+    const sync = () => { const d = isDark(); tb.dataset.mode = d ? 'dark' : 'light'; tb.setAttribute('aria-checked', String(d)); };
+    sync(); new MutationObserver(sync).observe(docEl, { attributes: true, attributeFilter: ['data-theme'] });
+    const mq = matchMedia('(prefers-color-scheme: light)'); mq.addEventListener && mq.addEventListener('change', sync);
+    tb.addEventListener('click', () => { if (RM) return; docEl.classList.add('theme-anim'); clearTimeout(tb._t); tb._t = setTimeout(() => docEl.classList.remove('theme-anim'), 600); }, true);
+  }
+
   /* ---- scroll progress, sticky header state, active nav link ---- */
   const prog = $('#prog'), hdr = $('header');
   let maxS = 1, tick0 = false, stuck = false, tt = null, ring = null, links = [];
