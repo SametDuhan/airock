@@ -933,7 +933,9 @@ Object.keys(CH).forEach(id => $(id).addEventListener('keydown', e => { if (e.key
 $('fPh').onclick = e => { const b = e.target.closest('button'); if (!b) return; document.querySelectorAll('#fPh button').forEach(x => x.classList.toggle('on', x === b)); applyF(); };
 $('fRst').onclick = () => { $('fA').value = 0; $('fM').value = 45000; $('fS').value = 0; $('fSM').value = 600; $('fF').checked = false; $('fE').checked = false; $('fG').checked = true; for (const i of Object.keys(CH)) { $(i).value = ''; CH[i] = []; } document.querySelectorAll('#fPh button').forEach(x => x.classList.toggle('on', !x.dataset.p)); applyF(); };
 $('fSw').onclick = () => {
-  const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; [CH.fDep, CH.fArr] = [CH.fArr, CH.fDep]; applyF();
+  const empty = !$('fDep').value && !$('fArr').value && !CH.fDep.length && !CH.fArr.length; // nothing to exchange: the two boxes trade places so the swap is still visible
+  if (empty) $('fDep').closest('.apd').classList.toggle('rv');
+  else { const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; [CH.fDep, CH.fArr] = [CH.fArr, CH.fDep]; applyF(); }
   for (const el of [$('fSw'), $('fDep'), $('fArr')]) { el.classList.remove('spin', 'flash'); void el.offsetWidth; el.classList.add(el === $('fSw') ? 'spin' : 'flash'); }
 };
 

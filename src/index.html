@@ -389,6 +389,7 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 /* round 5: multi-value fields (+ adds the typed value, × clears), chips, card for the aircraft list, thicker accent bar */
 .apd{display:grid;grid-template-columns:1fr 34px;grid-template-rows:auto auto;gap:6px 8px;margin-top:6px;align-items:start}
 .apd .apc1:first-child{grid-column:1;grid-row:1}.apd .apc1:last-child{grid-column:1;grid-row:2}
+.apd.rv .apc1:first-child{grid-row:2}.apd.rv .apc1:last-child{grid-row:1}
 .apd #fSw{grid-column:2;grid-row:1/3;align-self:center;width:34px;height:34px;margin:0}.apd #fSw span{display:block;transform:rotate(90deg)}
 .apr1{margin-top:6px}
 .fw{position:relative}
