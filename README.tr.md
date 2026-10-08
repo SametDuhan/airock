@@ -13,7 +13,7 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 - **Canlı uçuşlar**: uçak konumları 15 saniyede bir yenilenir. Haritayı kaydırınca ya da yakınlaştırınca yeni bölge hemen yüklenir.
 - **Demo modu**: internet gerektirmeyen 45 sanal uçuş. Zaman 30 kat hızlı akar.
 - **Web demosu**: SkyTrack'i tarayıcıda dene: [sametduhan.github.io/airock/app/](https://sametduhan.github.io/airock/app/). Uçuşlar ve türbülans alanları sanaldır; canlı veri için masaüstü uygulaması gerekir. Yeniden derlemek için `npm run build:web` (çıktı `site/app/` içinde).
-- **Rota kontrolü**: iki havalimanı seç (**Mod → 🧭 Rota kontrolü**); FL280, FL340 ve FL390'da yol boyunca bildirilen türbülansı, ilk görüldüğü yeri ve haritada çizgiyi gör.
+- **Rota kontrolü**: iki havalimanı seç (**Mod → Rota kontrolü**); FL280, FL340 ve FL390'da yol boyunca bildirilen türbülansı, ilk görüldüğü yeri ve haritada çizgiyi gör.
 - **Takip ettiğin uçuşlar için türbülans uyarısı**: takip listendeki bir uçuşun önündeki yol sallantılı olunca (ve düzelince) SkyTrack haber verir. **🔔 Uyarılar → Bir uçuşu takip et**, kalkıştan önce `TK1` gibi bir uçuş numarası alır ve havalanınca izlemeye başlar.
 - **Koltuk ipuçları**: uçuş kartı güneşin uçağın hangi tarafında olduğunu (gerçek güneş konumundan) ve türbülans varsa kabinde en az nerede hissedildiğini söyler.
 - **Takip bağlantısı**: canlı bir uçuşta **🔗 Takip bağlantısını kopyala**, bir arkadaşın ya da yakının açabileceği bir sayfa verir (`site/track/`). `proxy/` içindeki proxy'yi gerektirir; `src/data.js` içinde `PROXY_URL` ayarlanana kadar kapalı kalır.
@@ -28,11 +28,15 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
   - havalimanının fotoğrafı, bulunduğu şehir ve ülke
   - anlık hava durumu: sıcaklık, rüzgâr, hamle, nem, basınç ve görüş
   - görebildiğin uçakların **Varışlar** ve **Kalkışlar** listesi; birine tıklayınca haritada tıklamış gibi uçuş kartı açılır
-- **Filtreler**:
-  - tek çubukta irtifa aralığı (sol tutamaç en az, sağ tutamaç en çok)
-  - hız aralığı (sol tutamaç en az, sağ tutamaç en çok)
+- **Filtreler**: Filtreler kartı kaç filtrenin açık olduğunu gösterir ve **Filtreleri sıfırla** düğmesi vardır.
+  - irtifa ve hız aralığı (sol tutamaç en az, sağ tutamaç en çok)
+  - **uçuş evresi**: hepsi, tırmanış, seyir ya da alçalış (dikey hıza göre)
   - kalkış ve/veya varış havalimanı; kodla (IST, LTFM) ya da şehir adıyla
-  - yerdeki uçakları gösterme/gizleme ve sadece favoriler
+  - havayolu, uçak tipi ve ülke (ülke veriden ya da tescil önekinden bulunur)
+  - metin kutusunun yanındaki **+**, yazdığını etikete çevirir; böylece tek filtreye birden çok değer girilir (THY ve Pegasus). **×** alanı temizler
+  - yerdeki uçakları gösterme/gizleme, sadece favoriler ve sadece acil durumlar
+- **Sadeleşen menü**: menü bölümleri başlığında sarı çubuk olan ayrı kartlardır, Harita bölümü kapalı başlar. **Ayarlar** ve **İletişim** (hata bildir, özellik iste, rapor için uygulama bilgisini kopyala) altta ince bir çubukta durur. Menü düğmesi, menünün açık olup olmadığını gösteren bir panel simgesidir.
+- **Daha doğru rota**: uçak havadayken veritabanındaki rota, uçak belli ki o rotada değilse (hattan çok uzak ya da varıştan uzaklaşıyorsa) gösterilmez; çünkü havayolları çağrı kodlarını yeniden kullanır.
 - **Acil durum**: 7500, 7600 ya da 7700 squawk kodu veren uçağın etrafında yanıp sönen kırmızı halka çıkar ve bildirim gelir; listede ⚠ görünür.
 - **Takip listesi**: uçuş kartında **🔔 Takip et**'e bas. SkyTrack takip ettiğin uçakları dünyanın neresinde olursa olsun 45 saniyede bir sorar; biri kalkınca ya da inince bildirim gelir.
 - **Bugünkü uçuşlar**: canlı bir uçuş kartında **Bugünkü uçuşlar**, uçağın bugün yaptığı bütün uçuşları (saat, mesafe, en yüksek irtifa) listeler. Birine tıklayınca haritada çizilir.
@@ -44,16 +48,16 @@ SkyTrack, uçuşları harita üzerinde canlı izlemeni sağlayan, Flightradar24 
 - **Farklı uçak simgeleri**: helikopterlerin rotorlu simgesi var, dört motorlu yolcu uçakları dört motoruyla daha büyük çizilir; iki motorlu yolcu uçakları, küçük jetler ve diğer uçaklar ayrı şekillerde. Hepsi irtifaya göre renklenir.
 - **İrtifa ve hız grafiği**: canlı uçuş kartında, uçuş boyunca irtifa ve hızı gösteren küçük bir grafik çıkar.
 - **Görsel paylaş**: uçuş kartındaki **📷 Görsel paylaş**, uçuşun rotası, çağrı kodu ve sayılarıyla bir resim kaydeder (panoya da kopyalar).
-- **Uçuş günlüğü**: **Mod** altındaki **📓 Uçuş günlüğü** kendi uçuşlarını tutar (tarih, rota, uçuş no, uçak); toplam mesafe, Dünya turu sayısı, yolcu başına tahmini CO₂ ve CSV dışa aktarma var. Uçuş kartındaki **Günlüğe ekle** bunu senin yerine doldurur.
+- **Uçuş günlüğü**: **Mod** altındaki **Uçuş günlüğü** kendi uçuşlarını tutar (tarih, rota, uçuş no, uçak); toplam mesafe, Dünya turu sayısı, yolcu başına tahmini CO₂ ve CSV dışa aktarma var. Uçuş kartındaki **Günlüğe ekle** bunu senin yerine doldurur.
 - **Tepsi ve bildirimler**: **Mod** altında pencereyi kapatınca SkyTrack'i sistem tepsisinde çalışır tutabilir (takip listesi bildirimleri gelmeye devam eder) ve masaüstü bildirimlerini açıp kapatabilirsin.
 - **Her sistem için indirme**: Windows kurulumu, macOS (.dmg, Apple silikon ve Intel) ve Linux (.AppImage) her sürüme derleme akışıyla eklenir.
 - **Uydu bulutları ve izler:** **Bulutlar** düğmesi uçakların altında NASA'nın son uydu görüntüsünü (bulutlarla) gösterir; **İzler** her uçağın nereden geldiğini (5 ya da 30 dakika, irtifaya göre renkli) çizer.
-- **İstatistikler:** **📊 İstatistikler**, SkyTrack'in şu an gördüklerini özetler: havadaki ve yerdeki uçaklar, en yüksek ve en hızlı uçak, en çok görülen havayolları ve tipler, en yoğun havalimanları.
+- **İstatistikler:** **İstatistikler** (**Mod** altında), SkyTrack'in şu an gördüklerini özetler: havadaki ve yerdeki uçaklar, en yüksek ve en hızlı uçak, en çok görülen havayolları ve tipler, en yoğun havalimanları.
 - **Daha uzun geri sarma:** Ayarlar'dan 1, 3 ya da 6 saat geriye sarabilirsin.
 - **Daha güvenilir veri:** SkyTrack canlı modda açılır ve harita son bilinen konumlarla dolu gelir; ücretsiz veri kaynakları yoğunsa anlaşılır bir mesaj gösterir ve daha yüksek günlük limit için kendi ücretsiz OpenSky API istemcini kullanabilir.
 - **Kendi yönteminle kur:** kurulum dosyalarına ek olarak winget ve Arch (AUR) için manifestolar [`packaging/`](packaging/) klasöründe, bkz. [docs/PACKAGING.md](docs/PACKAGING.md).
 - **Favoriler**: bir uçuşu ☆ ile işaretleyip sonra kolayca bulabilirsin.
-- **Uyarı bölgesi**: haritaya tıklayarak bir daire belirlersin (varsayılan 100 km; yarıçapı menüden 10–500 km arasında değiştirebilirsin). Bir uçak daireye girince, ya da ilk kez daire içinde görününce bildirim gelir.
+- **Uyarı bölgesi**: haritaya tıklayarak bir daire belirlersin (varsayılan 100 km; yarıçapı menüde − ve + düğmeleriyle 3–500 km arasında değiştirebilirsin). Bir uçak daireye girince, ya da ilk kez daire içinde görününce bildirim gelir.
 - **Geçmişi oynatma**: alttaki çubukla son bir saati geri sarabilirsin. *● Canlı* düğmesi canlı görünüme döndürür.
 - **Harita stili**: Standart, Açık veya Koyu. Fare imleci ve filtre kutucukları SkyTrack'in sarı-siyah görünümünü kullanır.
 - **Çok uçakta da hızlı**: bütün uçaklar tek bir tuvale (canvas) çizilir. Avrupa genelinde yaklaşık 3.700 uçak yaklaşık 8 ms'de çizilir.
@@ -93,7 +97,7 @@ Kurulum dosyası `dist/` klasöründe oluşur.
 | Bir uçağın bilgilerini görmek | Uçağa haritada ya da listede tıkla. Kartı **✕** ile kapat. |
 | Bir uçuşu bulmak | Arama kutusuna çağrı kodu (ör. `THY1`) ya da tescil (ör. `TC-JPN`) yaz. |
 | Sadece İstanbul'dan Frankfurt'a gidenleri görmek | *Filtreler* bölümünde **Kalkış**'a `IST`, **Varış**'a `FRA` yaz. Tek kutuyu doldurursan o havalimanından kalkan ya da oraya giden bütün uçuşları görürsün. |
-| Yan menüyü gizlemek/göstermek | Menünün üstündeki **✕** ile kapat, haritadaki **☰** ile geri aç. |
+| Yan menüyü gizlemek/göstermek | Haritanın sol üstündeki panel düğmesiyle (telefonda menünün üstündeki **✕**) kapat ve aç. |
 | Geçmişe dönmek | Haritanın altındaki çubuğu sürükle. |
 
 ## Veri kaynakları
@@ -138,7 +142,14 @@ src/geo.js        Mesafe, yön ve büyük daire yardımcıları (testli)
 src/data.js       Bütün veri kaynakları: uçuşlar, rotalar, uçak bilgisi
 src/renderer.js   Harita, uçak katmanı, uçuş kartı, liste, filtreler, geçmiş oynatma
 src/extras.js     Acil durumlar, takip listesi, bugünkü uçuşlar, radar, gözlem defteri, dil değiştirme
-src/i18n.js       İngilizce / Türkçe metinler
+src/i18n.js       İngilizce / Türkçe metinler ve dil listesi
+src/langs*.js     Diğer on üç dil
+src/layers.js     Gece, bulut, izler, katlanan menü
+src/features.js   Görsel paylaş, günlük, irtifa profili
+src/tools.js      Ayarlar, uyarılar, tepemde, tur, karşılama ekranı
+src/trip.js       Rota kontrolü ve yolculuk araçları
+src/airports*.js  Gömülü havalimanı verisi
+site/             İnternet sitesi (GitHub Pages) ve site/app/ içindeki web demosu
 docs/             README'deki ekran görüntüleri
 ```
 
