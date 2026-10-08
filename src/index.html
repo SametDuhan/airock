@@ -369,6 +369,22 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 #upd{bottom:100px}
 .apr input#fDep,.apr input#fArr{font-size:12px;padding-right:20px;background-position:right 6px center;background-size:11px;padding-left:9px}
 .dr{margin-bottom:10px}
+
+/* round 4: slim dock, sections as separate cards */
+#foot{padding:6px 10px;gap:0;box-shadow:0 -6px 14px #0007}
+#foot .fr2{gap:6px}
+#foot .setb,#fb{padding:6px 8px!important;border-radius:9px;font-size:12px;box-shadow:none}
+#foot .setb .gr,#fb svg{width:16px;height:16px}
+#foot .setb::after{display:none}
+#foot #ver{display:none}
+#upd{bottom:52px}
+#side>.sec:not(#srch),#side>.flt{margin:8px 10px 0;padding:4px 14px 12px;background:#ffffff06;border:1px solid var(--line);border-radius:12px;transition:background .2s,border-color .2s}
+#side>.sec:not(#srch):not(.collapsed),#side>.flt:not(.collapsed){border-color:#ffffff1f;background:#ffffff09}
+#side>.sec:not(#srch)>.lbl,#side>.flt>.lbl{position:relative;padding-left:12px}
+#side>.sec:not(#srch)>.lbl::before,#side>.flt>.lbl::before{content:'';position:absolute;left:0;top:50%;width:3px;height:14px;margin-top:-7px;border-radius:2px;background:var(--ac);opacity:.9;transition:height .25s,opacity .25s}
+#side>.collapsed>.lbl::before{height:8px;margin-top:-4px;opacity:.35}
+#side>.collapsed{padding-bottom:0!important}#side>.collapsed>.lbl{margin-bottom:8px}
+#srch{margin-top:8px}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button class="ib" id="sx" aria-label="Close menu">✕</button><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
