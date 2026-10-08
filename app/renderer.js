@@ -67,7 +67,7 @@ const zoneR = () => zone?.r || ZONE_R;
 const APO = AP.map(a => ({ code: a[0], name: a[1], lat: a[2], lon: a[3] }));
 const { R, brg, km, gc, unwrap, nearLon } = window.SkyGeo;
 const flights = new Map(), routeCache = new Map(), acCache = new Map(), picCache = new Map(), fav = new Set(LS('sky.fav', [])), hist = [],
-watch = new Map(LS('sky.watch', [])), flt = { alt: 0, maxAlt: 45000, spd: 0, maxSpd: 600, fav: false, ground: true, dep: '', arr: '', type: '', air: '' };
+watch = new Map(LS('sky.watch', [])), flt = { alt: 0, maxAlt: 45000, spd: 0, maxSpd: 600, fav: false, ground: true, dep: [], arr: [], type: [], air: [], ph: '', em: false, co: [] };
 // Hooks filled in by extras.js (watchlist, today's flights, spotter logbook): they keep this file focused on the map itself
 const X = { top: () => '', bottom: () => '', bottom2: () => '', rows: () => {}, sync: () => {}, click: () => false, event: () => {}, arrive: () => {}, sel: () => {} };
 const EMG = { 7500: 'Hijacking', 7600: 'Radio failure', 7700: 'General emergency' }; // squawk codes
@@ -91,8 +91,19 @@ const typeIs = (f, t) => { const c = acCode(f); return c === t || c.startsWith(t
 const airCode = f => /^[A-Z]{3}(?=\d)/.exec(f.cs.toUpperCase())?.[0] || '';
 const airIs = (f, a) => { const c = airCode(f), n = (f.route?.airline || AIRLINE[c]?.[0] || '').toUpperCase();
   return c === a || (f.route?.airlineIata || '').toUpperCase() === a || (a.length > 2 && n.includes(a)); };
+// Flight phase from the vertical rate (m/s): climbing above ~500 ft/min, descending below -500 ft/min, otherwise cruise (airborne only)
+const phaseIs = (f, p) => !f.ground && (p === 'c' ? f.vr > 2.5 : p === 'd' ? f.vr < -2.5 : Math.abs(f.vr) <= 2.5);
+// Country: the data source's own value when it has one, else from the registration prefix (ICAO-style national marks)
+const REGC = 'N:United States;TC:Türkiye Turkey;G:United Kingdom;D:Germany;F:France;EC:Spain;I:Italy;PH:Netherlands;OO:Belgium;HB:Switzerland;OE:Austria;SE:Sweden;LN:Norway;OY:Denmark;OH:Finland;EI:Ireland;CS:Portugal;SP:Poland;OK:Czechia;HA:Hungary;YR:Romania;LZ:Bulgaria;SX:Greece;9H:Malta;RA:Russia;VP:Russia;UR:Ukraine;LY:Lithuania;YL:Latvia;ES:Estonia;S5:Slovenia;9A:Croatia;YU:Serbia;T7:San Marino;A6:United Arab Emirates;A7:Qatar;HZ:Saudi Arabia;9K:Kuwait;A9C:Bahrain;A4O:Oman;EP:Iran;YI:Iraq;SU:Egypt;4X:Israel;OD:Lebanon;JY:Jordan;4K:Azerbaijan;4L:Georgia;EK:Armenia;UP:Kazakhstan;VT:India;AP:Pakistan;S2:Bangladesh;4R:Sri Lanka;B:China;JA:Japan;HL:South Korea;9V:Singapore;9M:Malaysia;HS:Thailand;PK:Indonesia;RP:Philippines;VN:Vietnam;VH:Australia;ZK:New Zealand;C:Canada;XA:Mexico;XB:Mexico;XC:Mexico;PR:Brazil;PT:Brazil;PP:Brazil;PS:Brazil;LV:Argentina;LQ:Argentina;CC:Chile;HK:Colombia;OB:Peru;YV:Venezuela;HP:Panama;TI:Costa Rica;CU:Cuba;ZS:South Africa;ET:Ethiopia;5Y:Kenya;CN:Morocco;7T:Algeria;TS:Tunisia;5N:Nigeria;5A:Libya;ST:Sudan;5X:Uganda;5H:Tanzania;9J:Zambia;Z:Zimbabwe;TU:Ivory Coast;6V:Senegal;EY:Tajikistan;UK:Uzbekistan;EW:Belarus;ER:Moldova;LX:Luxembourg;TF:Iceland;OM:Slovakia;E7:Bosnia;Z3:North Macedonia;ZA:Albania;5B:Cyprus;P:North Korea';
+const REGM = new Map(REGC.split(';').map(x => { const i = x.indexOf(':'); return [x.slice(0, i), x.slice(i + 1)]; }));
+const countryOf = f => { if (f.country) return f.country; if (f.ac?.country) return f.ac.country; const r = (f.reg || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  for (let n = 3; n > 0; n--) { const c = REGM.get(r.slice(0, n)); if (c) return c; } return ''; };
+const COUNTRIES = [...new Set([...REGM.values()].flatMap(v => v.split(' ').length > 1 && /^(Türkiye Turkey)$/.test(v) ? ['Türkiye', 'Turkey'] : [v]))].sort();
+$('coList').innerHTML = COUNTRIES.map(c => `<option value="${c}">`).join('');
+// Multi-value filter fields: the values added with "+" (chips); the text currently typed counts as one more value
+const CH = { fDep: [], fArr: [], fAl: [], fTp: [], fCo: [] };
 const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (flt.maxSpd >= 600 || f.spd * 1.944 <= flt.maxSpd) && (!flt.fav || fav.has(f.id))
-  && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)) && (!flt.type || typeIs(f, flt.type)) && (!flt.air || airIs(f, flt.air)); };
+  && (!flt.dep.length || flt.dep.some(d => apIs(f.route?.org, d))) && (!flt.arr.length || flt.arr.some(d => apIs(f.route?.dst, d))) && (!flt.type.length || flt.type.some(x => typeIs(f, x))) && (!flt.air.length || flt.air.some(x => airIs(f, x))) && (!flt.ph || phaseIs(f, flt.ph)) && (!flt.em || isEmg(f)) && (!flt.co.length || flt.co.some(x => countryOf(f).toLowerCase().includes(x))); };
 // toastEv: toasts about events the user didn't ask for (alerts, take-offs, emergencies, turbulence...): Settings → "In-app notifications" turns them off. Plain toast() is feedback for
 // something the user just did and always shows. At most 3 are on screen at once (the oldest goes first), so zooming into a crowded area can't pile them up.
 const toastEv = (msg, id) => toast(msg, id, !LS('sky.toast', true));
@@ -278,6 +289,16 @@ function nearAirport(lat, lon, maxKm) {
   let best = null, bd = maxKm; knownAps.forEach(a => { const d = km(lat, lon, a.lat, a.lon); if (d < bd) { bd = d; best = a; } });
   if (best) return best; for (const a of BIGAP) { const d = km(lat, lon, a.lat, a.lon); if (d < bd) { bd = d; best = a; } } return best;
 }
+// A callsign can be flown on another leg than the one the database lists. In the air, a route is dropped when the aircraft is clearly not on it:
+// far off the line origin→destination, or flying away from the destination while far from both airports. (A wrong line is worse than none.)
+function implausible(f, r) {
+  if (!r || f.ground || !(f.lat != null)) return false;
+  const dOD = km(r.org.lat, r.org.lon, r.dst.lat, r.dst.lon), dO = km(r.org.lat, r.org.lon, f.lat, f.lon), dD = km(f.lat, f.lon, r.dst.lat, r.dst.lon);
+  if (dOD < 150 || dO < 80 || dD < 80) return false;
+  if ((dO + dD) / dOD > 1.45) return true;
+  if (f.hdg != null && dD > 150 && dO > 150) { const d = Math.abs(((brg(f.lat, f.lon, r.dst.lat, r.dst.lon) - f.hdg) % 360 + 540) % 360 - 180); if (d > 110) return true; }
+  return false;
+}
 function reconcileRoute(f) {
   const r0 = f.routeDb; if (!r0) return false;
   const t0 = f.landedAt ? f.landedAt * 1000 : f.gAt || 0, justLanded = !!(f.ground && f.arr && (!t0 || Date.now() - t0 < 25 * 60e3));
@@ -285,6 +306,7 @@ function reconcileRoute(f) {
   if (st && km(st[0], st[1], org.lat, org.lon) > 60) { const a = nearAirport(st[0], st[1], 25); if (a) org = a; }
   if (justLanded && km(st[0], st[1], f.lat, f.lon) > 30) { const a = nearAirport(f.lat, f.lon, 8); if (a && a.code !== org.code) dst = a; }
   const was = f.route; f.route = org === r0.org && dst === r0.dst ? r0 : { ...r0, org, dst, fixed: true };
+  if (implausible(f, f.route)) { f.route = null; f.rs = 'none'; } else if (f.rs === 'none' && f.route) f.rs = 'ok';
   return !was || was.org.code !== f.route.org.code || was.dst.code !== f.route.dst.code;
 }
 function showRoute(f) { if (f.id !== selected) return; if (!replay) drawRoute(f); renderCard(true); }
@@ -613,6 +635,9 @@ $('bZ').onclick = () => { if (zone) { zone = null; save('sky.zone', null); drawZ
 $('zR').value = zoneR();
 $('zR').onchange = function () { const r = Math.max(3, Math.min(500, Math.round(+this.value) || ZONE_R)); this.value = r; if (zone) { zone.r = r; save('sky.zone', zone); initIn(); drawZone(); } else zoneRDef = r; };
 let zoneRDef = ZONE_R; // radius chosen while there's no zone; applied to the next zone
+{ const zi = $('zR'), step = d => { const n = Math.round(+zi.value) || ZONE_R, v = Math.max(3, Math.min(500, n + d * (n >= 100 ? 10 : 5))); zi.value = v; zi.classList.remove('bump'); void zi.offsetWidth; zi.classList.add('bump'); zi.onchange(); };
+  for (const [id, d] of [['zM', -1], ['zP', 1]]) { const b = $(id); let h = 0, r = 0; const stop = () => { clearTimeout(h); clearInterval(r); };
+    b.onpointerdown = () => { step(d); h = setTimeout(() => { r = setInterval(() => step(d), 70); }, 400); }; b.onpointerup = b.onpointerleave = b.onpointercancel = stop; } }
 // When the zone changes, silently recompute whether each aircraft is "inside" (to avoid a flood of notifications)
 const initIn = () => flights.forEach(f => { if (zone) f.in = km(f.lat, f.lon, zone.lat, zone.lon) < zoneR(); else delete f.in; });
 drawZone();
@@ -849,7 +874,7 @@ function renderList() {
   const emgN = [...flights.values()].filter(f => !f.gone && isEmg(f)).length;
   $('meta').textContent = `${arr.length} / ${flights.size} ${t('FLIGHTS')}` + (emgN ? ` · ⚠ ${emgN}` : '');
   let st = '';
-  if (live && (flt.dep || flt.arr)) { const v = map.getBounds(), inV = [...flights.values()].filter(f => !f.ground && v.contains([f.lat, f.lon]));
+  if (live && (flt.dep.length || flt.arr.length)) { const v = map.getBounds(), inV = [...flights.values()].filter(f => !f.ground && v.contains([f.lat, f.lon]));
     const done = inV.filter(f => f.rs && f.rs !== 'loading').length; if (done < inV.length) st = t('loading route info · {0} / {1} aircraft', done, inV.length); }
   $('apSt').textContent = st;
   $('list').innerHTML = (window.searchExtra ? searchExtra($('q').value, arr) : '') + (arr.length || !$('q').value.trim() ? '' : `<div class="none" style="padding:12px 16px;color:var(--mut);font-size:12px">${t('Nothing matches')}</div>`) + arr.map(f => { const k = kindOf(f), sh = SHAPES[k] || SHAPES.gen, col = f.ground ? '#9aa0a6' : color(f.alt), rot = k === 'heli' ? '' : '';
@@ -858,7 +883,7 @@ function renderList() {
     + `<span>${f.ground ? t('on ground') : fmtAlt(f.alt * 3.281, 100)}</span></div>`; }).join('');
 }
 $('list').onpointerdown = e => { const r = e.target.closest('.row'); if (r) { select(r.dataset.id); if (matchMedia('(max-width:760px)').matches) setMenu(false); } };
-$('q').oninput = renderList; setInterval(renderList, 2000);
+$('q').oninput = () => { $('qx').hidden = !$('q').value; renderList(); }; $('qx').onclick = () => { $('q').value = ''; $('qx').hidden = true; renderList(); $('q').focus(); }; setInterval(renderList, 2000);
 const knownTypes = new Set(), knownAir = new Set();
 const addAir = (c, n) => { if (knownAir.has(c)) return; knownAir.add(c); const o = document.createElement('option'); o.value = c; if (n) o.label = n; $('alList').appendChild(o); };
 Object.entries(AIRLINE).forEach(([c, a]) => addAir(c, a[0]));
@@ -869,19 +894,35 @@ const applyF = e => {
   const sa = $('fS'), sm = $('fSM'); // same two-handle bar for speed
   if (+sa.value > +sm.value) { if (e && e.target === sm) sm.value = sa.value; else sa.value = sm.value; }
   flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.maxSpd = +$('fSM').value; flt.fav = $('fF').checked; flt.ground = $('fG').checked;
-  flt.dep = apCode($('fDep').value); flt.arr = apCode($('fArr').value); flt.type = $('fTp').value.trim().toUpperCase(); $('fTp').classList.toggle('set', !!flt.type); flt.air = $('fAl').value.trim().toUpperCase(); $('fAl').classList.toggle('set', !!flt.air);
-  $('fDep').classList.toggle('set', !!flt.dep); $('fArr').classList.toggle('set', !!flt.arr); pumpRoutes();
-  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, sm: $('fSM').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value, al: $('fAl').value });
+  const vals = (id, fn) => [...new Set([...CH[id], $(id).value].map(x => fn(x.trim())).filter(Boolean))];
+  flt.em = $('fE').checked; flt.ph = document.querySelector('#fPh .on')?.dataset.p || '';
+  flt.co = vals('fCo', x => x.toLowerCase()); flt.dep = vals('fDep', apCode); flt.arr = vals('fArr', apCode); flt.type = vals('fTp', x => x.toUpperCase()); flt.air = vals('fAl', x => x.toUpperCase());
+  for (const id of Object.keys(CH)) { const el = $(id), w = el.parentElement, has = !!el.value.trim(); el.classList.toggle('set', has || !!CH[id].length); w.classList.toggle('hasv', has); w.classList.toggle('hasany', has || !!CH[id].length); renderChips(id); }
+  pumpRoutes();
+  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, sm: $('fSM').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value, al: $('fAl').value, co: $('fCo').value, ch: CH, e: flt.em, ph: flt.ph });
+  { const n = (flt.alt > 0 || flt.maxAlt < 45000) + (flt.spd > 0 || flt.maxSpd < 600) + !!flt.dep.length + !!flt.arr.length + !!flt.air.length + !!flt.type.length + !!flt.co.length + !!flt.ph + flt.em + flt.fav + !flt.ground;
+    for (const id of ['fCnt', 'fCnt2']) { $(id).textContent = n; } $('fCnt').hidden = !n; $('fRst').hidden = !n; }
   a.style.zIndex = flt.alt > 22500 ? 3 : 1; // so "min" can still be grabbed at the right end when the handles overlap
   $('dr').style.setProperty('--a', flt.alt / 450 + '%'); $('dr').style.setProperty('--b', flt.maxAlt / 450 + '%');
   $('vA').textContent = nf(uAlt(flt.alt)[0]); $('vM').textContent = nf(uAlt(flt.maxAlt)[0]) + (flt.maxAlt >= 45000 ? '+' : ''); $('vS').textContent = nf(uSpd(flt.spd)[0]); $('vSM').textContent = nf(uSpd(flt.maxSpd)[0]) + (flt.maxSpd >= 600 ? '+' : ''); $('uA').textContent = uAlt(0)[1]; $('uS').textContent = uSpd(0)[1];
   sa.style.zIndex = flt.spd > 300 ? 3 : 1; $('dr2').style.setProperty('--a', flt.spd / 6 + '%'); $('dr2').style.setProperty('--b', flt.maxSpd / 6 + '%');
   redraw(); renderList();
 };
-['fA', 'fM', 'fS', 'fSM', 'fF', 'fG', 'fDep', 'fArr', 'fTp', 'fAl'].forEach(i => $(i).oninput = applyF);
+['fA', 'fM', 'fS', 'fSM', 'fF', 'fG', 'fE', 'fDep', 'fArr', 'fTp', 'fAl', 'fCo'].forEach(i => $(i).oninput = applyF);
+const renderChips = id => { $('c' + id.slice(1)).innerHTML = CH[id].map((v, i) => `<span class="chip">${esc(v)}<b data-f="${id}" data-i="${i}" role="button" aria-label="Remove">×</b></span>`).join(''); };
+const addChip = id => { const v = $(id).value.trim(); if (!v) return; if (!CH[id].some(x => x.toLowerCase() === v.toLowerCase())) CH[id].push(v); $(id).value = ''; applyF(); $(id).focus(); };
+document.querySelector('.flt').addEventListener('click', e => {
+  const p = e.target.closest('.fp'), x = e.target.closest('.fx'), c = e.target.closest('.chip b');
+  if (p) addChip(p.dataset.f); else if (x) { CH[x.dataset.f] = []; $(x.dataset.f).value = ''; applyF(); $(x.dataset.f).focus(); } else if (c) { CH[c.dataset.f].splice(+c.dataset.i, 1); applyF(); } });
+Object.keys(CH).forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addChip(id); } }));
 { const v = LS('sky.flt', null); // restore the filters from the last session
-  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fSM').value = v.sm ?? 600; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; } }
-$('fSw').onclick = () => { const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; applyF(); };
+  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fSM').value = v.sm ?? 600; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; $('fCo').value = v.co || ''; if (v.ch) for (const k of Object.keys(CH)) CH[k] = Array.isArray(v.ch[k]) ? v.ch[k].filter(x => typeof x === 'string') : []; $('fE').checked = !!v.e; document.querySelectorAll('#fPh button').forEach(b => b.classList.toggle('on', b.dataset.p === (v.ph || ''))); } }
+$('fPh').onclick = e => { const b = e.target.closest('button'); if (!b) return; document.querySelectorAll('#fPh button').forEach(x => x.classList.toggle('on', x === b)); applyF(); };
+$('fRst').onclick = () => { $('fA').value = 0; $('fM').value = 45000; $('fS').value = 0; $('fSM').value = 600; $('fF').checked = false; $('fE').checked = false; $('fG').checked = true; for (const i of Object.keys(CH)) { $(i).value = ''; CH[i] = []; } document.querySelectorAll('#fPh button').forEach(x => x.classList.toggle('on', !x.dataset.p)); applyF(); };
+$('fSw').onclick = () => {
+  const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; [CH.fDep, CH.fArr] = [CH.fArr, CH.fDep]; applyF();
+  for (const el of [$('fSw'), $('fDep'), $('fArr')]) { el.classList.remove('spin', 'flash'); void el.offsetWidth; el.classList.add(el === $('fSw') ? 'spin' : 'flash'); }
+};
 
 /* ---------- airport filter (departure / arrival) ---------- */
 // Known airports (suggestion list): the fixed list + route airports learned in live mode
@@ -899,7 +940,7 @@ function apCode(v) {
 // In live mode route info only arrives when an aircraft is clicked; while a filter is active, load the routes of on-screen aircraft in the background (at most 3 at a time)
 let routeJobs = 0, pumpT = null;
 function pumpRoutes() {
-  if (!live || (!flt.dep && !flt.arr)) return; const v = map.getBounds();
+  if (!live || (!flt.dep.length && !flt.arr.length)) return; const v = map.getBounds();
   if (Date.now() < dbPause) { clearTimeout(pumpT); pumpT = setTimeout(pumpRoutes, dbPause - Date.now() + 100); return; } // wait after 429/error
   for (const f of flights.values()) {
     if (routeJobs >= 3) return;
@@ -926,3 +967,12 @@ map.on('click', e => {
   const f = hit(e.containerPoint); select(f ? f.id : null);
 });
 applyF(); setMode(LS('sky.live', true) && navigator.onLine !== false); if (live) { const c = LS('sky.cache', null); if (c?.c) map.setView([c.c[0], c.c[1]], c.c[2], { animate: false }); loadCache(); }
+
+
+// Contact menu: bug / feature requests open a prefilled GitHub issue; "app info" copies version, system and language for the report
+{ const cm = $('cmenu'), BASE = 'https://github.com/SametDuhan/airock/issues/new';
+  $('fb').onclick = e => { e.stopPropagation(); cm.hidden = !cm.hidden; };
+  document.addEventListener('click', e => { if (!cm.hidden && !e.target.closest('#cmenu')) cm.hidden = true; });
+  cm.onclick = async e => { const b = e.target.closest('button'); if (!b) return; cm.hidden = true; const info = `${$('ver').textContent} · ${navigator.platform} · ${LANG} · ${navigator.userAgent.split(') ')[0].split('(')[1] || ''}`;
+    if (b.dataset.c === 'info') { try { await navigator.clipboard.writeText(info); toast(t('App info copied')); } catch { toast(info); } return; }
+    window.open(`${BASE}?labels=${b.dataset.c === 'bug' ? 'bug' : 'enhancement'}&title=${encodeURIComponent(b.dataset.c === 'bug' ? 'Bug: ' : 'Idea: ')}&body=${encodeURIComponent('\n\n---\n' + info)}`, '_blank', 'noopener'); }; }
