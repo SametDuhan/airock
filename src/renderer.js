@@ -67,7 +67,7 @@ const zoneR = () => zone?.r || ZONE_R;
 const APO = AP.map(a => ({ code: a[0], name: a[1], lat: a[2], lon: a[3] }));
 const { R, brg, km, gc, unwrap, nearLon } = window.SkyGeo;
 const flights = new Map(), routeCache = new Map(), acCache = new Map(), picCache = new Map(), fav = new Set(LS('sky.fav', [])), hist = [],
-watch = new Map(LS('sky.watch', [])), flt = { alt: 0, maxAlt: 45000, spd: 0, maxSpd: 600, fav: false, ground: true, dep: '', arr: '', type: '', air: '' };
+watch = new Map(LS('sky.watch', [])), flt = { alt: 0, maxAlt: 45000, spd: 0, maxSpd: 600, fav: false, ground: true, dep: '', arr: '', type: '', air: '', ph: '', em: false, co: '' };
 // Hooks filled in by extras.js (watchlist, today's flights, spotter logbook): they keep this file focused on the map itself
 const X = { top: () => '', bottom: () => '', bottom2: () => '', rows: () => {}, sync: () => {}, click: () => false, event: () => {}, arrive: () => {}, sel: () => {} };
 const EMG = { 7500: 'Hijacking', 7600: 'Radio failure', 7700: 'General emergency' }; // squawk codes
@@ -91,8 +91,17 @@ const typeIs = (f, t) => { const c = acCode(f); return c === t || c.startsWith(t
 const airCode = f => /^[A-Z]{3}(?=\d)/.exec(f.cs.toUpperCase())?.[0] || '';
 const airIs = (f, a) => { const c = airCode(f), n = (f.route?.airline || AIRLINE[c]?.[0] || '').toUpperCase();
   return c === a || (f.route?.airlineIata || '').toUpperCase() === a || (a.length > 2 && n.includes(a)); };
+// Flight phase from the vertical rate (m/s): climbing above ~500 ft/min, descending below -500 ft/min, otherwise cruise (airborne only)
+const phaseIs = (f, p) => !f.ground && (p === 'c' ? f.vr > 2.5 : p === 'd' ? f.vr < -2.5 : Math.abs(f.vr) <= 2.5);
+// Country: the data source's own value when it has one, else from the registration prefix (ICAO-style national marks)
+const REGC = 'N:United States;TC:Türkiye Turkey;G:United Kingdom;D:Germany;F:France;EC:Spain;I:Italy;PH:Netherlands;OO:Belgium;HB:Switzerland;OE:Austria;SE:Sweden;LN:Norway;OY:Denmark;OH:Finland;EI:Ireland;CS:Portugal;SP:Poland;OK:Czechia;HA:Hungary;YR:Romania;LZ:Bulgaria;SX:Greece;9H:Malta;RA:Russia;VP:Russia;UR:Ukraine;LY:Lithuania;YL:Latvia;ES:Estonia;S5:Slovenia;9A:Croatia;YU:Serbia;T7:San Marino;A6:United Arab Emirates;A7:Qatar;HZ:Saudi Arabia;9K:Kuwait;A9C:Bahrain;A4O:Oman;EP:Iran;YI:Iraq;SU:Egypt;4X:Israel;OD:Lebanon;JY:Jordan;4K:Azerbaijan;4L:Georgia;EK:Armenia;UP:Kazakhstan;VT:India;AP:Pakistan;S2:Bangladesh;4R:Sri Lanka;B:China;JA:Japan;HL:South Korea;9V:Singapore;9M:Malaysia;HS:Thailand;PK:Indonesia;RP:Philippines;VN:Vietnam;VH:Australia;ZK:New Zealand;C:Canada;XA:Mexico;XB:Mexico;XC:Mexico;PR:Brazil;PT:Brazil;PP:Brazil;PS:Brazil;LV:Argentina;LQ:Argentina;CC:Chile;HK:Colombia;OB:Peru;YV:Venezuela;HP:Panama;TI:Costa Rica;CU:Cuba;ZS:South Africa;ET:Ethiopia;5Y:Kenya;CN:Morocco;7T:Algeria;TS:Tunisia;5N:Nigeria;5A:Libya;ST:Sudan;5X:Uganda;5H:Tanzania;9J:Zambia;Z:Zimbabwe;TU:Ivory Coast;6V:Senegal;EY:Tajikistan;UK:Uzbekistan;EW:Belarus;ER:Moldova;LX:Luxembourg;TF:Iceland;OM:Slovakia;E7:Bosnia;Z3:North Macedonia;ZA:Albania;5B:Cyprus;P:North Korea';
+const REGM = new Map(REGC.split(';').map(x => { const i = x.indexOf(':'); return [x.slice(0, i), x.slice(i + 1)]; }));
+const countryOf = f => { if (f.country) return f.country; if (f.ac?.country) return f.ac.country; const r = (f.reg || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  for (let n = 3; n > 0; n--) { const c = REGM.get(r.slice(0, n)); if (c) return c; } return ''; };
+const COUNTRIES = [...new Set([...REGM.values()].flatMap(v => v.split(' ').length > 1 && /^(Türkiye Turkey)$/.test(v) ? ['Türkiye', 'Turkey'] : [v]))].sort();
+$('coList').innerHTML = COUNTRIES.map(c => `<option value="${c}">`).join('');
 const vis = f => { const ft = f.alt * 3.281; return (!f.ground || flt.ground) && ft >= flt.alt && (flt.maxAlt >= 45000 || ft <= flt.maxAlt) && f.spd * 1.944 >= flt.spd && (flt.maxSpd >= 600 || f.spd * 1.944 <= flt.maxSpd) && (!flt.fav || fav.has(f.id))
-  && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)) && (!flt.type || typeIs(f, flt.type)) && (!flt.air || airIs(f, flt.air)); };
+  && (!flt.dep || apIs(f.route?.org, flt.dep)) && (!flt.arr || apIs(f.route?.dst, flt.arr)) && (!flt.type || typeIs(f, flt.type)) && (!flt.air || airIs(f, flt.air)) && (!flt.ph || phaseIs(f, flt.ph)) && (!flt.em || isEmg(f)) && (!flt.co || countryOf(f).toLowerCase().includes(flt.co)); };
 // toastEv: toasts about events the user didn't ask for (alerts, take-offs, emergencies, turbulence...): Settings → "In-app notifications" turns them off. Plain toast() is feedback for
 // something the user just did and always shows. At most 3 are on screen at once (the oldest goes first), so zooming into a crowded area can't pile them up.
 const toastEv = (msg, id) => toast(msg, id, !LS('sky.toast', true));
@@ -872,7 +881,7 @@ function renderList() {
     + `<span>${f.ground ? t('on ground') : fmtAlt(f.alt * 3.281, 100)}</span></div>`; }).join('');
 }
 $('list').onpointerdown = e => { const r = e.target.closest('.row'); if (r) { select(r.dataset.id); if (matchMedia('(max-width:760px)').matches) setMenu(false); } };
-$('q').oninput = renderList; setInterval(renderList, 2000);
+$('q').oninput = () => { $('qx').hidden = !$('q').value; renderList(); }; $('qx').onclick = () => { $('q').value = ''; $('qx').hidden = true; renderList(); $('q').focus(); }; setInterval(renderList, 2000);
 const knownTypes = new Set(), knownAir = new Set();
 const addAir = (c, n) => { if (knownAir.has(c)) return; knownAir.add(c); const o = document.createElement('option'); o.value = c; if (n) o.label = n; $('alList').appendChild(o); };
 Object.entries(AIRLINE).forEach(([c, a]) => addAir(c, a[0]));
@@ -883,18 +892,23 @@ const applyF = e => {
   const sa = $('fS'), sm = $('fSM'); // same two-handle bar for speed
   if (+sa.value > +sm.value) { if (e && e.target === sm) sm.value = sa.value; else sa.value = sm.value; }
   flt.alt = +a.value; flt.maxAlt = +m.value; flt.spd = +$('fS').value; flt.maxSpd = +$('fSM').value; flt.fav = $('fF').checked; flt.ground = $('fG').checked;
+  flt.co = $('fCo').value.trim().toLowerCase(); $('fCo').classList.toggle('set', !!flt.co); flt.em = $('fE').checked; flt.ph = document.querySelector('#fPh .on')?.dataset.p || '';
   flt.dep = apCode($('fDep').value); flt.arr = apCode($('fArr').value); flt.type = $('fTp').value.trim().toUpperCase(); $('fTp').classList.toggle('set', !!flt.type); flt.air = $('fAl').value.trim().toUpperCase(); $('fAl').classList.toggle('set', !!flt.air);
   $('fDep').classList.toggle('set', !!flt.dep); $('fArr').classList.toggle('set', !!flt.arr); pumpRoutes();
-  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, sm: $('fSM').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value, al: $('fAl').value });
+  save('sky.flt', { a: a.value, m: m.value, s: $('fS').value, sm: $('fSM').value, f: flt.fav, g: flt.ground, dep: $('fDep').value, arr: $('fArr').value, t: $('fTp').value, al: $('fAl').value, co: $('fCo').value, e: flt.em, ph: flt.ph });
+  { const n = (flt.alt > 0 || flt.maxAlt < 45000) + (flt.spd > 0 || flt.maxSpd < 600) + !!flt.dep + !!flt.arr + !!flt.air + !!flt.type + !!flt.co + !!flt.ph + flt.em + flt.fav + !flt.ground;
+    for (const id of ['fCnt', 'fCnt2']) { $(id).textContent = n; } $('fCnt').hidden = !n; $('fRst').hidden = !n; }
   a.style.zIndex = flt.alt > 22500 ? 3 : 1; // so "min" can still be grabbed at the right end when the handles overlap
   $('dr').style.setProperty('--a', flt.alt / 450 + '%'); $('dr').style.setProperty('--b', flt.maxAlt / 450 + '%');
   $('vA').textContent = nf(uAlt(flt.alt)[0]); $('vM').textContent = nf(uAlt(flt.maxAlt)[0]) + (flt.maxAlt >= 45000 ? '+' : ''); $('vS').textContent = nf(uSpd(flt.spd)[0]); $('vSM').textContent = nf(uSpd(flt.maxSpd)[0]) + (flt.maxSpd >= 600 ? '+' : ''); $('uA').textContent = uAlt(0)[1]; $('uS').textContent = uSpd(0)[1];
   sa.style.zIndex = flt.spd > 300 ? 3 : 1; $('dr2').style.setProperty('--a', flt.spd / 6 + '%'); $('dr2').style.setProperty('--b', flt.maxSpd / 6 + '%');
   redraw(); renderList();
 };
-['fA', 'fM', 'fS', 'fSM', 'fF', 'fG', 'fDep', 'fArr', 'fTp', 'fAl'].forEach(i => $(i).oninput = applyF);
+['fA', 'fM', 'fS', 'fSM', 'fF', 'fG', 'fE', 'fDep', 'fArr', 'fTp', 'fAl', 'fCo'].forEach(i => $(i).oninput = applyF);
 { const v = LS('sky.flt', null); // restore the filters from the last session
-  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fSM').value = v.sm ?? 600; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; } }
+  if (v) { $('fA').value = v.a; $('fM').value = v.m; $('fS').value = v.s; $('fSM').value = v.sm ?? 600; $('fF').checked = !!v.f; $('fG').checked = v.g !== false; $('fDep').value = v.dep || ''; $('fArr').value = v.arr || ''; $('fTp').value = v.t || ''; $('fAl').value = v.al || ''; $('fCo').value = v.co || ''; $('fE').checked = !!v.e; document.querySelectorAll('#fPh button').forEach(b => b.classList.toggle('on', b.dataset.p === (v.ph || ''))); } }
+$('fPh').onclick = e => { const b = e.target.closest('button'); if (!b) return; document.querySelectorAll('#fPh button').forEach(x => x.classList.toggle('on', x === b)); applyF(); };
+$('fRst').onclick = () => { $('fA').value = 0; $('fM').value = 45000; $('fS').value = 0; $('fSM').value = 600; $('fF').checked = false; $('fE').checked = false; $('fG').checked = true; for (const i of ['fDep', 'fArr', 'fTp', 'fAl', 'fCo']) $(i).value = ''; document.querySelectorAll('#fPh button').forEach(x => x.classList.toggle('on', !x.dataset.p)); applyF(); };
 $('fSw').onclick = () => {
   const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; applyF();
   for (const el of [$('fSw'), $('fDep'), $('fArr')]) { el.classList.remove('spin', 'flash'); void el.offsetWidth; el.classList.add(el === $('fSw') ? 'spin' : 'flash'); }
@@ -944,4 +958,11 @@ map.on('click', e => {
 });
 applyF(); setMode(LS('sky.live', true) && navigator.onLine !== false); if (live) { const c = LS('sky.cache', null); if (c?.c) map.setView([c.c[0], c.c[1]], c.c[2], { animate: false }); loadCache(); }
 
-$('fb').onclick = () => window.open('https://github.com/SametDuhan/airock/issues/new', '_blank', 'noopener');
+
+// Contact menu: bug / feature requests open a prefilled GitHub issue; "app info" copies version, system and language for the report
+{ const cm = $('cmenu'), BASE = 'https://github.com/SametDuhan/airock/issues/new';
+  $('fb').onclick = e => { e.stopPropagation(); cm.hidden = !cm.hidden; };
+  document.addEventListener('click', e => { if (!cm.hidden && !e.target.closest('#cmenu')) cm.hidden = true; });
+  cm.onclick = async e => { const b = e.target.closest('button'); if (!b) return; cm.hidden = true; const info = `${$('ver').textContent} · ${navigator.platform} · ${LANG} · ${navigator.userAgent.split(') ')[0].split('(')[1] || ''}`;
+    if (b.dataset.c === 'info') { try { await navigator.clipboard.writeText(info); toast(t('App info copied')); } catch { toast(info); } return; }
+    window.open(`${BASE}?labels=${b.dataset.c === 'bug' ? 'bug' : 'enhancement'}&title=${encodeURIComponent(b.dataset.c === 'bug' ? 'Bug: ' : 'Idea: ')}&body=${encodeURIComponent('\n\n---\n' + info)}`, '_blank', 'noopener'); }; }

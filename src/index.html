@@ -57,7 +57,7 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 .zr{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--mut)}.zr input{width:64px;padding:5px 6px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}.zr input:focus{border-color:var(--ac)}
 .apr{display:flex;gap:6px;align-items:center;margin:6px 0 4px}.apr .ib{flex:none;width:28px;height:30px}
 .apr input{flex:1;min-width:0;padding:7px 8px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0;font:600 12px ui-monospace,monospace;text-transform:uppercase}
-.apr input#fTp,.apr input#fAl{text-transform:none}.apr input::placeholder{text-transform:none;font-weight:400}.apr input:focus{border-color:var(--ac)}.apr input.set{border-color:var(--ac);color:var(--ac)}
+.apr input#fTp,.apr input#fAl,.apr input#fCo{text-transform:none}.apr input::placeholder{text-transform:none;font-weight:400}.apr input:focus{border-color:var(--ac)}.apr input.set{border-color:var(--ac);color:var(--ac)}
 .dr .rmin,.dr .rmax{position:absolute;top:19px;font-size:10px}.dr .rmax{right:0}
 .flt label{display:block;margin:6px 0}.flt b{color:var(--fg)}.flt input[type=range]{width:100%;accent-color:var(--ac)}.ck{display:flex;gap:10px;align-items:center;cursor:pointer;font:600 13px/1.2 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.03em;color:var(--fg);user-select:none}.ck:hover{color:var(--ac)}.ck input{appearance:none;-webkit-appearance:none;margin:0;width:18px;height:18px;flex:none;border:1.5px solid var(--mut);border-radius:4px;background:transparent;cursor:pointer;display:grid;place-content:center;transition:background .15s,border-color .15s}.ck input::after{content:'';width:9px;height:5px;border:solid #111;border-width:0 0 2.5px 2.5px;transform:rotate(-45deg) translate(1px,-1px) scale(0);transition:transform .12s}.ck input:checked{background:var(--ac);border-color:var(--ac)}.ck input:checked::after{transform:rotate(-45deg) translate(1px,-1px) scale(1)}.ck input:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 #card button{margin-top:12px;width:100%;background:transparent;color:var(--ac);border:1px solid var(--ac);border-radius:3px;padding:7px;cursor:pointer}#card button:hover{background:var(--ac);color:#111}
@@ -280,7 +280,7 @@ html:is([lang=ar],[lang=fa]) #side .brand{direction:ltr} /* the title and the la
 .apr input{background:#1c1c1c;border-color:#4a4740;color:#f4f1e8;font:600 13px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.02em}
 .apr input::placeholder{color:#a9a395;opacity:1;font-weight:500}
 .apr input:hover{border-color:#6b665a}.apr input:focus{border-color:var(--ac);box-shadow:0 0 0 3px #f2c23026}
-.apr .ib{position:relative;flex:none;width:36px;height:36px;border-radius:50%;font-size:17px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;border-color:#4a4740;color:var(--ac);transition:transform .35s cubic-bezier(.3,1.5,.5,1),background .2s,color .2s,box-shadow .2s}
+.apr .ib{position:relative;flex:none;width:32px;height:32px;border-radius:50%;font-size:17px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;border-color:#4a4740;color:var(--ac);transition:transform .35s cubic-bezier(.3,1.5,.5,1),background .2s,color .2s,box-shadow .2s}
 .apr .ib:hover{background:var(--ac);color:#111;border-color:var(--ac);box-shadow:0 0 14px #f2c23066;transform:scale(1.1)}
 .apr .ib:active{transform:scale(.92)}
 .apr .ib.spin{animation:swp .45s cubic-bezier(.3,1.4,.5,1)}
@@ -337,32 +337,70 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 #fb:hover{box-shadow:0 4px 18px #f2c23044}
 #foot #ver{flex:none;font-size:10px}
 #upd{bottom:112px}
+
+/* ---- round 3 ---- */
+/* select arrow: our own chevron instead of the browser's black triangle */
+.apr input[list]{padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23a9a395' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;background-size:13px;transition:background-position .2s,border-color .2s,box-shadow .2s}
+.apr input[list]:hover,.apr input[list]:focus{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23f2c230' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");background-position:right 9px center}
+.apr input[list]:focus{background-position:right 9px top 50%;}
+.apr input[list]::-webkit-calendar-picker-indicator{opacity:0;cursor:pointer;width:22px;height:22px;margin-right:-6px}
+/* min / max under the sliders */
+.dr .rmin,.dr .rmax{font:600 11px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#cfc9b8}
+/* filter extras */
+#fRst{display:flex;align-items:center;gap:8px;margin-top:10px;width:100%;padding:9px 12px;border-radius:10px;border:1px solid #f2c23066;background:#f2c2300f;color:var(--ac);font:700 12px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;cursor:pointer;transition:background .2s,color .2s,transform .2s}
+#fRst[hidden]{display:none}#fRst svg{width:15px;height:15px;transition:transform .5s cubic-bezier(.3,1.4,.4,1)}#fRst span{flex:1;text-align:left}
+#fRst em,#fCnt{font-style:normal;font:800 11px 'Segoe UI',system-ui,sans-serif;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--ac);color:#111;display:inline-grid;place-items:center}
+#fCnt{margin-left:8px;margin-right:auto}#fCnt[hidden]{display:none}
+#fRst:hover{background:var(--ac);color:#111}#fRst:hover svg{transform:rotate(-360deg)}#fRst:hover em{background:#111;color:var(--ac)}
+#fPh button{font-size:12px;padding:7px 2px}
+.qw{position:relative;margin:10px 14px}.qw #q{margin:0;width:100%;padding-right:34px}
+#qx{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;border:0;background:#ffffff14;color:var(--fg);display:grid;place-items:center;cursor:pointer;transition:background .2s,color .2s,transform .25s}
+#qx[hidden]{display:none}#qx svg{width:10px;height:10px}#qx:hover{background:var(--ac);color:#111;transform:translateY(-50%) rotate(90deg)}
+/* dock v2 */
+#foot{position:sticky}#foot .fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#foot .setb,#fb{width:auto;margin:0;justify-content:center;flex:none;padding:10px 8px!important;gap:8px;border-radius:12px;font-size:12px}
+#foot .setb .sl{flex:none;font-size:12px}#foot .setb .gr,#fb svg{width:19px;height:19px}
+#fb{display:flex;align-items:center}
+#foot #ver{text-align:center;padding:0;letter-spacing:.2em;opacity:.7}
+#cmenu{position:absolute;left:12px;right:12px;bottom:calc(100% - 4px);display:flex;flex-direction:column;gap:2px;padding:6px;background:#1f1f1f;border:1px solid #f2c23055;border-radius:12px;box-shadow:0 -10px 28px #000b;animation:cmi .22s cubic-bezier(.2,.8,.3,1.2)}
+#cmenu[hidden]{display:none}@keyframes cmi{from{opacity:0;transform:translateY(8px) scale(.97)}}
+#cmenu button{text-align:left;background:transparent;border:0;border-radius:8px;padding:10px 12px;color:var(--fg);font:600 13px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;cursor:pointer;transition:background .15s,color .15s,padding .2s}
+#cmenu button:hover{background:var(--ac);color:#111;padding-left:16px}
+#upd{bottom:100px}
+.apr input#fDep,.apr input#fArr{font-size:12px;padding-right:20px;background-position:right 6px center;background-size:11px;padding-left:9px}
+.dr{margin-bottom:10px}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button class="ib" id="sx" aria-label="Close menu">✕</button><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
 <div class="sec"><div class="lbl">Data</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Live</button></div><div id="st"></div></div>
 <div class="sec"><div class="lbl">Mode</div><div class="btns"><button id="mNorm" class="on">Normal</button><button id="mSpot">Plane spotter</button></div>
-<div class="btns wrap" style="margin-top:8px"><button id="bDiary">📓 Flight diary</button><button id="bAlerts">🔔 Alerts</button><button id="bOver">📍 Overhead</button></div>
-<div class="btns" style="margin-top:8px"><button id="bStats">📊 Stats</button><button id="bRoute">🧭 Route check</button></div><div class="btns" id="ovRmRow" style="margin-top:8px;display:none"><button id="bOverRm">✕ Remove overhead spot</button></div></div>
+<div class="btns wrap" style="margin-top:8px"><button id="bDiary">Flight diary</button><button id="bAlerts">Alerts</button><button id="bOver">Overhead</button><button id="bStats">Stats</button><button id="bRoute" style="flex-basis:100%">Route check</button></div>
+<div class="btns" id="ovRmRow" style="margin-top:8px;display:none"><button id="bOverRm">✕ Remove overhead spot</button></div></div>
 <div class="sec" id="spt" style="display:none"></div>
 <div class="sec"><div class="lbl">Map</div><div class="btns seg" id="tiles"><button data-t="osm">Standard</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div><div class="btns wrap" style="margin-top:8px"><button id="bAp" class="on">Airports</button><button id="bZ">Alert zone</button><button id="bRd" title="Rain radar">Radar</button><button id="bTb" title="Turbulence advisories (SIGMET / G-AIRMET)">Turbulence</button><button id="bWd" title="Wind arrows">Wind</button><button id="bNt" title="Day / night">Night</button><button id="bCl" title="Satellite imagery with clouds (NASA, latest daily image)">Clouds</button><button id="bTr" title="Aircraft trails">Trails</button></div><select id="wdLv" style="display:none;width:100%;margin-top:6px"><option value="0">Wind: FL050</option><option value="1">Wind: FL100</option><option value="2">Wind: FL180</option><option value="3">Wind: FL300</option><option value="4" selected>Wind: FL340</option><option value="5">Wind: FL390</option></select>
 <label class="zr"><span>Zone radius</span> <span class="stp"><button type="button" id="zM" aria-label="−"><svg viewBox="0 0 12 12"><path d="M2.5 6h7"/></svg></button><input id="zR" type="number" min="3" max="500" step="1" value="100"><button type="button" id="zP" aria-label="+"><svg viewBox="0 0 12 12"><path d="M2.5 6h7M6 2.5v7"/></svg></button></span> <span>km</span></label>
 </div>
-<div class="flt"><div class="lbl">Filters</div><div class="fr"><span>Altitude</span><span><b id="vA">0</b> – <b id="vM">45.000+</b> <u id="uA">ft</u></span></div>
+<div class="flt"><div class="lbl"><span>Filters</span><em id="fCnt" hidden></em></div><div class="fr"><span>Altitude</span><span><b id="vA">0</b> – <b id="vM">45.000+</b> <u id="uA">ft</u></span></div>
 <div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">min</span><span class="rmax">max</span></div>
 <div class="fr"><span>Speed</span><span><b id="vS">0</b> – <b id="vSM">600+</b> <u id="uS">kt</u></span></div>
 <div class="dr" id="dr2"><input id="fS" type="range" min="0" max="600" step="25" value="0"><input id="fSM" type="range" min="0" max="600" step="25" value="600"><span class="rmin">min</span><span class="rmax">max</span></div>
+<div class="ff">Flight phase</div>
+<div class="btns seg" id="fPh" style="margin-top:6px"><button data-p="" class="on">All</button><button data-p="c">Climbing</button><button data-p="z">Cruise</button><button data-p="d">Descending</button></div>
 <div class="ff">Airport</div>
 <div class="apr"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button id="fSw" class="ib" title="Departure ↔ arrival">⇄</button><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"></div>
 <div class="ff">Airline</div>
 <div class="apr"><input id="fAl" list="alList" placeholder="e.g. THY, Pegasus, Lufthansa" autocomplete="off"></div><datalist id="alList"></datalist>
 <div class="ff">Aircraft type</div>
 <div class="apr"><input id="fTp" list="tpList" placeholder="e.g. B738, A320, boeing 777" autocomplete="off"></div><datalist id="tpList"></datalist>
+<div class="ff">Country</div>
+<div class="apr"><input id="fCo" list="coList" placeholder="e.g. Türkiye, Germany, USA" autocomplete="off"></div><datalist id="coList"></datalist>
 <div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
 <div class="cks"><label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
-<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div></div>
+<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label>
+<label class="ck"><input id="fE" type="checkbox"> Emergencies only</label>
+<button id="fRst" type="button" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a5 5 0 1 0 1.6-3.7M3 2.5v3h3"/></svg><span>Reset filters</span><em id="fCnt2"></em></button></div></div>
 <div class="sec" id="wls" style="display:none"></div>
-<div class="sec" id="srch"><div class="lbl">Aircraft</div><input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></div><div id="upd" hidden></div><div id="foot"><button id="bSet" class="setb"><svg class="gr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/><circle cx="12" cy="12" r="6.6" stroke-dasharray="2.2 2.6"/></svg><span class="sl">Settings</span><svg class="sa" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5 7.5 6 4 9.5"/></svg></button><div class="fr2"><button id="fb" title="Report a bug or request a feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path class="fl" d="m4 7.5 8 6 8-6"/></svg><span>Contact us</span></button><div id="ver">SkyTrack</div></div></div></aside>
+<div class="sec" id="srch"><div class="lbl">Aircraft</div><div class="qw"><input id="q" placeholder="Search callsign or registration…"><button id="qx" type="button" aria-label="Clear" hidden><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div id="meta"></div><div id="list"></div></div><div id="upd" hidden></div><div id="foot"><div id="cmenu" hidden><button data-c="bug">Report a bug</button><button data-c="idea">Request a feature</button><button data-c="info">Copy app info</button></div><div class="fr2"><button id="bSet" class="setb"><svg class="gr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/><circle cx="12" cy="12" r="6.6" stroke-dasharray="2.2 2.6"/></svg><span class="sl">Settings</span></button><button id="fb" title="Report a bug or request a feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path class="fl" d="m4 7.5 8 6 8-6"/></svg><span>Contact us</span></button></div><div id="ver">SkyTrack</div></div></aside>
 <main><div id="map"></div>
 <button id="open" class="ib" title="Close menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect class="fr" x="3" y="4" width="18" height="16" rx="4.5"/><path class="pn" d="M3 8.5A4.5 4.5 0 0 1 7.5 4H10v16H7.5A4.5 4.5 0 0 1 3 15.5z"/><path class="ch" d="M16 9.5 13.5 12l2.5 2.5"/></svg></button><div class="bar"><span class="cdot"></span><div class="ct"><span id="clock"></span><small id="cdate"></small></div></div>
 <div id="stm" class="mdl"></div><div id="stt" class="mdl"></div><div id="alm" class="mdl"></div><div id="rcm" class="mdl"></div><div id="ovp"></div><div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
