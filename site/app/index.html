@@ -424,6 +424,15 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 #side>.sec:not(#srch)>.lbl::before,#side>.flt>.lbl::before,#srch>.lbl::before{content:'';position:absolute;left:0;top:50%;width:5px;height:22px;margin-top:-11px;border-radius:3px;background:#ffcc33;opacity:1;box-shadow:0 0 8px #ffcc3388;transition:height .25s,margin .25s}
 #side>.collapsed>.lbl::before,#side>.sec.collapsed:not(#srch)>.lbl::before{height:14px;margin-top:-7px;opacity:1}
 #srch>.lbl{position:relative;padding-left:28px!important}#srch>.lbl::before{left:14px}
+
+/* filters: breathing room between groups */
+#side .flt .fr{margin-top:18px}#side .flt .fr:first-of-type{margin-top:8px}
+.flt .dr{margin-top:8px;margin-bottom:30px}
+.dr .rmin,.dr .rmax{top:24px}
+#side .flt .ff{margin:0;padding:18px 0 0;border-top:1px solid var(--line)}
+.flt .ff+.btns,.flt .ff+.apd,.flt .ff+.apr1{margin-top:10px}
+.flt .apd{gap:8px 10px}
+.flt .cks{margin-top:20px;padding-top:12px}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button class="ib" id="sx" aria-label="Close menu">✕</button><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
