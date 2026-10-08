@@ -150,11 +150,15 @@ const HELI_RE = /^(EC\d\d|AS\d\d|AW\d\d|B06|B407|B412|B427|B429|B505|R22|R44|R66
 const FOUR_ENG = new Set('A342 A343 A345 A346 A388 A124 A225 B741 B742 B743 B744 B74D B74R B74S B748 B703 B701 B720 B52 B1 C17 C5M C5 C135 K35R KC10 IL96 IL76 IL62 IL86 IL18 AN12 AN22 AN70 A400 C130 C30J L100 E3CF E6 DC8 DC85 DC86 DC87 B461 B462 B463 RJ70 RJ85 RJ1H VC10 TU95 TU16'.split(' '));
 const JET_RE = /^(C25\w|C5[0-9]\w|C56X|C68A|C680|C700|C750|C510|C525|C550|E5[05]P|E545|E550|LJ\d\d|GLF\d|GL\d\d|GALX|FA\d\w|F2TH|F900|CL3\d|CL60|H25\w|HDJT|PC24|BE40|PRM1|ASTR|G150|G280|SF50|EA50|ECLP|F\d\d[A-Z]?$|EUFI|RFAL|TORN|GRIF|HAWK|T38|L39|A10|SU\d\d|MG\d\d)/;
 const PROP_RE = /^(AT\d\d|DH8\w|DHC[5-8]|SF34|B190|B350|BE[29]\w|E120|F50|F27|JS\d\d|SB20|D328|AN2[46]|AN32|PC12|C208|TBM\d|P180|DH3\w|AT7\w|AT4\w|AT8\w|Q\d00|SH36|L410|MA60|Y12)/;
-const TWIN_RE = /^(A2\d\d|A3[0-9]\d|A\d\dN|B7[1-9]\d|B3[7-9]M|B3XM|E1\d\d|E2\d\d|E7\d\w|CRJ|CR\d|AT\d\d|DH8|SF34|B190|F100|F70|MD[89]\d|BCS|SU95|C919|ARJ|J328)/;
-const kindOf = f => { const c = acCode(f), cat = f.cat || '';
-  if (f._kk === c + cat) return f._k;
-  const k = cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : PROP_RE.test(c) ? 'prop' : TWIN_RE.test(c) || /^A[345]$/.test(cat) ? 'air2' : 'gen';
-  f._kk = c + cat; return f._k = k; };
+const TWIN_RE = /^(A2\d\d|A3\w\w|A\d\d[NK]|B7[0-9A-Z]{2}|B3[7-9][A-Z0-9]|MD1[01]|DC10|L101|IL9\d|TU[12]\d\d|RJ\w\w|E[12]\d\w|B7[1-9]\d|B3[7-9]M|B3XM|E1\d\d|E2\d\d|E7\d\w|CRJ|CR\d|AT\d\d|DH8|SF34|B190|F100|F70|MD[89]\d|BCS|SU95|C919|ARJ|J328)/;
+// Feeds that carry no aircraft type (OpenSky) or no category leave the icon undecided: then it is guessed from how the aircraft behaves, so a jet at FL410 is never drawn as a light plane.
+// airline-style callsign (3 letters + digits) or fast / high -> airliner; otherwise a light aircraft. The guess is part of the cache key so it updates when the aircraft speeds up or climbs.
+const guessAir = f => { const kt = (f.spd || 0) * 1.944, ft = (f.alt || 0) * 3.281, line = /^[A-Z]{3}\d{1,4}[A-Z]{0,2}$/.test(f.cs || '');
+  return !f.ground && (kt >= 190 || ft >= 18000) || line && (kt >= 120 || ft >= 5000) ? 'F' : f.ground && line ? 'F' : ''; };
+const kindOf = f => { const c = acCode(f), cat = f.cat || '', g = !c && !cat ? guessAir(f) : '';
+  if (f._kk === c + cat + g) return f._k;
+  const k = cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : PROP_RE.test(c) ? 'prop' : TWIN_RE.test(c) || /^A[345]$/.test(cat) || g ? 'air2' : 'gen';
+  f._kk = c + cat + g; return f._k = k; };
 // Size class by aircraft type: big airliners draw larger, small ones smaller. The difference fades out when zoomed far out so crowded areas stay readable.
 const XL_RE = /^(A38\w|B74\w|B77[WL]|B778|B779|B77\w|A35K|A346|A345|A124|A225|C5M?|IL96|B748)$/, WIDE_RE = /^(B78\w|B76\w|A33\w|A35\w|A30B|A310|A306|A3ST|B75\w|MD11|DC10|L101|IL86)$/, SMALL_RE = /^(CRJ\w|CR\d|AT\d\d|DH8\w|SF34|B190|E1[34]\w|J328|D328|F50|F27|SB20|JS\d\d|DHC\d|PC12|C208|TBM\d|BE\d\d|PA\d\d|C1\d\d|C2\d\d|SR2\d|DA\d\d|M20\w|P28\w)/;
 const sizeOf = f => { const k = kindOf(f); if (f._sk !== f._kk) { const c = acCode(f); f._sk = f._kk;

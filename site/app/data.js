@@ -154,11 +154,11 @@
   }
   async function openSky(b) {
     if (Date.now() < openSkyPause) throw new Error('daily credits used up, waiting');
-    const r = await fetch(`https://opensky-network.org/api/states/all?lamin=${b.s}&lomin=${b.w}&lamax=${b.n}&lomax=${b.e}`, { headers: { ...HEADERS, ...(await osHeaders().catch(() => ({}))) }, signal: AbortSignal.timeout(15000) });
+    const r = await fetch(`https://opensky-network.org/api/states/all?lamin=${b.s}&lomin=${b.w}&lamax=${b.n}&lomax=${b.e}&extended=1`, { headers: { ...HEADERS, ...(await osHeaders().catch(() => ({}))) }, signal: AbortSignal.timeout(15000) });
     if (r.status === 429) { openSkyPause = Date.now() + 600000; throw new Error('daily credits used up (429)'); }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return ((await r.json()).states || []).filter(s => s[5] != null && s[6] != null).map(s => ({ id: s[0], cs: (s[1] || '').trim() || s[0].toUpperCase(), reg: '', type: '', country: s[2],
-      lon: s[5], lat: s[6], ground: !!s[8], alt: s[8] ? 0 : s[7] ?? s[13] ?? 0, spd: s[9] || 0, hdg: s[10] || 0, vr: s[11] || 0, sq: s[14] || '', emg: '', cat: '' }));
+      lon: s[5], lat: s[6], ground: !!s[8], alt: s[8] ? 0 : s[7] ?? s[13] ?? 0, spd: s[9] || 0, hdg: s[10] || 0, vr: s[11] || 0, sq: s[14] || '', emg: '', cat: ['', '', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7'][s[17]] || '' })); // extended=1 adds the ADS-B emitter category (OpenSky has no aircraft type)
   }
 
   // Close view: adsb.lol (fallback OpenSky). Wide view: OpenSky, which covers everywhere in one request (fallback: adsb.lol for the center).
