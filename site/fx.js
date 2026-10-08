@@ -7,15 +7,16 @@
 
   /* ---- scroll progress, sticky header state, active nav link ---- */
   const prog = $('#prog'), hdr = $('header');
-  let maxS = 1, tick0 = false, stuck = false, tt = null, ring = null;
+  let maxS = 1, tick0 = false, stuck = false, tt = null, ring = null, links = [];
   const calc = () => { maxS = Math.max(1, document.documentElement.scrollHeight - innerHeight); };
   const onScroll = () => { tick0 = false;
     if (prog) prog.style.transform = `scaleX(${Math.min(1, scrollY / maxS).toFixed(4)})`;
     const sh = scrollY > 900; if (tt && sh !== tt._s) { tt._s = sh; tt.classList.toggle('show', sh); } if (tt && sh) ring.style.strokeDashoffset = (150.8 * (1 - Math.min(1, scrollY / maxS))).toFixed(1);
+    if (scrollY < 300) links.forEach(a => a.classList.remove('act'));
     const s = scrollY > 30; if (hdr && s !== stuck) { stuck = s; hdr.classList.toggle('stuck', s); } };
   addEventListener('scroll', () => { if (!tick0) { tick0 = true; requestAnimationFrame(onScroll); } }, { passive: true });
   addEventListener('resize', () => { calc(); onScroll(); }); addEventListener('load', () => { calc(); onScroll(); }); calc(); onScroll();
-  const links = $$('nav a.l[href^="#"]'), secs = links.map(a => $(a.getAttribute('href'))).filter(Boolean);
+  links = $$('nav a.l[href^="#"]'); const secs = links.map(a => $(a.getAttribute('href'))).filter(Boolean);
   if ('IntersectionObserver' in window && secs.length) {
     const so = new IntersectionObserver(es => es.forEach(e => {
       if (e.isIntersecting) links.forEach(a => a.classList.toggle('act', a.getAttribute('href') === '#' + e.target.id));
@@ -39,7 +40,7 @@
 
   /* ---- brand motif on every card: the dotted trail that grows toward the plane ---- */
   const MOTIF = '<span class="ci"><svg viewBox="0 0 46 30" fill="currentColor" aria-hidden="true"><circle class="d" cx="5" cy="15" r="1.7"/><circle class="d" cx="13" cy="15" r="2.4"/><circle class="d" cx="22" cy="15" r="3.1"/><path class="pl" d="M43 15 29 7v4.2l8 3.8-8 3.8V23z"/></svg></span>';
-  $$('.grid .card').forEach(c => { if (c.closest('#turbulence')) return; const h = c.querySelector('h3'); if (h) c.insertAdjacentHTML('afterbegin', MOTIF); });
+  $$('.grid .card').forEach(c => { if (c.closest('#turbulence') || c.querySelector('.wico')) return; const h = c.querySelector('h3'); if (h) c.insertAdjacentHTML('afterbegin', MOTIF); });
 
   /* ---- wrap screenshots for glow + tilt ---- */
   $$('.shotbox').forEach(b => { const w = document.createElement('div'); w.className = 'shotwrap' + (b.classList.contains('narrow') ? ' narrowwrap' : ''); b.parentNode.insertBefore(w, b); w.appendChild(b); });
@@ -62,6 +63,12 @@
       '<div class="chip3d c3"><i class="led g"></i><span><b>15 s</b>live refresh</span></div>');
     attachTilt(st, 6);
   }
+
+  /* ---- click a screenshot to see it large ---- */
+  const lb = document.createElement('div'); lb.className = 'lightbox'; lb.hidden = true; lb.innerHTML = '<img alt=""><button aria-label="Close">×</button>'; document.body.appendChild(lb);
+  const lbi = lb.querySelector('img'), closeLb = () => { lb.hidden = true; document.documentElement.style.overflow = ''; };
+  $$('.shotbox img').forEach(im => { im.style.cursor = 'zoom-in'; im.addEventListener('click', () => { lbi.src = im.currentSrc || im.src; lbi.alt = im.alt; lb.hidden = false; document.documentElement.style.overflow = 'hidden'; }); });
+  lb.addEventListener('click', closeLb); addEventListener('keydown', e => { if (e.key === 'Escape' && !lb.hidden) closeLb(); });
 
   /* ---- card spotlight follows the pointer ---- */
   if (fine) { let pe = null, pq = false;
