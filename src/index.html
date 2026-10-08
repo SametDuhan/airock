@@ -57,7 +57,7 @@ canvas.planes{position:absolute;top:0;left:0;pointer-events:none}
 .zr{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--mut)}.zr input{width:64px;padding:5px 6px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0}.zr input:focus{border-color:var(--ac)}
 .apr{display:flex;gap:6px;align-items:center;margin:6px 0 4px}.apr .ib{flex:none;width:28px;height:30px}
 .apr input{flex:1;min-width:0;padding:7px 8px;background:#111;border:1px solid var(--line);border-radius:3px;color:var(--fg);outline:0;font:600 12px ui-monospace,monospace;text-transform:uppercase}
-.apr input#fTp,.apr input#fAl{text-transform:none}.apr input::placeholder{text-transform:none;font-weight:400}.apr input:focus{border-color:var(--ac)}.apr input.set{border-color:var(--ac);color:var(--ac)}
+.apr input#fTp,.apr input#fAl,.apr input#fCo{text-transform:none}.apr input::placeholder{text-transform:none;font-weight:400}.apr input:focus{border-color:var(--ac)}.apr input.set{border-color:var(--ac);color:var(--ac)}
 .dr .rmin,.dr .rmax{position:absolute;top:19px;font-size:10px}.dr .rmax{right:0}
 .flt label{display:block;margin:6px 0}.flt b{color:var(--fg)}.flt input[type=range]{width:100%;accent-color:var(--ac)}.ck{display:flex;gap:10px;align-items:center;cursor:pointer;font:600 13px/1.2 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.03em;color:var(--fg);user-select:none}.ck:hover{color:var(--ac)}.ck input{appearance:none;-webkit-appearance:none;margin:0;width:18px;height:18px;flex:none;border:1.5px solid var(--mut);border-radius:4px;background:transparent;cursor:pointer;display:grid;place-content:center;transition:background .15s,border-color .15s}.ck input::after{content:'';width:9px;height:5px;border:solid #111;border-width:0 0 2.5px 2.5px;transform:rotate(-45deg) translate(1px,-1px) scale(0);transition:transform .12s}.ck input:checked{background:var(--ac);border-color:var(--ac)}.ck input:checked::after{transform:rotate(-45deg) translate(1px,-1px) scale(1)}.ck input:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 #card button{margin-top:12px;width:100%;background:transparent;color:var(--ac);border:1px solid var(--ac);border-radius:3px;padding:7px;cursor:pointer}#card button:hover{background:var(--ac);color:#111}
@@ -274,34 +274,208 @@ html:is([lang=ar],[lang=fa]) #side .brand{direction:ltr} /* the title and the la
   #sx{display:inline-flex!important}
 }
 #sx{display:none;margin-left:8px;flex:none}
+
+/* filter polish */
+.flt .ck{display:flex;flex-direction:row;align-items:center;gap:10px;margin:4px 0}
+.apr input{background:#1c1c1c;border-color:#4a4740;color:#f4f1e8;font:600 13px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.02em}
+.apr input::placeholder{color:#a9a395;opacity:1;font-weight:500}
+.apr input:hover{border-color:#6b665a}.apr input:focus{border-color:var(--ac);box-shadow:0 0 0 3px #f2c23026}
+.apd .ib{position:relative;flex:none;width:32px;height:32px;border-radius:50%;font-size:17px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;border-color:#4a4740;color:var(--ac);transition:transform .35s cubic-bezier(.3,1.5,.5,1),background .2s,color .2s,box-shadow .2s}
+.apd .ib:hover{background:var(--ac);color:#111;border-color:var(--ac);box-shadow:0 0 14px #f2c23066;transform:scale(1.1)}
+.apd .ib:active{transform:scale(.92)}
+.apd .ib.spin{animation:swp .45s cubic-bezier(.3,1.4,.5,1)}
+@keyframes swp{from{transform:rotate(0)}to{transform:rotate(180deg)}}
+.apd input.flash,.apr input.flash{animation:fl .45s ease-out}
+@keyframes fl{from{background:#f2c23044;transform:translateY(-3px)}to{background:#1c1c1c;transform:none}}
+
+/* radius stepper */
+.zr .stp{margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:3px;background:#111;border:1px solid var(--line);border-radius:999px;transition:border-color .2s,box-shadow .2s}
+.zr .stp:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px #f2c23026}
+.zr .stp input{margin:0;width:46px;padding:3px 0;border:0;background:transparent;text-align:center;font:700 14px ui-monospace,monospace;color:var(--fg);-moz-appearance:textfield;appearance:textfield}
+.zr .stp input::-webkit-inner-spin-button,.zr .stp input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.zr .stp button{width:26px;height:26px;padding:0;border:0;border-radius:50%;background:#ffffff12;color:var(--ac);display:grid;place-items:center;cursor:pointer;transition:transform .25s cubic-bezier(.3,1.6,.5,1),background .2s,color .2s,box-shadow .2s}
+.zr .stp button svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
+.zr .stp button:hover{background:var(--ac);color:#111;box-shadow:0 0 12px #f2c23066;transform:scale(1.12)}
+.zr .stp button:active{transform:scale(.88)}
+.zr .stp input.bump{animation:bmp .22s ease-out}
+@keyframes bmp{50%{transform:scale(1.25);color:var(--ac)}}
+/* settings row */
+.setsec{padding-top:0!important}
+.setb{position:relative;overflow:hidden;width:100%;display:flex!important;align-items:center;gap:12px;padding:11px 14px!important;text-align:left;background:linear-gradient(120deg,#f2c23014,#ffffff06)!important;border:1px solid #f2c23055!important;border-radius:12px!important;color:var(--fg)!important;transition:transform .25s,box-shadow .25s,border-color .25s}
+.setb::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,#ffffff22 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s}
+.setb:hover::after{transform:translateX(120%)}
+.setb:hover{border-color:var(--ac)!important;box-shadow:0 4px 18px #f2c23033;transform:translateY(-1px)}
+.setb .gr{width:22px;height:22px;color:var(--ac);flex:none;transition:transform .8s cubic-bezier(.3,1.2,.4,1)}
+.setb:hover .gr{transform:rotate(180deg)}.setb:active .gr{transform:rotate(300deg) scale(.9)}
+.setb .sl{flex:1;font:700 13px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.04em}
+.setb .sa{width:14px;height:14px;color:var(--mut);transition:transform .25s,color .25s}.setb:hover .sa{transform:translateX(4px);color:var(--ac)}
+/* footer */
+#foot{flex:none;position:sticky;bottom:0;z-index:3;display:flex;align-items:center;gap:8px;background:var(--pn);border-top:1px solid var(--line);padding:7px 10px}
+#foot #ver{position:static;border:0;padding:0;background:none;flex:1;text-align:right}
+#fb{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:#ffffff08;color:var(--fg);font:600 11px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.03em;cursor:pointer;transition:background .2s,color .2s,border-color .2s,transform .2s}
+#fb svg{width:16px;height:16px}#fb .fl{transform-origin:12px 7.5px;transition:transform .35s}
+#fb:hover{background:var(--ac);border-color:var(--ac);color:#111;transform:translateY(-1px)}#fb:hover .fl{transform:scaleY(-1)}
+#upd{bottom:44px}
+/* menu toggle */
+#open{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:rgba(28,28,28,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #f2c23066;color:var(--ac);box-shadow:0 4px 16px #0006;transition:transform .25s cubic-bezier(.3,1.6,.5,1),box-shadow .25s,border-color .25s,background .25s}
+#open svg{width:24px;height:24px;overflow:visible}
+#open .fr{stroke:currentColor;stroke-width:1.7}
+#open .pn{fill:currentColor;stroke:currentColor;stroke-width:1.2;transform-origin:3px 12px;transition:transform .4s cubic-bezier(.3,1.2,.4,1),opacity .3s}
+#open .ch{stroke:#111;stroke-width:2;transform-origin:14.5px 12px;transition:transform .4s cubic-bezier(.3,1.4,.4,1),stroke .3s}
+#open:hover{transform:scale(1.08);border-color:var(--ac);box-shadow:0 4px 20px #f2c23055}#open:active{transform:scale(.94)}
+body.closed #open .pn{transform:scaleX(.35);opacity:.45}
+body.closed #open .ch{transform:rotate(180deg);stroke:currentColor}
+body.closed #open{animation:opn 2.4s ease-in-out infinite}
+@keyframes opn{0%,100%{box-shadow:0 4px 16px #0006,0 0 0 0 #f2c23055}50%{box-shadow:0 4px 16px #0006,0 0 0 7px #f2c23000}}
+
+/* dock: settings + contact pinned at the very bottom */
+#foot{flex-direction:column;align-items:stretch;gap:8px;padding:10px 12px 8px;background:linear-gradient(180deg,#1d1d1d,#161616);box-shadow:0 -8px 18px #0008}
+#foot .setb{padding:10px 14px!important}
+#foot .fr2{display:flex;align-items:center;gap:10px}
+#fb{flex:1;justify-content:center;gap:10px;padding:11px 14px;border-radius:12px;font-size:13px;font-weight:700;background:linear-gradient(120deg,#f2c23022,#ffffff0a);border:1px solid #f2c23066;color:var(--ac)}
+#fb svg{width:20px;height:20px}
+#fb:hover{box-shadow:0 4px 18px #f2c23044}
+#foot #ver{flex:none;font-size:10px}
+#upd{bottom:112px}
+
+/* ---- round 3 ---- */
+/* select arrow: our own chevron instead of the browser's black triangle */
+.apr input[list]{padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23a9a395' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;background-size:13px;transition:background-position .2s,border-color .2s,box-shadow .2s}
+.apr input[list]:hover,.apr input[list]:focus{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23f2c230' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");background-position:right 9px center}
+.apr input[list]:focus{background-position:right 9px top 50%;}
+.apr input[list]::-webkit-calendar-picker-indicator{opacity:0;cursor:pointer;width:22px;height:22px;margin-right:-6px}
+/* min / max under the sliders */
+.dr .rmin,.dr .rmax{font:600 11px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#cfc9b8}
+/* filter extras */
+#fRst{display:flex;align-items:center;gap:8px;margin-top:10px;width:100%;padding:9px 12px;border-radius:10px;border:1px solid #f2c23066;background:#f2c2300f;color:var(--ac);font:700 12px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;cursor:pointer;transition:background .2s,color .2s,transform .2s}
+#fRst[hidden]{display:none}#fRst svg{width:15px;height:15px;transition:transform .5s cubic-bezier(.3,1.4,.4,1)}#fRst span{flex:1;text-align:left}
+#fRst em,#fCnt{font-style:normal;font:800 11px 'Segoe UI',system-ui,sans-serif;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--ac);color:#111;display:inline-grid;place-items:center}
+#fCnt{margin-left:8px;margin-right:auto}#fCnt[hidden]{display:none}
+#fRst:hover{background:var(--ac);color:#111}#fRst:hover svg{transform:rotate(-360deg)}#fRst:hover em{background:#111;color:var(--ac)}
+#fPh button{font-size:12px;padding:7px 2px}
+.qw{position:relative;margin:10px 14px}.qw #q{margin:0;width:100%;padding-right:34px}
+#qx{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;border:0;background:#ffffff14;color:var(--fg);display:grid;place-items:center;cursor:pointer;transition:background .2s,color .2s,transform .25s}
+#qx[hidden]{display:none}#qx svg{width:10px;height:10px}#qx:hover{background:var(--ac);color:#111;transform:translateY(-50%) rotate(90deg)}
+/* dock v2 */
+#foot{position:sticky}#foot .fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#foot .setb,#fb{width:auto;margin:0;justify-content:center;flex:none;padding:10px 8px!important;gap:8px;border-radius:12px;font-size:12px}
+#foot .setb .sl{flex:none;font-size:12px}#foot .setb .gr,#fb svg{width:19px;height:19px}
+#fb{display:flex;align-items:center}
+#foot #ver{text-align:center;padding:0;letter-spacing:.2em;opacity:.7}
+#cmenu{position:absolute;left:12px;right:12px;bottom:calc(100% - 4px);display:flex;flex-direction:column;gap:2px;padding:6px;background:#1f1f1f;border:1px solid #f2c23055;border-radius:12px;box-shadow:0 -10px 28px #000b;animation:cmi .22s cubic-bezier(.2,.8,.3,1.2)}
+#cmenu[hidden]{display:none}@keyframes cmi{from{opacity:0;transform:translateY(8px) scale(.97)}}
+#cmenu button{text-align:left;background:transparent;border:0;border-radius:8px;padding:10px 12px;color:var(--fg);font:600 13px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;cursor:pointer;transition:background .15s,color .15s,padding .2s}
+#cmenu button:hover{background:var(--ac);color:#111;padding-left:16px}
+#upd{bottom:100px}
+.apr input#fDep,.apr input#fArr{font-size:12px;padding-right:20px;background-position:right 6px center;background-size:11px;padding-left:9px}
+.dr{margin-bottom:10px}
+
+/* round 4: slim dock, sections as separate cards */
+#foot{padding:6px 10px;gap:0;box-shadow:0 -6px 14px #0007}
+#foot .fr2{gap:6px}
+#foot .setb,#fb{padding:6px 8px!important;border-radius:9px;font-size:12px;box-shadow:none}
+#foot .setb .gr,#fb svg{width:16px;height:16px}
+#foot .setb::after{display:none}
+#foot{margin-top:auto}#foot #ver{display:block;position:static;margin:2px -12px -8px;padding:7px 0 8px;border-top:1px solid #ffffff14;background:#0003;text-align:center;text-transform:none;font:600 11px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.12em;color:#d9bf62;opacity:1}#foot #ver:empty{display:none}
+#upd{bottom:52px}
+#side>.sec:not(#srch),#side>.flt{margin:8px 10px 0;padding:4px 14px 12px;background:#ffffff06;border:1px solid var(--line);border-radius:12px;transition:background .2s,border-color .2s}
+#side>.sec:not(#srch):not(.collapsed),#side>.flt:not(.collapsed){border-color:#ffffff1f;background:#ffffff09}
+#side>.sec:not(#srch)>.lbl,#side>.flt>.lbl{position:relative;padding-left:12px}
+#side>.sec:not(#srch)>.lbl::before,#side>.flt>.lbl::before{content:'';position:absolute;left:0;top:50%;width:3px;height:14px;margin-top:-7px;border-radius:2px;background:var(--ac);opacity:.9;transition:height .25s,opacity .25s}
+#side>.collapsed>.lbl::before{height:8px;margin-top:-4px;opacity:.35}
+#side>.collapsed{padding-bottom:0!important}#side>.collapsed>.lbl{margin-bottom:8px}
+#srch{margin-top:8px}
+
+/* round 5: multi-value fields (+ adds the typed value, × clears), chips, card for the aircraft list, thicker accent bar */
+.apd{display:grid;grid-template-columns:1fr 34px;grid-template-rows:auto auto;gap:6px 8px;margin-top:6px;align-items:start}
+.apd .apc1:first-child{grid-column:1;grid-row:1}.apd .apc1:last-child{grid-column:1;grid-row:2}
+.apd.rv .apc1:first-child{grid-row:2}.apd.rv .apc1:last-child{grid-row:1}
+.apd #fSw{grid-column:2;grid-row:1/3;align-self:center;width:34px;height:34px;margin:0}.apd #fSw span{display:block;transform:rotate(90deg)}
+.apr1{margin-top:6px}
+.fw{position:relative}
+.fw input{width:100%;box-sizing:border-box;padding:9px 62px 9px 11px;background:#1c1c1c;border:1px solid #4a4740;border-radius:8px;color:#f4f1e8;outline:0;font:600 13px 'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:.02em;text-transform:none;transition:border-color .2s,box-shadow .2s,background .2s}
+.fw input#fDep,.fw input#fArr{text-transform:uppercase}.fw input::placeholder{text-transform:none;color:#a9a395;opacity:1;font-weight:500}
+.fw input:hover{border-color:#6b665a}.fw input:focus{border-color:var(--ac);box-shadow:0 0 0 3px #f2c23026}
+.fw input.set{border-color:#f2c23099;background:#f2c2300d;color:var(--ac)}
+.fw input[list]{background-image:none}.fw input::-webkit-calendar-picker-indicator{display:none!important}
+.fw input:-webkit-autofill,.fw input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 100px #1c1c1c inset;-webkit-text-fill-color:#f4f1e8}
+.fw button{position:absolute;top:50%;width:24px;height:24px;margin-top:-12px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;opacity:0;pointer-events:none;transform:scale(.6);transition:opacity .18s,transform .22s cubic-bezier(.3,1.6,.5,1),background .15s,color .15s}
+.fw button svg{width:11px;height:11px}
+.fw .fx{right:6px;background:#ffffff14;color:var(--fg)}.fw .fp{right:34px;background:#f2c23026;color:var(--ac)}
+.fw.hasv .fp,.fw.hasany .fx{opacity:1;pointer-events:auto;transform:none}
+.fw .fp:hover{background:var(--ac);color:#111}.fw .fx:hover{background:#ff6b5e;color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:5px}.chips:not(:empty){margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 4px 3px 9px;border-radius:999px;background:#f2c23022;border:1px solid #f2c23066;color:var(--ac);font:700 11px 'Segoe UI',system-ui,sans-serif;animation:chin .2s cubic-bezier(.3,1.5,.5,1)}
+.chip b{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:#ffffff18;color:var(--fg);font-size:11px;line-height:1}.chip b:hover{background:#ff6b5e;color:#fff}
+@keyframes chin{from{opacity:0;transform:scale(.7)}}
+/* accent bar on every card title, bigger */
+#side>.sec>.lbl::before,#side>.flt>.lbl::before{width:4px;height:20px;margin-top:-10px;opacity:1;background:linear-gradient(180deg,#ffd75e,var(--ac))}
+#side>.collapsed>.lbl::before{height:12px;margin-top:-6px;opacity:.6}
+#side>.sec>.lbl,#side>.flt>.lbl{position:relative;padding-left:14px}
+/* aircraft list as a card too */
+#srch{margin:8px 10px 6px;background:#ffffff09;border:1px solid #ffffff1f!important;border-radius:12px;overflow:hidden;padding-top:4px}
+#srch>.lbl{padding-left:28px!important}#srch>.lbl::before{left:14px}
+#srch.collapsed{background:#ffffff06;border-color:var(--line)!important}
+/* slimmer dock */
+#foot{padding:4px 10px 5px}#foot .setb,#fb{padding:5px 8px!important}
+
+/* accent bars: same, solid and bright on every card title (aircraft list included) */
+#side>.sec:not(#srch)>.lbl::before,#side>.flt>.lbl::before,#srch>.lbl::before{content:'';position:absolute;left:0;top:50%;width:5px;height:22px;margin-top:-11px;border-radius:3px;background:#ffcc33;opacity:1;box-shadow:0 0 8px #ffcc3388;transition:height .25s,margin .25s}
+#side>.collapsed>.lbl::before,#side>.sec.collapsed:not(#srch)>.lbl::before{height:14px;margin-top:-7px;opacity:1}
+#srch>.lbl{position:relative;padding-left:28px!important}#srch>.lbl::before{left:14px}
+
+/* filters: breathing room between groups */
+#side .flt .fr{margin-top:18px}#side .flt .fr:first-of-type{margin-top:8px}
+.flt .dr{margin-top:8px;margin-bottom:30px}
+.dr .rmin,.dr .rmax{top:24px}
+#side .flt .ff{margin:0;padding:18px 0 0;border-top:1px solid var(--line)}
+.flt .ff+.btns,.flt .ff+.apd,.flt .ff+.apr1{margin-top:10px}
+.flt .apd{gap:8px 10px}
+.flt .cks{margin-top:20px;padding-top:12px}
+.mdl .rcmap{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:14px;padding:11px 16px;border-radius:12px;border:1px solid #ffcc3366;background:linear-gradient(180deg,#ffcc3322,#ffcc3310);color:#ffcc33;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;transition:background .18s,transform .18s,box-shadow .18s}.mdl .rcmap .ar{transition:transform .18s}.mdl .rcmap:hover{background:#ffcc33;color:#111;box-shadow:0 4px 16px #ffcc3333}.mdl .rcmap:hover .ar{transform:translateX(3px)}.mdl .rcmap:active{transform:scale(.98)}
+#sx{display:none!important}
+#cls{position:absolute;top:50%;left:0;transform:translateY(-50%);z-index:1001;width:26px;height:84px;padding:0;border:1.5px solid #f2c230bb;border-left:0;border-radius:0 18px 18px 0;background:#1c1c1cf2;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--ac);display:grid;place-items:center;cursor:pointer;box-shadow:4px 0 16px #0006;transition:opacity .25s,transform .3s cubic-bezier(.2,.7,.2,1),width .2s,background .2s,color .2s,box-shadow .2s}
+#cls svg{width:21px;height:21px;transition:transform .25s}
+#cls:hover{width:32px;background:var(--ac);color:#111;box-shadow:4px 0 20px #f2c23055}#cls:hover svg{transform:translateX(-2px)}#cls:active{width:26px}
+body.closed #cls{opacity:0;pointer-events:none;transform:translate(-100%,-50%)}
+body:not(.closed) #open{opacity:0;pointer-events:none;transform:scale(.6);animation:none}
+#open{transition:transform .25s cubic-bezier(.3,1.6,.5,1),opacity .25s,box-shadow .25s,border-color .25s,background .25s}
+@media(max-width:760px){#cls{left:min(88vw,330px);z-index:2600;height:64px}}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button class="ib" id="sx" aria-label="Close menu">✕</button><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
 <div class="sec"><div class="lbl">Data</div><div class="btns"><button id="mDemo" class="on">Demo</button><button id="mLive">Live</button></div><div id="st"></div></div>
 <div class="sec"><div class="lbl">Mode</div><div class="btns"><button id="mNorm" class="on">Normal</button><button id="mSpot">Plane spotter</button></div>
-<div class="btns wrap" style="margin-top:8px"><button id="bDiary">📓 Flight diary</button><button id="bAlerts">🔔 Alerts</button><button id="bOver">📍 Overhead</button><button id="bSet">⚙ Settings</button></div>
-<div class="btns" style="margin-top:8px"><button id="bStats">📊 Stats</button><button id="bRoute">🧭 Route check</button></div><div class="btns" id="ovRmRow" style="margin-top:8px;display:none"><button id="bOverRm">✕ Remove overhead spot</button></div></div>
+<div class="btns wrap" style="margin-top:8px"><button id="bDiary">Flight diary</button><button id="bAlerts">Alerts</button><button id="bOver">Overhead</button><button id="bStats">Stats</button><button id="bRoute" style="flex-basis:100%">Route check</button></div>
+<div class="btns" id="ovRmRow" style="margin-top:8px;display:none"><button id="bOverRm">✕ Remove overhead spot</button></div></div>
 <div class="sec" id="spt" style="display:none"></div>
 <div class="sec"><div class="lbl">Map</div><div class="btns seg" id="tiles"><button data-t="osm">Standard</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div><div class="btns wrap" style="margin-top:8px"><button id="bAp" class="on">Airports</button><button id="bZ">Alert zone</button><button id="bRd" title="Rain radar">Radar</button><button id="bTb" title="Turbulence advisories (SIGMET / G-AIRMET)">Turbulence</button><button id="bWd" title="Wind arrows">Wind</button><button id="bNt" title="Day / night">Night</button><button id="bCl" title="Satellite imagery with clouds (NASA, latest daily image)">Clouds</button><button id="bTr" title="Aircraft trails">Trails</button></div><select id="wdLv" style="display:none;width:100%;margin-top:6px"><option value="0">Wind: FL050</option><option value="1">Wind: FL100</option><option value="2">Wind: FL180</option><option value="3">Wind: FL300</option><option value="4" selected>Wind: FL340</option><option value="5">Wind: FL390</option></select>
-<label class="zr"><span>Zone radius</span> <input id="zR" type="number" min="3" max="500" step="1" value="100"> <span>km</span></label>
+<label class="zr"><span>Zone radius</span> <span class="stp"><button type="button" id="zM" aria-label="−"><svg viewBox="0 0 12 12"><path d="M2.5 6h7"/></svg></button><input id="zR" type="number" min="3" max="500" step="1" value="100"><button type="button" id="zP" aria-label="+"><svg viewBox="0 0 12 12"><path d="M2.5 6h7M6 2.5v7"/></svg></button></span> <span>km</span></label>
 </div>
-<div class="flt"><div class="lbl">Filters</div><div class="fr"><span>Altitude</span><span><b id="vA">0</b> – <b id="vM">45.000+</b> <u id="uA">ft</u></span></div>
+<div class="flt"><div class="lbl"><span>Filters</span><em id="fCnt" hidden></em></div><div class="fr"><span>Altitude</span><span><b id="vA">0</b> – <b id="vM">45.000+</b> <u id="uA">ft</u></span></div>
 <div class="dr" id="dr"><input id="fA" type="range" min="0" max="45000" step="1000" value="0"><input id="fM" type="range" min="0" max="45000" step="1000" value="45000"><span class="rmin">min</span><span class="rmax">max</span></div>
 <div class="fr"><span>Speed</span><span><b id="vS">0</b> – <b id="vSM">600+</b> <u id="uS">kt</u></span></div>
 <div class="dr" id="dr2"><input id="fS" type="range" min="0" max="600" step="25" value="0"><input id="fSM" type="range" min="0" max="600" step="25" value="600"><span class="rmin">min</span><span class="rmax">max</span></div>
+<div class="ff">Flight phase</div>
+<div class="btns seg" id="fPh" style="margin-top:6px"><button data-p="" class="on">All</button><button data-p="c">Climbing</button><button data-p="z">Cruise</button><button data-p="d">Descending</button></div>
 <div class="ff">Airport</div>
-<div class="apr"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button id="fSw" class="ib" title="Departure ↔ arrival">⇄</button><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"></div>
+<div class="apd"><div class="apc1"><div class="fw"><input id="fDep" list="apList" placeholder="Departure" autocomplete="off"><button type="button" class="fp" data-f="fDep" aria-label="Add"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M2.5 6h7M6 2.5v7"/></svg></button><button type="button" class="fx" data-f="fDep" aria-label="Remove"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div class="chips" id="cDep"></div></div><button id="fSw" class="ib" title="Departure ↔ arrival"><span>⇄</span></button><div class="apc1"><div class="fw"><input id="fArr" list="apList" placeholder="Arrival" autocomplete="off"><button type="button" class="fp" data-f="fArr" aria-label="Add"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M2.5 6h7M6 2.5v7"/></svg></button><button type="button" class="fx" data-f="fArr" aria-label="Remove"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div class="chips" id="cArr"></div></div></div>
 <div class="ff">Airline</div>
-<div class="apr"><input id="fAl" list="alList" placeholder="e.g. THY, Pegasus, Lufthansa" autocomplete="off"></div><datalist id="alList"></datalist>
+<div class="apr1"><div class="fw"><input id="fAl" list="alList" placeholder="e.g. THY, Pegasus, Lufthansa" autocomplete="off"><button type="button" class="fp" data-f="fAl" aria-label="Add"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M2.5 6h7M6 2.5v7"/></svg></button><button type="button" class="fx" data-f="fAl" aria-label="Remove"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div class="chips" id="cAl"></div></div><datalist id="alList"></datalist>
 <div class="ff">Aircraft type</div>
-<div class="apr"><input id="fTp" list="tpList" placeholder="e.g. B738, A320, boeing 777" autocomplete="off"></div><datalist id="tpList"></datalist>
+<div class="apr1"><div class="fw"><input id="fTp" list="tpList" placeholder="e.g. B738, A320, boeing 777" autocomplete="off"><button type="button" class="fp" data-f="fTp" aria-label="Add"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M2.5 6h7M6 2.5v7"/></svg></button><button type="button" class="fx" data-f="fTp" aria-label="Remove"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div class="chips" id="cTp"></div></div><datalist id="tpList"></datalist>
+<div class="ff">Country</div>
+<div class="apr1"><div class="fw"><input id="fCo" list="coList" placeholder="e.g. Türkiye, Germany, USA" autocomplete="off"><button type="button" class="fp" data-f="fCo" aria-label="Add"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M2.5 6h7M6 2.5v7"/></svg></button><button type="button" class="fx" data-f="fCo" aria-label="Remove"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div class="chips" id="cCo"></div></div><datalist id="coList"></datalist>
 <div id="apSt" class="rtx"></div><datalist id="apList"></datalist>
 <div class="cks"><label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
-<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div></div>
+<label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label>
+<label class="ck"><input id="fE" type="checkbox"> Emergencies only</label>
+<button id="fRst" type="button" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a5 5 0 1 0 1.6-3.7M3 2.5v3h3"/></svg><span>Reset filters</span><em id="fCnt2"></em></button></div></div>
 <div class="sec" id="wls" style="display:none"></div>
-<div class="sec" id="srch"><div class="lbl">Aircraft</div><input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></div><div id="upd" hidden></div><div id="ver">SkyTrack</div></aside>
+<div class="sec" id="srch"><div class="lbl">Aircraft</div><div class="qw"><input id="q" placeholder="Search callsign or registration…"><button id="qx" type="button" aria-label="Clear" hidden><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div id="meta"></div><div id="list"></div></div><div id="upd" hidden></div><div id="foot"><div id="cmenu" hidden><button data-c="bug">Report a bug</button><button data-c="idea">Request a feature</button><button data-c="info">Copy app info</button></div><div class="fr2"><button id="bSet" class="setb"><svg class="gr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/><circle cx="12" cy="12" r="6.6" stroke-dasharray="2.2 2.6"/></svg><span class="sl">Settings</span></button><button id="fb" title="Report a bug or request a feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path class="fl" d="m4 7.5 8 6 8-6"/></svg><span>Contact us</span></button></div><div id="ver">SkyTrack</div></div></aside>
 <main><div id="map"></div>
-<button id="open" class="ib" title="Close menu" aria-label="Menu"><b></b><b></b><b></b></button><div class="bar"><span class="cdot"></span><div class="ct"><span id="clock"></span><small id="cdate"></small></div></div>
+<button id="open" class="ib" title="Close menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect class="fr" x="3" y="4" width="18" height="16" rx="4.5"/><path class="pn" d="M3 8.5A4.5 4.5 0 0 1 7.5 4H10v16H7.5A4.5 4.5 0 0 1 3 15.5z"/><path class="ch" d="M16 9.5 13.5 12l2.5 2.5"/></svg></button><div class="bar"><span class="cdot"></span><div class="ct"><span id="clock"></span><small id="cdate"></small></div></div>
+<button id="cls" type="button" title="Close menu" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button>
 <div id="stm" class="mdl"></div><div id="stt" class="mdl"></div><div id="alm" class="mdl"></div><div id="rcm" class="mdl"></div><div id="ovp"></div><div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
 <div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span><div id="rpTip"></div></div></main></div>
 <script src="loader.js"></script></body></html>

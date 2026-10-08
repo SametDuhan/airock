@@ -52,5 +52,5 @@ $('wdLv').onchange = () => setWind(+$('wdLv').value);
 { let fold = {}; try { fold = JSON.parse(localStorage.getItem('sky.fold') || '{}') || {}; } catch {}
   document.querySelectorAll('#side > .sec, #side > .flt').forEach((sec, i) => { const lbl = sec.querySelector(':scope > .lbl'); if (!lbl) return;
     const key = 's' + i; // by position, so it doesn't change with the language
-    sec.classList.add('fold'); sec.classList.toggle('collapsed', !!fold[key]);
+    sec.classList.add('fold'); sec.classList.toggle('collapsed', key in fold ? !!fold[key] : !!sec.querySelector('#tiles')); // first run: the Map section starts folded, the menu is shorter
     lbl.onclick = () => { const c = sec.classList.toggle('collapsed'); fold[key] = c; try { localStorage.setItem('sky.fold', JSON.stringify(fold)); } catch {} }; }); }
