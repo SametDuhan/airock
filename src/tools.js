@@ -14,7 +14,7 @@ function renderSettings() {
     + UNIT_ROWS.map(([k, l, o]) => `<div class="sr"><span>${t(l)}</span><div class="btns seg">${o.map(([v, tx]) => `<button data-u="${k}" data-v="${v}" class="${U[k] === v ? 'on' : ''}">${tx}</button>`).join('')}</div></div>`).join('')
     + `<h3>${t('Replay history')}</h3><div class="sr"><span>${t('How far back you can rewind')}</span><div class="btns seg">${[[5, '1 h'], [15, '3 h'], [30, '6 h']].map(([v, tx]) => `<button data-h="${v}" class="${HSTEP === v ? 'on' : ''}">${tx}</button>`).join('')}</div></div>`
     + (window.api?.openskySet ? `<h3>${t('OpenSky account (optional)')}</h3><div class="rtx">${t('A free OpenSky API client gives the wide view a much higher daily limit. Create one in your OpenSky account. It is stored encrypted on this computer.')}</div><div class="rtx">${t('1) Sign up at opensky-network.org (free)  2) Account page → create an API client  3) Paste Client ID and secret here.')} <a href="https://opensky-network.org/my-opensky/account" target="_blank">${t('Open OpenSky account page')}</a></div><div class="os"><input id="osId" placeholder="Client ID" autocomplete="off"><input id="osSec" type="password" placeholder="Client secret" autocomplete="off"><button class="bt2" id="osSave">${t('Save')}</button></div><div class="rtx" id="osSt"></div>` : '')
-    + `<h3>${t('App')}</h3><label class="ck" id="lTray"><input id="sTray" type="checkbox"> ${t('Keep running in the tray')}</label><label class="ck"><input id="sNot" type="checkbox"> ${t('Desktop notifications')}</label><label class="ck"><input id="sToast" type="checkbox"> ${t('In-app notifications')}</label><label class="ck"><input id="sThin" type="checkbox"> ${t('Thin out crowded areas when zoomed out')}</label>`
+    + `<h3>${t('App')}</h3><label class="ck" id="lTray"><input id="sTray" type="checkbox"> ${t('Keep running in the tray')}</label><label class="ck"><input id="sNot" type="checkbox"> ${t('Desktop notifications')}</label><label class="ck"><input id="sToast" type="checkbox"> ${t('In-app notifications')}</label><label class="ck"><input id="sThin" type="checkbox"> ${t('Thin out crowded areas when zoomed out')}</label><label class="ck"><input id="sSmAp" type="checkbox"> ${t('Hide small airports')}</label><label class="ck"><input id="sHeAp" type="checkbox"> ${t('Hide heliports')}</label>`
     + (window.api?.checkUpdate ? `<div class="sr"><span>${esc($('ver').textContent)}</span><button class="bt2" id="updCheck">${t('Check for updates')}</button></div><div class="rtx" id="updSt"></div>` : '')
     + `<div style="margin-top:14px"><button class="bt2" id="tourAgain">${t('Show the tour again')}</button></div></div>`;
   if (window.api?.openskyGet) window.api.openskyGet().then(r => { if ($('osSt')) { $('osSt').textContent = r.set ? t('Connected as {0}', r.id) : ''; if (r.set && $('osId')) $('osId').placeholder = r.id; } });
@@ -23,6 +23,10 @@ function renderSettings() {
   tr.onchange = () => { save('sky.tray', tr.checked); try { window.api.tray(tr.checked); } catch {} if (tr.checked) toast(t('SkyTrack keeps running in the tray when you close the window')); };
   nt.onchange = () => save('sky.notif', nt.checked);
   const tt = $('sToast'); tt.checked = LS('sky.toast', true); tt.onchange = () => { save('sky.toast', tt.checked); if (!tt.checked) $('toast').replaceChildren(); };
+  const apRe = () => { for (const m of apMk.values()) apLayer.removeLayer(m); apMk.clear(); drawAp(); };
+  const sa = $('sSmAp'), sh2 = $('sHeAp'); sa.checked = apHide.small; sh2.checked = apHide.heli;
+  sa.onchange = () => { apHide.small = sa.checked; save('sky.hideSmallAp', apHide.small); apRe(); };
+  sh2.onchange = () => { apHide.heli = sh2.checked; save('sky.hideHeliAp', apHide.heli); apRe(); };
   const th = $('sThin'); th.checked = thinOn; th.onchange = () => { thinOn = th.checked; save('sky.thin', thinOn); redraw(); };
 }
 stm.onclick = e => {

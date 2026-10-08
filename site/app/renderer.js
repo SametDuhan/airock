@@ -125,13 +125,16 @@ const desktopNote = (msg, id) => {
 // Instead of a separate HTML element per aircraft, all are drawn on one canvas: stays smooth with thousands of aircraft
 // Icon shapes (24x24, nose up): b = body, e = engines (outlined separately so each one is visible), r = rotor blades (helicopters, stroke only), d = rotor disc (filled, faint)
 const SHAPES = {
-  gen: { b: 'M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z', s: 1 },
+  gen: { b: 'M12 3 L12.8 3.9 L13.1 6 L13.1 8.1 L22.2 8.9 L22.4 11.3 L13.1 11.8 L12.6 17.4 L17.2 18.2 L17.2 20 L12.5 19.8 L12 20.2 L11.5 19.8 L6.8 20 L6.8 18.2 L11.4 17.4 L10.9 11.8 L1.6 11.3 L1.8 8.9 L10.9 8.1 L10.9 6 L11.2 3.9Z',
+    e: 'M9.2 1.6h5.6v1H9.2z', s: 1 }, // light single-engine: straight tapered wing + propeller
   air2: { b: 'M12 1.5c1 0 1.6 1.6 1.6 3.5v4l8.9 6v2l-8.9-2.8v5.3l2.4 2v1.3L12 21.8l-4 1v-1.3l2.4-2v-5.3L1.5 17v-2l8.9-6V5c0-1.9.6-3.5 1.6-3.5z',
     e: 'M6.2 11a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM15.8 11a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0z', s: 1 },
   air4: { b: 'M12 1.5c1 0 1.6 1.6 1.6 3.5v4l8.9 6v2l-8.9-2.8v5.3l2.4 2v1.3L12 21.8l-4 1v-1.3l2.4-2v-5.3L1.5 17v-2l8.9-6V5c0-1.9.6-3.5 1.6-3.5z',
     e: 'M6.5 10.6a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM15.5 10.6a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM2.8 12.8a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM19.2 12.8a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0z', s: 1.3 },
-  jet: { b: 'M12 1c.9 0 1.4 2 1.4 4v5l6.6 5v1.8l-6.6-2v4.2l1.6 1.5v1.3L12 21l-3 .8v-1.3l1.6-1.5v-4.2l-6.6 2V15l6.6-5V5c0-2 .5-4 1.4-4z',
-    e: 'M8.6 14.5a.9.9 0 0 1 1.8 0v4a.9.9 0 0 1-1.8 0zM13.6 14.5a.9.9 0 0 1 1.8 0v4a.9.9 0 0 1-1.8 0z', s: .9 },
+  jet: { b: 'M12 1.8 L12.7 3 L12.9 5 L12.9 10.2 L20.3 14.6 L20.3 16 L12.9 14.4 L12.8 18 L14.6 19.4 L14.6 20.6 L12.6 20 L12 20.6 L11.4 20 L9.4 20.6 L9.4 19.4 L11.2 18 L11.1 14.4 L3.7 16 L3.7 14.6 L11.1 10.2 L11.1 5 L11.3 3Z',
+    e: 'M9 15.9a0.7 0.7 0 0 1 1.4 0v1.8a0.7 0.7 0 0 1-1.4 0zM13.6 15.9a0.7 0.7 0 0 1 1.4 0v1.8a0.7 0.7 0 0 1-1.4 0z', s: 1 },
+  prop: { b: 'M12 1.8 L12.8 2.8 L13 5 L13 10.4 L21.8 11.2 L21.8 13.2 L13 13.8 L12.9 18.8 L15.6 19.6 L15.6 21 L12.7 20.6 L12 21.2 L11.3 20.6 L8.4 21 L8.4 19.6 L11.1 18.8 L11 13.8 L2.2 13.2 L2.2 11.2 L11 10.4 L11 5 L11.2 2.8Z',
+    e: 'M6.1 8.6a0.8 0.8 0 0 1 1.6 0v1.8a0.8 0.8 0 0 1-1.6 0zM16.3 8.6a0.8 0.8 0 0 1 1.6 0v1.8a0.8 0.8 0 0 1-1.6 0z', s: 1 }, // turboprop: straight wing, engines on the wing
   heli: { b: 'M12 3.6c2.4 0 3.8 2 3.8 4.6 0 2.2-.8 3.7-1.6 4.6h-4.4c-.8-.9-1.6-2.4-1.6-4.6 0-2.6 1.4-4.6 3.8-4.6zM11.2 12.4h1.6v7.4h-1.6zM9.3 18.6h5.4l-.6 1.7H9.9zM11.35 19.8h1.3v2.4h-1.3z', // cabin, tail boom, stabilizer, tail fin
     e: 'M7.1 6.8h1v6.4h-1zM15.9 6.8h1v6.4h-1z', // skids
     d: 'M22 8.6a10 10 0 1 1-20 0a10 10 0 1 1 20 0z', // faint rotor disc (filled)
@@ -142,15 +145,16 @@ for (const k in SHAPES) { const o = SHAPES[k]; o.B = new Path2D(o.b); if (o.e) o
 const HELI_RE = /^(EC\d\d|AS\d\d|AW\d\d|B06|B407|B412|B427|B429|B505|R22|R44|R66|S76|S92|S61|S64|A109|A119|A139|A149|A169|A189|MD52|MD60|MI\d|KA\d\d|NH90|H47|H53|H60|H64|H500|UH\d\d|CH\d\d|MH\d\d|BK17|EN28|EN48|SCOU|GAZL|LYNX|PUMA|TIGR)/;
 const FOUR_ENG = new Set('A342 A343 A345 A346 A388 A124 A225 B741 B742 B743 B744 B74D B74R B74S B748 B703 B701 B720 B52 B1 C17 C5M C5 C135 K35R KC10 IL96 IL76 IL62 IL86 IL18 AN12 AN22 AN70 A400 C130 C30J L100 E3CF E6 DC8 DC85 DC86 DC87 B461 B462 B463 RJ70 RJ85 RJ1H VC10 TU95 TU16'.split(' '));
 const JET_RE = /^(C25\w|C5[0-9]\w|C56X|C68A|C680|C700|C750|C510|C525|C550|E5[05]P|E545|E550|LJ\d\d|GLF\d|GL\d\d|GALX|FA\d\w|F2TH|F900|CL3\d|CL60|H25\w|HDJT|PC24|BE40|PRM1|ASTR|G150|G280|SF50|EA50|ECLP|F\d\d[A-Z]?$|EUFI|RFAL|TORN|GRIF|HAWK|T38|L39|A10|SU\d\d|MG\d\d)/;
+const PROP_RE = /^(AT\d\d|DH8\w|DHC[5-8]|SF34|B190|B350|BE[29]\w|E120|F50|F27|JS\d\d|SB20|D328|AN2[46]|AN32|PC12|C208|TBM\d|P180|DH3\w|AT7\w|AT4\w|AT8\w|Q\d00|SH36|L410|MA60|Y12)/;
 const TWIN_RE = /^(A2\d\d|A3[0-9]\d|A\d\dN|B7[1-9]\d|B3[7-9]M|B3XM|E1\d\d|E2\d\d|E7\d\w|CRJ|CR\d|AT\d\d|DH8|SF34|B190|F100|F70|MD[89]\d|BCS|SU95|C919|ARJ|J328)/;
 const kindOf = f => { const c = acCode(f), cat = f.cat || '';
   if (f._kk === c + cat) return f._k;
-  const k = cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : TWIN_RE.test(c) || /^A[345]$/.test(cat) ? 'air2' : 'gen';
+  const k = cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : PROP_RE.test(c) ? 'prop' : TWIN_RE.test(c) || /^A[345]$/.test(cat) ? 'air2' : 'gen';
   f._kk = c + cat; return f._k = k; };
 // Size class by aircraft type: big airliners draw larger, small ones smaller. The difference fades out when zoomed far out so crowded areas stay readable.
 const XL_RE = /^(A38\w|B74\w|B77[WL]|B778|B779|B77\w|A35K|A346|A345|A124|A225|C5M?|IL96|B748)$/, WIDE_RE = /^(B78\w|B76\w|A33\w|A35\w|A30B|A310|A306|A3ST|B75\w|MD11|DC10|L101|IL86)$/, SMALL_RE = /^(CRJ\w|CR\d|AT\d\d|DH8\w|SF34|B190|E1[34]\w|J328|D328|F50|F27|SB20|JS\d\d|DHC\d|PC12|C208|TBM\d|BE\d\d|PA\d\d|C1\d\d|C2\d\d|SR2\d|DA\d\d|M20\w|P28\w)/;
 const sizeOf = f => { const k = kindOf(f); if (f._sk !== f._kk) { const c = acCode(f); f._sk = f._kk;
-    f._sz = k === 'heli' ? .75 : k === 'gen' ? .7 : XL_RE.test(c) ? 1.35 : WIDE_RE.test(c) ? 1.15 : k === 'jet' || SMALL_RE.test(c) ? .8 : (f.cat === 'A5' ? 1.3 : f.cat === 'A4' ? 1.15 : f.cat === 'A1' ? .7 : f.cat === 'A2' ? .8 : 1); }
+    f._sz = k === 'heli' ? .75 : k === 'gen' ? .7 : XL_RE.test(c) ? 1.35 : WIDE_RE.test(c) ? 1.15 : k === 'jet' || k === 'prop' || SMALL_RE.test(c) ? .8 : (f.cat === 'A5' ? 1.3 : f.cat === 'A4' ? 1.15 : f.cat === 'A1' ? .7 : f.cat === 'A2' ? .8 : 1); }
   return f._sz; };
 const sizeK = f => { const z = map.getZoom(), m = sizeOf(f); return 1 + (m - 1) * (z <= 4 ? 0 : z <= 6 ? .5 : 1); };
 map.createPane('planes').style.zIndex = 450;
@@ -538,7 +542,7 @@ const apLarge = new Set((window.AIRPORTS_LARGE || '').split(',')), apRest = BIGA
 const apAll = APO.concat(apRest.filter(a => apLarge.has(a.icao)), apRest.filter(a => !apLarge.has(a.icao)), apMore.filter(a => a.sz === 'm'), apMore.filter(a => a.sz === 's'), apTiny);
 // Heliports and seaplane bases (zoom 11+) come from a file that is loaded the first time it is needed
 let heliLoad = false;
-function ensureHeli() { if (heliLoad || map.getZoom() < 11) return; heliLoad = true;
+function ensureHeli() { if (heliLoad || apHide.heli || map.getZoom() < 11) return; heliLoad = true;
   loadJs('airports-heli').then(ok => { if (!ok) return; for (const x of (window.AIRPORTS_HELI || '').split(';')) { if (!x) continue; const [code, name, lat, lon, sz] = x.split('|'); apAll.push({ code, icao: code, name, lat: +lat, lon: +lon, sz }); } drawAp(); }); }
 const apMk = new Map();
 function apIcon(a) { const big = apBig.has(a.code), z = map.getZoom(), sz = big ? (z < 5 ? 15 : z < 7 ? 19 : 23) : (z < 8 ? 13 : z < 10 ? 16 : 14);
@@ -546,12 +550,15 @@ function apIcon(a) { const big = apBig.has(a.code), z = map.getZoom(), sz = big 
 // Thinning: when the map is zoomed out only the most important airport of each patch of the map is drawn (the fixed list first, then the large ones, then the rest), so a small country gets one
 // airport and a big one several, and zooming in brings more in where you look. The patches are fixed to the world (not the screen), so panning doesn't shuffle the airports around.
 const AP_CELL = z => z <= 5 ? 112 : z <= 6 ? 90 : z <= 7 ? 72 : z <= 8 ? 54 : z <= 9 ? 44 : z <= 10 ? 36 : 28;
+const apHide = { small: LS('sky.hideSmallAp', false), heli: LS('sky.hideHeliAp', false) };
+const apHidden = a => apHide.small && (a.sz === 's' || a.sz === 't' || a.sz === 'w') || apHide.heli && a.sz === 'h';
 const AP_MINZ = { m: 6, s: 8, t: 10, h: 11, w: 11 };
 function drawAp() {
   if (!map.hasLayer(apLayer)) return;
   const z = map.getZoom(), v = map.getBounds().pad(.15), want = new Map(), S = AP_CELL(z), taken = new Map(); ensureHeli();
   for (const a of apAll) {
     if (want.size >= AP_MAX) break;
+    if (!apBig.has(a.code) && apHidden(a)) continue;
     if (!(apBig.has(a.code) || z >= (AP_MINZ[a.sz] || 5)) || !v.contains([a.lat, a.lon])) continue;
     const p = map.project([a.lat, a.lon], z), cx = Math.floor(p.x / S), cy = Math.floor(p.y / S); let near = false;
     for (let i = -1; i <= 1 && !near; i++) for (let j = -1; j <= 1 && !near; j++) { const q = taken.get((cx + i) + ',' + (cy + j)); if (q && Math.hypot(q.x - p.x, q.y - p.y) < S) near = true; }
