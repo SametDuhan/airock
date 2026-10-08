@@ -145,7 +145,7 @@ const TOUR = [
   { s: '#srch', h: 'Search the whole world', p: 'Type a callsign, registration, aircraft type or airport. Results are not limited to the part of the map you see.' },
   { s: '.flt', h: 'Filters', p: 'Narrow the map by altitude, speed, airport, airline or aircraft type.' },
   { s: '#bDiary', h: 'Your tools', p: 'Keep a flight diary, set alerts for rare aircraft, see what is flying overhead, and change units in Settings.' },
-  { s: '#open', h: 'Menu button', p: 'Hide or show the menu any time. Enjoy the sky!' }];
+  { s: 'body.closed #open, body:not(.closed) #cls', h: 'Menu button', p: 'Hide or show the menu any time. Enjoy the sky!' }];
 let tourI = 0, tourEl = null;
 function startTour() { tourI = 0; if (!tourEl) { tourEl = document.createElement('div'); tourEl.id = 'tour'; tourEl.innerHTML = '<div class="spot"></div><div class="tip"></div>'; document.body.appendChild(tourEl); tourEl.onclick = tourClick; } setMenu(true); setTimeout(showTour, 380); }
 function showTour() { const st = TOUR[tourI], sp = tourEl.querySelector('.spot'), tip = tourEl.querySelector('.tip'); let r;

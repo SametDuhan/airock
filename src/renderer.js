@@ -978,7 +978,7 @@ function pumpRoutes() {
 
 /* ---------- collapsible menu + clock ---------- */
 const setMenu = open => { $('side').classList.toggle('hide', !open); document.body.classList.toggle('closed', !open); save('sky.menu', open); const o = $('open'); o.dataset.otitle = open ? 'Close menu' : 'Open menu'; o.title = t(o.dataset.otitle); };
-$('sx').onclick = () => setMenu(false);
+$('sx').onclick = $('cls').onclick = () => setMenu(false);
 map.on('click', () => { if (matchMedia('(max-width:760px)').matches && !document.body.classList.contains('closed')) setMenu(false); }); // on a phone a tap on the map closes the menu drawer
 $('open').onclick = () => setMenu(document.body.classList.contains('closed'));
 $('side').addEventListener('transitionend', () => { map.invalidateSize(); redraw(); });
