@@ -147,6 +147,12 @@ const kindOf = f => { const c = acCode(f), cat = f.cat || '';
   if (f._kk === c + cat) return f._k;
   const k = cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : TWIN_RE.test(c) || /^A[345]$/.test(cat) ? 'air2' : 'gen';
   f._kk = c + cat; return f._k = k; };
+// Size class by aircraft type: big airliners draw larger, small ones smaller. The difference fades out when zoomed far out so crowded areas stay readable.
+const XL_RE = /^(A38\w|B74\w|B77[WL]|B778|B779|B77\w|A35K|A346|A345|A124|A225|C5M?|IL96|B748)$/, WIDE_RE = /^(B78\w|B76\w|A33\w|A35\w|A30B|A310|A306|A3ST|B75\w|MD11|DC10|L101|IL86)$/, SMALL_RE = /^(CRJ\w|CR\d|AT\d\d|DH8\w|SF34|B190|E1[34]\w|J328|D328|F50|F27|SB20|JS\d\d|DHC\d|PC12|C208|TBM\d|BE\d\d|PA\d\d|C1\d\d|C2\d\d|SR2\d|DA\d\d|M20\w|P28\w)/;
+const sizeOf = f => { const k = kindOf(f); if (f._sk !== f._kk) { const c = acCode(f); f._sk = f._kk;
+    f._sz = k === 'heli' ? .75 : k === 'gen' ? .7 : XL_RE.test(c) ? 1.35 : WIDE_RE.test(c) ? 1.15 : k === 'jet' || SMALL_RE.test(c) ? .8 : (f.cat === 'A5' ? 1.3 : f.cat === 'A4' ? 1.15 : f.cat === 'A1' ? .7 : f.cat === 'A2' ? .8 : 1); }
+  return f._sz; };
+const sizeK = f => { const z = map.getZoom(), m = sizeOf(f); return 1 + (m - 1) * (z <= 4 ? 0 : z <= 6 ? .5 : 1); };
 map.createPane('planes').style.zIndex = 450;
 /* ---------- thinning out crowded areas when zoomed out ---------- */
 // Over a busy area at continent scale thousands of overlapping icons are unreadable and slow to draw. Above THIN_FROM visible aircraft we keep one per grid cell (the most
@@ -205,10 +211,10 @@ const PlaneLayer = L.Layer.extend({
     const shown = thinOn && cand.length > THIN_FROM ? thinOut(cand) : cand; setThn(shown.length + (sel ? 1 : 0), cand.length + (sel ? 1 : 0));
     shown.forEach(f => {
       if (f.seen && Date.now() - f.seen > 45000) ctx.globalAlpha = .5; // not reported for a while: shown fainter, still moving
-      icon(ctx, f._p, f._h, (f.ground ? 16 : 24) * k, f.ground ? '#9aa0a6' : color(f.alt), kindOf(f));
-      ctx.globalAlpha = 1; rings(ctx, f, f._p, (f.ground ? 16 : 24) * k);
+      icon(ctx, f._p, f._h, (f.ground ? 16 : 24) * k * sizeK(f), f.ground ? '#9aa0a6' : color(f.alt), kindOf(f));
+      ctx.globalAlpha = 1; rings(ctx, f, f._p, (f.ground ? 16 : 24) * k * sizeK(f));
     });
-    if (sel) { ctx.shadowColor = '#f2c230'; ctx.shadowBlur = 12; icon(ctx, sel._p, sel._h, 30, '#fff', kindOf(sel)); ctx.shadowBlur = 0; rings(ctx, sel, sel._p, 30); }
+    if (sel) { ctx.shadowColor = '#f2c230'; ctx.shadowBlur = 12; icon(ctx, sel._p, sel._h, 30 * Math.max(.9, sizeK(sel)), '#fff', kindOf(sel)); ctx.shadowBlur = 0; rings(ctx, sel, sel._p, 30); }
   }
 });
 // Emergency (squawk 7500/7600/7700): blinking red ring
@@ -227,7 +233,7 @@ function icon(ctx, p, hdg, size, fill, kind = 'gen') {
 }
 const planes = new PlaneLayer().addTo(map), redraw = () => planes.redraw();
 // Click/hover: the nearest aircraft from the last drawn screen positions (within 14 px)
-function hit(pt) { let best = null, bd = 12 * 12; flights.forEach(f => { if (!f._p) return; const d = (f._p.x - pt.x) ** 2 + (f._p.y - pt.y) ** 2; if (d < bd) { bd = d; best = f; } }); return best; }
+function hit(pt) { let best = null, bd = 12 * 12; flights.forEach(f => { if (!f._p) return; const r = Math.max(9, 12 * Math.min(1.2, sizeK(f))), d = (f._p.x - pt.x) ** 2 + (f._p.y - pt.y) ** 2; if (d < r * r && d < bd) { bd = d; best = f; } }); return best; }
 map.on('mousemove', e => { const f = hit(e.containerPoint), h = $('hov');
   map.getContainer().style.cursor = f ? 'var(--ptr)' : '';
   if (!f) { h.style.display = 'none'; return; }
