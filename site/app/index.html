@@ -329,6 +329,16 @@ body.closed #open .pn{transform:scaleX(.35);opacity:.45}
 body.closed #open .ch{transform:rotate(180deg);stroke:currentColor}
 body.closed #open{animation:opn 2.4s ease-in-out infinite}
 @keyframes opn{0%,100%{box-shadow:0 4px 16px #0006,0 0 0 0 #f2c23055}50%{box-shadow:0 4px 16px #0006,0 0 0 7px #f2c23000}}
+
+/* dock: settings + contact pinned at the very bottom */
+#foot{flex-direction:column;align-items:stretch;gap:8px;padding:10px 12px 8px;background:linear-gradient(180deg,#1d1d1d,#161616);box-shadow:0 -8px 18px #0008}
+#foot .setb{padding:10px 14px!important}
+#foot .fr2{display:flex;align-items:center;gap:10px}
+#fb{flex:1;justify-content:center;gap:10px;padding:11px 14px;border-radius:12px;font-size:13px;font-weight:700;background:linear-gradient(120deg,#f2c23022,#ffffff0a);border:1px solid #f2c23066;color:var(--ac)}
+#fb svg{width:20px;height:20px}
+#fb:hover{box-shadow:0 4px 18px #f2c23044}
+#foot #ver{flex:none;font-size:10px}
+#upd{bottom:112px}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button class="ib" id="sx" aria-label="Close menu">✕</button><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
@@ -337,8 +347,6 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 <div class="btns wrap" style="margin-top:8px"><button id="bDiary">📓 Flight diary</button><button id="bAlerts">🔔 Alerts</button><button id="bOver">📍 Overhead</button></div>
 <div class="btns" style="margin-top:8px"><button id="bStats">📊 Stats</button><button id="bRoute">🧭 Route check</button></div><div class="btns" id="ovRmRow" style="margin-top:8px;display:none"><button id="bOverRm">✕ Remove overhead spot</button></div></div>
 <div class="sec" id="spt" style="display:none"></div>
-<div class="sec setsec"><button id="bSet" class="setb"><svg class="gr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/><circle cx="12" cy="12" r="6.6" stroke-dasharray="2.2 2.6"/></svg><span class="sl">Settings</span><svg class="sa" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5 7.5 6 4 9.5"/></svg></button>
-</div>
 <div class="sec"><div class="lbl">Map</div><div class="btns seg" id="tiles"><button data-t="osm">Standard</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div><div class="btns wrap" style="margin-top:8px"><button id="bAp" class="on">Airports</button><button id="bZ">Alert zone</button><button id="bRd" title="Rain radar">Radar</button><button id="bTb" title="Turbulence advisories (SIGMET / G-AIRMET)">Turbulence</button><button id="bWd" title="Wind arrows">Wind</button><button id="bNt" title="Day / night">Night</button><button id="bCl" title="Satellite imagery with clouds (NASA, latest daily image)">Clouds</button><button id="bTr" title="Aircraft trails">Trails</button></div><select id="wdLv" style="display:none;width:100%;margin-top:6px"><option value="0">Wind: FL050</option><option value="1">Wind: FL100</option><option value="2">Wind: FL180</option><option value="3">Wind: FL300</option><option value="4" selected>Wind: FL340</option><option value="5">Wind: FL390</option></select>
 <label class="zr"><span>Zone radius</span> <span class="stp"><button type="button" id="zM" aria-label="−"><svg viewBox="0 0 12 12"><path d="M2.5 6h7"/></svg></button><input id="zR" type="number" min="3" max="500" step="1" value="100"><button type="button" id="zP" aria-label="+"><svg viewBox="0 0 12 12"><path d="M2.5 6h7M6 2.5v7"/></svg></button></span> <span>km</span></label>
 </div>
@@ -356,7 +364,7 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 <div class="cks"><label class="ck"><input id="fG" type="checkbox" checked> Show aircraft on the ground</label>
 <label class="ck"><input id="fF" type="checkbox"> Favorites only ★</label></div></div>
 <div class="sec" id="wls" style="display:none"></div>
-<div class="sec" id="srch"><div class="lbl">Aircraft</div><input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></div><div id="upd" hidden></div><div id="foot"><button id="fb" title="Report a bug or request a feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path class="fl" d="m4 7.5 8 6 8-6"/></svg><span>Contact us</span></button><div id="ver">SkyTrack</div></div></aside>
+<div class="sec" id="srch"><div class="lbl">Aircraft</div><input id="q" placeholder="Search callsign or registration…"><div id="meta"></div><div id="list"></div></div><div id="upd" hidden></div><div id="foot"><button id="bSet" class="setb"><svg class="gr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/><circle cx="12" cy="12" r="6.6" stroke-dasharray="2.2 2.6"/></svg><span class="sl">Settings</span><svg class="sa" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5 7.5 6 4 9.5"/></svg></button><div class="fr2"><button id="fb" title="Report a bug or request a feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path class="fl" d="m4 7.5 8 6 8-6"/></svg><span>Contact us</span></button><div id="ver">SkyTrack</div></div></div></aside>
 <main><div id="map"></div>
 <button id="open" class="ib" title="Close menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect class="fr" x="3" y="4" width="18" height="16" rx="4.5"/><path class="pn" d="M3 8.5A4.5 4.5 0 0 1 7.5 4H10v16H7.5A4.5 4.5 0 0 1 3 15.5z"/><path class="ch" d="M16 9.5 13.5 12l2.5 2.5"/></svg></button><div class="bar"><span class="cdot"></span><div class="ct"><span id="clock"></span><small id="cdate"></small></div></div>
 <div id="stm" class="mdl"></div><div id="stt" class="mdl"></div><div id="alm" class="mdl"></div><div id="rcm" class="mdl"></div><div id="ovp"></div><div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
