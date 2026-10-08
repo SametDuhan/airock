@@ -33,7 +33,7 @@ async function runRc() {
     const [c, txt] = rcLevel(r.level), more = r.level >= 2 && r.km != null ? ` · ${t('first about {0} from {1}', fmtDist(r.km), A.code)}` : '';
     return `<div class="rcr"><span class="dots"><i class="${c}"></i></span><b>FL${RC_FL[i]}</b><span>${t(txt)}${more}</span></div>`; });
   rcOut = `<h3>${esc(A.code)} → ${esc(B.code)} · ${fmtDist(dist)}</h3>${rows.join('')}<div class="rtx" style="margin-top:12px">${t('Based on SIGMET / G-AIRMET advisories and pilot reports from the last 2 hours. Nothing reported is not a guarantee.')}</div>`
-    + `<div class="ch2"><button id="rcMap">${t('Show on map')}</button></div>`;
+    + `<button id="rcMap" class="rcmap" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg><span>${t('Show on map')}</span><svg class="ar" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`;
   $('rcOut').innerHTML = rcOut; drawRc(path);
 }
 function drawRc(path) { rcLine && rcLine.remove(); rcLine = L.polyline(SkyGeo.unwrap(path.map(p => p.slice())), { color: '#2f8cff', weight: 3, dashArray: '8 8', interactive: false }).addTo(map); }

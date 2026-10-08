@@ -74,7 +74,11 @@ const EMG = { 7500: 'Hijacking', 7600: 'Radio failure', 7700: 'General emergency
 // A real emergency: squawk 7500 / 7600 / 7700, or the ADS-B emergency status that means the same (unlawful / nordo / general). Other status values
 // ("lifeguard", "minfuel", "downed", "reserved") and ordinary squawks such as 1000 (a normal IFR code in Europe) are NOT shown as emergencies.
 const EMG_STATUS = { unlawful: 7500, nordo: 7600, general: 7700 };
-const emgCode = f => EMG[f.sq] ? +f.sq : EMG_STATUS[f.emg] || 0;
+const emgRaw = f => EMG[f.sq] ? +f.sq : EMG_STATUS[f.emg] || 0;
+// A pilot turning the transponder knob passes through 7500 / 7600 / 7700 on the way to another code (e.g. 7000 -> 7600 -> 7700 -> ...): for a few seconds the aircraft "declares" an emergency it never did.
+// So a code only counts once it has been reported without a break for EMG_HOLD ms (tracked in upsert(): f._eAt = when this code was first seen; undefined = not tracked, e.g. demo / replay).
+const EMG_HOLD = 45000;
+const emgCode = f => { const c = emgRaw(f); return c && (f._eAt === undefined || (f._eC === c && f._eAt && Date.now() - f._eAt >= EMG_HOLD)) ? c : 0; };
 const isEmg = f => !!emgCode(f);
 let HSTEP = LS('sky.hstep', 5), TRAIL = LS('sky.trail', 0); // history: seconds per frame (720 frames: 1 h / 3 h / 6 h); trails: 0 off, 1 short, 2 long
 let selected = null, live = false, ts = 30, replay = false, placing = false, zone = LS('sky.zone', null), zoneLayer = null, tick = 0;
@@ -125,13 +129,17 @@ const desktopNote = (msg, id) => {
 // Instead of a separate HTML element per aircraft, all are drawn on one canvas: stays smooth with thousands of aircraft
 // Icon shapes (24x24, nose up): b = body, e = engines (outlined separately so each one is visible), r = rotor blades (helicopters, stroke only), d = rotor disc (filled, faint)
 const SHAPES = {
-  gen: { b: 'M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z', s: 1 },
+  gen: { b: 'M12 3 L12.8 3.9 L13.1 6 L13.1 8.1 L22.2 8.9 L22.4 11.3 L13.1 11.8 L12.6 17.4 L17.2 18.2 L17.2 20 L12.5 19.8 L12 20.2 L11.5 19.8 L6.8 20 L6.8 18.2 L11.4 17.4 L10.9 11.8 L1.6 11.3 L1.8 8.9 L10.9 8.1 L10.9 6 L11.2 3.9Z',
+    e: 'M9.2 1.6h5.6v1H9.2z', s: 1 }, // light single-engine: straight tapered wing + propeller
   air2: { b: 'M12 1.5c1 0 1.6 1.6 1.6 3.5v4l8.9 6v2l-8.9-2.8v5.3l2.4 2v1.3L12 21.8l-4 1v-1.3l2.4-2v-5.3L1.5 17v-2l8.9-6V5c0-1.9.6-3.5 1.6-3.5z',
     e: 'M6.2 11a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM15.8 11a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0z', s: 1 },
   air4: { b: 'M12 1.5c1 0 1.6 1.6 1.6 3.5v4l8.9 6v2l-8.9-2.8v5.3l2.4 2v1.3L12 21.8l-4 1v-1.3l2.4-2v-5.3L1.5 17v-2l8.9-6V5c0-1.9.6-3.5 1.6-3.5z',
     e: 'M6.5 10.6a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM15.5 10.6a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM2.8 12.8a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0zM19.2 12.8a1 1 0 0 1 2 0v2.8a1 1 0 0 1-2 0z', s: 1.3 },
-  jet: { b: 'M12 1c.9 0 1.4 2 1.4 4v5l6.6 5v1.8l-6.6-2v4.2l1.6 1.5v1.3L12 21l-3 .8v-1.3l1.6-1.5v-4.2l-6.6 2V15l6.6-5V5c0-2 .5-4 1.4-4z',
-    e: 'M8.6 14.5a.9.9 0 0 1 1.8 0v4a.9.9 0 0 1-1.8 0zM13.6 14.5a.9.9 0 0 1 1.8 0v4a.9.9 0 0 1-1.8 0z', s: .9 },
+  jet: { b: 'M12 1.8 L12.7 3 L12.9 5 L12.9 10.2 L20.3 14.6 L20.3 16 L12.9 14.4 L12.8 18 L14.6 19.4 L14.6 20.6 L12.6 20 L12 20.6 L11.4 20 L9.4 20.6 L9.4 19.4 L11.2 18 L11.1 14.4 L3.7 16 L3.7 14.6 L11.1 10.2 L11.1 5 L11.3 3Z',
+    e: 'M9 15.9a0.7 0.7 0 0 1 1.4 0v1.8a0.7 0.7 0 0 1-1.4 0zM13.6 15.9a0.7 0.7 0 0 1 1.4 0v1.8a0.7 0.7 0 0 1-1.4 0z', s: 1 },
+  prop: { b: 'M12 1.8 L12.8 2.8 L13 5 L13 10.4 L21.8 11.2 L21.8 13.2 L13 13.8 L12.9 18.8 L15.6 19.6 L15.6 21 L12.7 20.6 L12 21.2 L11.3 20.6 L8.4 21 L8.4 19.6 L11.1 18.8 L11 13.8 L2.2 13.2 L2.2 11.2 L11 10.4 L11 5 L11.2 2.8Z',
+    e: 'M6.1 8.6a0.8 0.8 0 0 1 1.6 0v1.8a0.8 0.8 0 0 1-1.6 0zM16.3 8.6a0.8 0.8 0 0 1 1.6 0v1.8a0.8 0.8 0 0 1-1.6 0z', s: 1 }, // turboprop: straight wing, engines on the wing
+  veh: { b: 'M9.2 8.2h5.6a1.2 1.2 0 0 1 1.2 1.2v5.2a1.2 1.2 0 0 1-1.2 1.2H9.2A1.2 1.2 0 0 1 8 14.6V9.4a1.2 1.2 0 0 1 1.2-1.2z', s: .75 }, // ground vehicle (ADS-B category C1 / C2 / C3): a small box, not a plane
   heli: { b: 'M12 3.6c2.4 0 3.8 2 3.8 4.6 0 2.2-.8 3.7-1.6 4.6h-4.4c-.8-.9-1.6-2.4-1.6-4.6 0-2.6 1.4-4.6 3.8-4.6zM11.2 12.4h1.6v7.4h-1.6zM9.3 18.6h5.4l-.6 1.7H9.9zM11.35 19.8h1.3v2.4h-1.3z', // cabin, tail boom, stabilizer, tail fin
     e: 'M7.1 6.8h1v6.4h-1zM15.9 6.8h1v6.4h-1z', // skids
     d: 'M22 8.6a10 10 0 1 1-20 0a10 10 0 1 1 20 0z', // faint rotor disc (filled)
@@ -142,11 +150,26 @@ for (const k in SHAPES) { const o = SHAPES[k]; o.B = new Path2D(o.b); if (o.e) o
 const HELI_RE = /^(EC\d\d|AS\d\d|AW\d\d|B06|B407|B412|B427|B429|B505|R22|R44|R66|S76|S92|S61|S64|A109|A119|A139|A149|A169|A189|MD52|MD60|MI\d|KA\d\d|NH90|H47|H53|H60|H64|H500|UH\d\d|CH\d\d|MH\d\d|BK17|EN28|EN48|SCOU|GAZL|LYNX|PUMA|TIGR)/;
 const FOUR_ENG = new Set('A342 A343 A345 A346 A388 A124 A225 B741 B742 B743 B744 B74D B74R B74S B748 B703 B701 B720 B52 B1 C17 C5M C5 C135 K35R KC10 IL96 IL76 IL62 IL86 IL18 AN12 AN22 AN70 A400 C130 C30J L100 E3CF E6 DC8 DC85 DC86 DC87 B461 B462 B463 RJ70 RJ85 RJ1H VC10 TU95 TU16'.split(' '));
 const JET_RE = /^(C25\w|C5[0-9]\w|C56X|C68A|C680|C700|C750|C510|C525|C550|E5[05]P|E545|E550|LJ\d\d|GLF\d|GL\d\d|GALX|FA\d\w|F2TH|F900|CL3\d|CL60|H25\w|HDJT|PC24|BE40|PRM1|ASTR|G150|G280|SF50|EA50|ECLP|F\d\d[A-Z]?$|EUFI|RFAL|TORN|GRIF|HAWK|T38|L39|A10|SU\d\d|MG\d\d)/;
-const TWIN_RE = /^(A2\d\d|A3[0-9]\d|A\d\dN|B7[1-9]\d|B3[7-9]M|B3XM|E1\d\d|E2\d\d|E7\d\w|CRJ|CR\d|AT\d\d|DH8|SF34|B190|F100|F70|MD[89]\d|BCS|SU95|C919|ARJ|J328)/;
-const kindOf = f => { const c = acCode(f), cat = f.cat || '';
-  if (f._kk === c + cat) return f._k;
-  const k = cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : TWIN_RE.test(c) || /^A[345]$/.test(cat) ? 'air2' : 'gen';
-  f._kk = c + cat; return f._k = k; };
+const PROP_RE = /^(AT\d\d|DH8\w|DHC[5-8]|SF34|B190|B350|BE[29]\w|E120|F50|F27|JS\d\d|SB20|D328|AN2[46]|AN32|PC12|C208|TBM\d|P180|DH3\w|AT7\w|AT4\w|AT8\w|Q\d00|SH36|L410|MA60|Y12)/;
+const TWIN_RE = /^(A2\d\d|A3\w\w|A\d\d[NK]|B7[0-9A-Z]{2}|B3[7-9][A-Z0-9]|MD1[01]|DC10|L101|IL9\d|TU[12]\d\d|RJ\w\w|E[12]\d\w|B7[1-9]\d|B3[7-9]M|B3XM|E1\d\d|E2\d\d|E7\d\w|CRJ|CR\d|AT\d\d|DH8|SF34|B190|F100|F70|MD[89]\d|BCS|SU95|C919|ARJ|J328)/;
+// Feeds that carry no aircraft type (OpenSky) or no category leave the icon undecided: then it is guessed from how the aircraft behaves, so a jet at FL410 is never drawn as a light plane.
+// airline-style callsign (3 letters + digits) or fast / high -> airliner; otherwise a light aircraft. The guess is part of the cache key so it updates when the aircraft speeds up or climbs.
+const guessAir = f => { const kt = (f.spd || 0) * 1.944, ft = (f.alt || 0) * 3.281, line = /^[A-Z]{3}\d{1,4}[A-Z]{0,2}$/.test(f.cs || '');
+  return !f.ground && (kt >= 190 || ft >= 18000) || line && (kt >= 120 || ft >= 5000) ? 'F' : f.ground && line ? 'F' : ''; };
+// Airport service positions that feeds list like aircraft: control tower, ground, apron, fire / rescue, tugs, buses... (and ADS-B emitter categories C1-C3: ground vehicles / obstacles). Not aircraft:
+// drawn as a small box, and no photo or registry lookup (a photo search for "TWR" returned a security camera).
+const SVC_RE = /^(TWR|TOWER|GND|GRND|GROUND|APP|DEP|ATIS|AOPS|OPS|FIRE|CAT\d?|SEC|SAFE|BUS|TUG|VEH|SVC|MAINT|CREW|FUEL|RAMP|RESCUE|AMB|POLICE|SNOW|FOLLOW\w*|MARSHAL|SWEEP\w*|AIRPORT|APRON|TRK|TRUCK|CLR|DEL|DELIVERY|OBST\w*|UNKN\w*)\d{0,2}$/i;
+const isSvc = f => /^C[123]$/.test(f.cat || '') || SVC_RE.test(f.cs || '') || SVC_RE.test(f.reg || '') || SVC_RE.test(f.type || '') || SVC_RE.test(f.ac?.icaoType || '');
+const kindOf = f => { const c = acCode(f), cat = f.cat || '', g = !c && !cat ? guessAir(f) : '';
+  if (f._kk === c + cat + g + f.cs) return f._k;
+  const k = isSvc(f) ? 'veh' : cat === 'A7' || HELI_RE.test(c) ? 'heli' : FOUR_ENG.has(c) ? 'air4' : JET_RE.test(c) || cat === 'A6' ? 'jet' : PROP_RE.test(c) ? 'prop' : TWIN_RE.test(c) || /^A[345]$/.test(cat) || g ? 'air2' : 'gen';
+  f._kk = c + cat + g + f.cs; return f._k = k; };
+// Size class by aircraft type: big airliners draw larger, small ones smaller. The difference fades out when zoomed far out so crowded areas stay readable.
+const XL_RE = /^(A38\w|B74\w|B77[WL]|B778|B779|B77\w|A35K|A346|A345|A124|A225|C5M?|IL96|B748)$/, WIDE_RE = /^(B78\w|B76\w|A33\w|A35\w|A30B|A310|A306|A3ST|B75\w|MD11|DC10|L101|IL86)$/, SMALL_RE = /^(CRJ\w|CR\d|AT\d\d|DH8\w|SF34|B190|E1[34]\w|J328|D328|F50|F27|SB20|JS\d\d|DHC\d|PC12|C208|TBM\d|BE\d\d|PA\d\d|C1\d\d|C2\d\d|SR2\d|DA\d\d|M20\w|P28\w)/;
+const sizeOf = f => { const k = kindOf(f); if (f._sk !== f._kk) { const c = acCode(f); f._sk = f._kk;
+    f._sz = k === 'veh' ? .8 : k === 'heli' ? .75 : k === 'gen' ? .7 : XL_RE.test(c) ? 1.35 : WIDE_RE.test(c) ? 1.15 : k === 'jet' || k === 'prop' || SMALL_RE.test(c) ? .8 : (f.cat === 'A5' ? 1.3 : f.cat === 'A4' ? 1.15 : f.cat === 'A1' ? .7 : f.cat === 'A2' ? .8 : 1); }
+  return f._sz; };
+const sizeK = f => { const z = map.getZoom(), m = sizeOf(f); return 1 + (m - 1) * (z <= 4 ? 0 : z <= 6 ? .5 : 1); };
 map.createPane('planes').style.zIndex = 450;
 /* ---------- thinning out crowded areas when zoomed out ---------- */
 // Over a busy area at continent scale thousands of overlapping icons are unreadable and slow to draw. Above THIN_FROM visible aircraft we keep one per grid cell (the most
@@ -185,7 +208,7 @@ const PlaneLayer = L.Layer.extend({
     L.DomUtil.setPosition(c, map.containerPointToLayerPoint([0, 0]));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, s.x, s.y); ctx.lineWidth = .7; ctx.strokeStyle = '#000';
     // Icons shrink as you zoom out so thousands of aircraft don't pile up at continent scale
-    const z = map.getZoom(), k = z <= 4 ? .55 : z <= 5 ? .65 : z <= 6 ? .8 : 1;
+    const z = map.getZoom(), k = z <= 4 ? .55 : z <= 5 ? .65 : z <= 6 ? .8 : z <= 12 ? 1 : z <= 13 ? 1.15 : z <= 14 ? 1.4 : z <= 15 ? 1.8 : z <= 16 ? 2.3 : 3; // zoomed right in (an airport apron) the aircraft grow towards their real size
     let sel = null; const cLon = map.getCenter().lng;
     if (TRAIL && !replay) { // fading-free, batched by color: one stroke per altitude color keeps thousands of trails cheap
       const N = TRAIL === 2 ? 360 : 60, paths = new Map(); let n = 0;
@@ -205,10 +228,10 @@ const PlaneLayer = L.Layer.extend({
     const shown = thinOn && cand.length > THIN_FROM ? thinOut(cand) : cand; setThn(shown.length + (sel ? 1 : 0), cand.length + (sel ? 1 : 0));
     shown.forEach(f => {
       if (f.seen && Date.now() - f.seen > 45000) ctx.globalAlpha = .5; // not reported for a while: shown fainter, still moving
-      icon(ctx, f._p, f._h, (f.ground ? 16 : 24) * k, f.ground ? '#9aa0a6' : color(f.alt), kindOf(f));
-      ctx.globalAlpha = 1; rings(ctx, f, f._p, (f.ground ? 16 : 24) * k);
+      icon(ctx, f._p, f._h, (f.ground ? 16 : 24) * k * sizeK(f), f.ground ? '#9aa0a6' : color(f.alt), kindOf(f));
+      ctx.globalAlpha = 1; rings(ctx, f, f._p, (f.ground ? 16 : 24) * k * sizeK(f));
     });
-    if (sel) { ctx.shadowColor = '#f2c230'; ctx.shadowBlur = 12; icon(ctx, sel._p, sel._h, 30, '#fff', kindOf(sel)); ctx.shadowBlur = 0; rings(ctx, sel, sel._p, 30); }
+    if (sel) { ctx.shadowColor = '#f2c230'; ctx.shadowBlur = 12; icon(ctx, sel._p, sel._h, 30 * Math.max(.9, sizeK(sel)), '#fff', kindOf(sel)); ctx.shadowBlur = 0; rings(ctx, sel, sel._p, 30); }
   }
 });
 // Emergency (squawk 7500/7600/7700): blinking red ring
@@ -227,7 +250,7 @@ function icon(ctx, p, hdg, size, fill, kind = 'gen') {
 }
 const planes = new PlaneLayer().addTo(map), redraw = () => planes.redraw();
 // Click/hover: the nearest aircraft from the last drawn screen positions (within 14 px)
-function hit(pt) { let best = null, bd = 12 * 12; flights.forEach(f => { if (!f._p) return; const d = (f._p.x - pt.x) ** 2 + (f._p.y - pt.y) ** 2; if (d < bd) { bd = d; best = f; } }); return best; }
+function hit(pt) { let best = null, bd = 12 * 12; flights.forEach(f => { if (!f._p) return; const r = Math.max(9, 12 * Math.min(1.2, sizeK(f))), d = (f._p.x - pt.x) ** 2 + (f._p.y - pt.y) ** 2; if (d < r * r && d < bd) { bd = d; best = f; } }); return best; }
 map.on('mousemove', e => { const f = hit(e.containerPoint), h = $('hov');
   map.getContainer().style.cursor = f ? 'var(--ptr)' : '';
   if (!f) { h.style.display = 'none'; return; }
@@ -255,7 +278,8 @@ function seedDemo() {
 function upsert(d) {
   let f = flights.get(d.id);
   if (!f) { f = { tr: [], gone: replay }; flights.set(d.id, f); } // an aircraft that arrives during replay wasn't in that frame
-  const was = f.ground; Object.assign(f, d); f.seen = d.stale ? Date.now() - 60000 : Date.now();
+  const was = f.ground; Object.assign(f, d); { const c = emgRaw(f); if (!c) f._eAt = 0; else if (f._eC !== c || !f._eAt) { f._eC = c; f._eAt = Date.now(); } }
+  f.seen = d.stale ? Date.now() - 60000 : Date.now();
   if (was === false && f.ground) f.gAt = Date.now(); else if (!f.ground) { f.gAt = 0; f.landedAt = 0; } // gAt: we saw it touch down (used when the trace does not say when)
   X.event(f); return f;
 }
@@ -294,6 +318,10 @@ function nearAirport(lat, lon, maxKm) {
 function implausible(f, r) {
   if (!r || f.ground || !(f.lat != null)) return false;
   const dOD = km(r.org.lat, r.org.lon, r.dst.lat, r.dst.lon), dO = km(r.org.lat, r.org.lon, f.lat, f.lon), dD = km(f.lat, f.lon, r.dst.lat, r.dst.lon);
+  // The real trace says it did not start at this origin: it is already close to the "departure" airport, but the trace it flew begins far away in the air (an inbound leg of the same
+  // callsign, e.g. ESB→IST flown before IST→AMS). A real departure's trace starts at the origin; a long flight with a cut-off trace is far from its origin, so it does not match this.
+  const S = f.flown?.length > 1 ? f.flown[0] : null;
+  if (S) { const dS = km(S[0], S[1], f.lat, f.lon); if (dS > 120 && dS > 2 * dO + 50 && km(S[0], S[1], r.org.lat, r.org.lon) > 100) return true; }
   if (dOD < 150 || dO < 80 || dD < 80) return false;
   if ((dO + dD) / dOD > 1.45) return true;
   if (f.hdg != null && dD > 150 && dO > 150) { const d = Math.abs(((brg(f.lat, f.lon, r.dst.lat, r.dst.lon) - f.hdg) % 360 + 540) % 360 - 180); if (d > 110) return true; }
@@ -363,6 +391,7 @@ const turbRow = f => { if (f.ground) return null;
 
 /* ---------- aircraft info (type, registration, photo) ---------- */
 async function loadAircraft(f) {
+  if (isSvc(f)) { f.as = 'none'; f.pics = []; if (f.id === selected) renderCard(true); return; } // a service position, not an aircraft: nothing to look up
   if (!canLoad(f, 'as')) return;
   f.as = 'loading'; let e = fresh(acCache, f.id);
   if (!e) { if (Date.now() < dbPause && f.id !== selected) { f.as = 'err'; f.asAt = Date.now(); return; }
@@ -372,7 +401,7 @@ async function loadAircraft(f) {
 }
 // Photos: planespotters (448 px, possibly several) first, then the full-size adsbdb photo (or its thumbnail as a last resort)
 async function loadPhotos(f) {
-  if (f.pics) return; let e = fresh(picCache, f.id);
+  if (f.pics || isSvc(f)) return; let e = fresh(picCache, f.id);
   if (!e) { const res = await DATA.photos(f.id, f.ac?.reg || f.reg); e = { v: res.ok ? res.photos : [], t: Date.now() }; if (res.ok && !res.partial) picCache.set(f.id, e); }
   const ac = f.ac || {}, extra = ac.photo || ac.thumb;
   // 3 photos at most (quicker to load and to flip through). The first one comes from planespotters when there is one: its CDN is fast, Commons makes big thumbnails slowly. Then the sharper
@@ -532,7 +561,7 @@ const apLarge = new Set((window.AIRPORTS_LARGE || '').split(',')), apRest = BIGA
 const apAll = APO.concat(apRest.filter(a => apLarge.has(a.icao)), apRest.filter(a => !apLarge.has(a.icao)), apMore.filter(a => a.sz === 'm'), apMore.filter(a => a.sz === 's'), apTiny);
 // Heliports and seaplane bases (zoom 11+) come from a file that is loaded the first time it is needed
 let heliLoad = false;
-function ensureHeli() { if (heliLoad || map.getZoom() < 11) return; heliLoad = true;
+function ensureHeli() { if (heliLoad || apHide.heli || map.getZoom() < 11) return; heliLoad = true;
   loadJs('airports-heli').then(ok => { if (!ok) return; for (const x of (window.AIRPORTS_HELI || '').split(';')) { if (!x) continue; const [code, name, lat, lon, sz] = x.split('|'); apAll.push({ code, icao: code, name, lat: +lat, lon: +lon, sz }); } drawAp(); }); }
 const apMk = new Map();
 function apIcon(a) { const big = apBig.has(a.code), z = map.getZoom(), sz = big ? (z < 5 ? 15 : z < 7 ? 19 : 23) : (z < 8 ? 13 : z < 10 ? 16 : 14);
@@ -540,12 +569,15 @@ function apIcon(a) { const big = apBig.has(a.code), z = map.getZoom(), sz = big 
 // Thinning: when the map is zoomed out only the most important airport of each patch of the map is drawn (the fixed list first, then the large ones, then the rest), so a small country gets one
 // airport and a big one several, and zooming in brings more in where you look. The patches are fixed to the world (not the screen), so panning doesn't shuffle the airports around.
 const AP_CELL = z => z <= 5 ? 112 : z <= 6 ? 90 : z <= 7 ? 72 : z <= 8 ? 54 : z <= 9 ? 44 : z <= 10 ? 36 : 28;
+const apHide = { small: LS('sky.hideSmallAp', false), heli: LS('sky.hideHeliAp', false) };
+const apHidden = a => apHide.small && (a.sz === 's' || a.sz === 't' || a.sz === 'w') || apHide.heli && a.sz === 'h';
 const AP_MINZ = { m: 6, s: 8, t: 10, h: 11, w: 11 };
 function drawAp() {
   if (!map.hasLayer(apLayer)) return;
   const z = map.getZoom(), v = map.getBounds().pad(.15), want = new Map(), S = AP_CELL(z), taken = new Map(); ensureHeli();
   for (const a of apAll) {
     if (want.size >= AP_MAX) break;
+    if (!apBig.has(a.code) && apHidden(a)) continue;
     if (!(apBig.has(a.code) || z >= (AP_MINZ[a.sz] || 5)) || !v.contains([a.lat, a.lon])) continue;
     const p = map.project([a.lat, a.lon], z), cx = Math.floor(p.x / S), cy = Math.floor(p.y / S); let near = false;
     for (let i = -1; i <= 1 && !near; i++) for (let j = -1; j <= 1 && !near; j++) { const q = taken.get((cx + i) + ',' + (cy + j)); if (q && Math.hypot(q.x - p.x, q.y - p.y) < S) near = true; }
@@ -759,14 +791,13 @@ const GS_HTML = `<div class="gsi"><div class="bg"><div class="bgn"></div><div cl
 // touchdown, paused when the plane stands still. Playback rate changes keep the position, and the position is kept on the flight when the card is rebuilt.
 const NO_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Where things are in the scene for this moment of the flight (SkyGeo.scenePose): the ground sinks out, clouds fade in, the plane rises and pitches, the gear folds up; and the look of the sky
-// follows the Night layer of the map at the airport the plane is at (the nearer of departure / arrival): inside the night region = dark sky, stars and the moon, otherwise a bright sky and the sun. CSS transitions (about a second)
+// follows the sun where the plane is right now (not an airport): night = dark sky, stars and the moon, day = a bright sky and the sun, with a soft change at dusk and dawn. CSS transitions (about a second)
 // smooth the once-a-second updates.
 function gsPose(f, el, p) {
   const $q = n => el.querySelector(n);
   $q('.gnd').style.transform = `translateY(${(p.g * 90).toFixed(1)}px)`; $q('.sky').style.opacity = p.cl.toFixed(2);
   $q('.plane').style.transform = `translateY(${(-p.rise).toFixed(1)}px) rotate(${(-p.pitch).toFixed(1)}deg)`; $q('.gear').classList.toggle('up', !p.gear);
-  const o = f.route.org, d = f.route.dst, ap = km(f.lat, f.lon, o.lat, o.lon) <= km(f.lat, f.lon, d.lat, d.lon) ? o : d;
-  const hr = SkyGeo.solarHour(ap.lon), day = SkyGeo.isNight(ap.lat, ap.lon) ? 0 : 1; // day or night from the same region as the map's Night layer, not from the clock
+  const el0 = SkyGeo.sunElevation(f.lat, f.lon), hr = SkyGeo.solarHour(f.lon), day = Math.max(0, Math.min(1, (el0 + 5) / 10)); // from the sun's height where the plane is now: full day above +5°, full night below -5°, dusk and dawn in between
   const df = Math.max(0, Math.min(1, (hr - 6) / 12)), nf = (hr >= 18 ? hr - 18 : hr + 6) / 12; // how far through the day / the night: the sun and the moon cross the sky from left to right
   $q('.bgd').style.opacity = day.toFixed(2); $q('.stars').style.opacity = (Math.max(0, 1 - day * 1.6) * .9).toFixed(2); el.querySelector('.gsi').classList.toggle('day', day > .5);
   const sun = $q('.sun'), moon = $q('.moon'); sun.style.opacity = day.toFixed(2); sun.style.left = (12 + 76 * df).toFixed(1) + '%'; sun.style.top = (21 - 13 * Math.sin(Math.PI * df)).toFixed(1) + 'px';
@@ -920,7 +951,9 @@ Object.keys(CH).forEach(id => $(id).addEventListener('keydown', e => { if (e.key
 $('fPh').onclick = e => { const b = e.target.closest('button'); if (!b) return; document.querySelectorAll('#fPh button').forEach(x => x.classList.toggle('on', x === b)); applyF(); };
 $('fRst').onclick = () => { $('fA').value = 0; $('fM').value = 45000; $('fS').value = 0; $('fSM').value = 600; $('fF').checked = false; $('fE').checked = false; $('fG').checked = true; for (const i of Object.keys(CH)) { $(i).value = ''; CH[i] = []; } document.querySelectorAll('#fPh button').forEach(x => x.classList.toggle('on', !x.dataset.p)); applyF(); };
 $('fSw').onclick = () => {
-  const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; [CH.fDep, CH.fArr] = [CH.fArr, CH.fDep]; applyF();
+  const empty = !$('fDep').value && !$('fArr').value && !CH.fDep.length && !CH.fArr.length; // nothing to exchange: the two boxes trade places so the swap is still visible
+  if (empty) $('fDep').closest('.apd').classList.toggle('rv');
+  else { const d = $('fDep').value; $('fDep').value = $('fArr').value; $('fArr').value = d; [CH.fDep, CH.fArr] = [CH.fArr, CH.fDep]; applyF(); }
   for (const el of [$('fSw'), $('fDep'), $('fArr')]) { el.classList.remove('spin', 'flash'); void el.offsetWidth; el.classList.add(el === $('fSw') ? 'spin' : 'flash'); }
 };
 
@@ -951,7 +984,7 @@ function pumpRoutes() {
 
 /* ---------- collapsible menu + clock ---------- */
 const setMenu = open => { $('side').classList.toggle('hide', !open); document.body.classList.toggle('closed', !open); save('sky.menu', open); const o = $('open'); o.dataset.otitle = open ? 'Close menu' : 'Open menu'; o.title = t(o.dataset.otitle); };
-$('sx').onclick = () => setMenu(false);
+$('sx').onclick = $('cls').onclick = () => setMenu(false);
 map.on('click', () => { if (matchMedia('(max-width:760px)').matches && !document.body.classList.contains('closed')) setMenu(false); }); // on a phone a tap on the map closes the menu drawer
 $('open').onclick = () => setMenu(document.body.classList.contains('closed'));
 $('side').addEventListener('transitionend', () => { map.invalidateSize(); redraw(); });

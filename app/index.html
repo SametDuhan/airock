@@ -378,7 +378,7 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 #foot .setb,#fb{padding:6px 8px!important;border-radius:9px;font-size:12px;box-shadow:none}
 #foot .setb .gr,#fb svg{width:16px;height:16px}
 #foot .setb::after{display:none}
-#foot #ver{display:none}
+#foot{margin-top:auto}#foot #ver{display:block;position:static;margin:2px -12px -8px;padding:7px 0 8px;border-top:1px solid #ffffff14;background:#0003;text-align:center;text-transform:none;font:600 11px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.12em;color:#d9bf62;opacity:1}#foot #ver:empty{display:none}
 #upd{bottom:52px}
 #side>.sec:not(#srch),#side>.flt{margin:8px 10px 0;padding:4px 14px 12px;background:#ffffff06;border:1px solid var(--line);border-radius:12px;transition:background .2s,border-color .2s}
 #side>.sec:not(#srch):not(.collapsed),#side>.flt:not(.collapsed){border-color:#ffffff1f;background:#ffffff09}
@@ -391,6 +391,7 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 /* round 5: multi-value fields (+ adds the typed value, × clears), chips, card for the aircraft list, thicker accent bar */
 .apd{display:grid;grid-template-columns:1fr 34px;grid-template-rows:auto auto;gap:6px 8px;margin-top:6px;align-items:start}
 .apd .apc1:first-child{grid-column:1;grid-row:1}.apd .apc1:last-child{grid-column:1;grid-row:2}
+.apd.rv .apc1:first-child{grid-row:2}.apd.rv .apc1:last-child{grid-row:1}
 .apd #fSw{grid-column:2;grid-row:1/3;align-self:center;width:34px;height:34px;margin:0}.apd #fSw span{display:block;transform:rotate(90deg)}
 .apr1{margin-top:6px}
 .fw{position:relative}
@@ -433,6 +434,15 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 .flt .ff+.btns,.flt .ff+.apd,.flt .ff+.apr1{margin-top:10px}
 .flt .apd{gap:8px 10px}
 .flt .cks{margin-top:20px;padding-top:12px}
+.mdl .rcmap{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:14px;padding:11px 16px;border-radius:12px;border:1px solid #ffcc3366;background:linear-gradient(180deg,#ffcc3322,#ffcc3310);color:#ffcc33;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;transition:background .18s,transform .18s,box-shadow .18s}.mdl .rcmap .ar{transition:transform .18s}.mdl .rcmap:hover{background:#ffcc33;color:#111;box-shadow:0 4px 16px #ffcc3333}.mdl .rcmap:hover .ar{transform:translateX(3px)}.mdl .rcmap:active{transform:scale(.98)}
+#sx{display:none!important}
+#cls{position:absolute;top:50%;left:0;transform:translateY(-50%);z-index:1001;width:26px;height:84px;padding:0;border:1.5px solid #f2c230bb;border-left:0;border-radius:0 18px 18px 0;background:#1c1c1cf2;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--ac);display:grid;place-items:center;cursor:pointer;box-shadow:4px 0 16px #0006;transition:opacity .25s,transform .3s cubic-bezier(.2,.7,.2,1),width .2s,background .2s,color .2s,box-shadow .2s}
+#cls svg{width:21px;height:21px;transition:transform .25s}
+#cls:hover{width:32px;background:var(--ac);color:#111;box-shadow:4px 0 20px #f2c23055}#cls:hover svg{transform:translateX(-2px)}#cls:active{width:26px}
+body.closed #cls{opacity:0;pointer-events:none;transform:translate(-100%,-50%)}
+body:not(.closed) #open{opacity:0;pointer-events:none;transform:scale(.6);animation:none}
+#open{transition:transform .25s cubic-bezier(.3,1.6,.5,1),opacity .25s,box-shadow .25s,border-color .25s,background .25s}
+@media(max-width:760px){#cls{left:min(88vw,330px);z-index:2600;height:64px}}
 </style></head>
 <body><div id="app">
 <aside id="side"><div class="brand"><span class="bt">SKYTRACK</span><span class="bb"><button class="ib" id="sx" aria-label="Close menu">✕</button><button id="lang" class="lsw" title="Language / Dil" aria-label="Language / Dil" aria-haspopup="true"><i class="lc">EN</i><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div id="lmenu" hidden></div></span></div>
@@ -467,6 +477,7 @@ body.closed #open{animation:opn 2.4s ease-in-out infinite}
 <div class="sec" id="srch"><div class="lbl">Aircraft</div><div class="qw"><input id="q" placeholder="Search callsign or registration…"><button id="qx" type="button" aria-label="Clear" hidden><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg></button></div><div id="meta"></div><div id="list"></div></div><div id="upd" hidden></div><div id="foot"><div id="cmenu" hidden><button data-c="bug">Report a bug</button><button data-c="idea">Request a feature</button><button data-c="info">Copy app info</button></div><div class="fr2"><button id="bSet" class="setb"><svg class="gr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/><circle cx="12" cy="12" r="6.6" stroke-dasharray="2.2 2.6"/></svg><span class="sl">Settings</span></button><button id="fb" title="Report a bug or request a feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path class="fl" d="m4 7.5 8 6 8-6"/></svg><span>Contact us</span></button></div><div id="ver">SkyTrack</div></div></aside>
 <main><div id="map"></div>
 <button id="open" class="ib" title="Close menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect class="fr" x="3" y="4" width="18" height="16" rx="4.5"/><path class="pn" d="M3 8.5A4.5 4.5 0 0 1 7.5 4H10v16H7.5A4.5 4.5 0 0 1 3 15.5z"/><path class="ch" d="M16 9.5 13.5 12l2.5 2.5"/></svg></button><div class="bar"><span class="cdot"></span><div class="ct"><span id="clock"></span><small id="cdate"></small></div></div>
+<button id="cls" type="button" title="Close menu" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button>
 <div id="stm" class="mdl"></div><div id="stt" class="mdl"></div><div id="alm" class="mdl"></div><div id="rcm" class="mdl"></div><div id="ovp"></div><div id="hov"></div><div id="card"></div><div id="apc"></div><div id="lb"></div><div id="toast"></div>
 <div id="rp"><button id="rpLive" class="on">● Live</button><input id="rpS" type="range" min="0" max="0" value="0"><span id="rpT">history</span><div id="rpTip"></div></div></main></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
